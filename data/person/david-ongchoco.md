@@ -1,15 +1,32 @@
 ---
 person: David Ongchoco
+alias:
 firm: Comma Capital
-role: Co-founder & Investor
+role: Co-founder and Investor
+location:
 created-at: 2026-02-16
 updated-at: 2026-02-16
 website: https://comma.vc
 email: david.ongchoco@gmail.com
 linkedin: https://www.linkedin.com/in/davidongchoco/
+relationship-status: cold
+how-we-met:
+last-contacted-at:
+follow-up-due:
+next-step:
+intro-paths: []
+focus-areas:
+- earliest-stage investing
+- New York and San Francisco startup ecosystems
 ---
 
 # David Ongchoco
+
+## Snapshot
+
+- Why they matter: Co-founder and investor associated with Comma Capital.
+- Current focus: Earliest-stage investing through Comma Capital.
+- Best way to engage: Send a concise early-stage pitch with clear market and timing signal.
 
 ## Bio
 
@@ -17,8 +34,13 @@ linkedin: https://www.linkedin.com/in/davidongchoco/
 
 David Ongchoco is listed as part of [Comma Capital](../org/comma-capital.md) on his public Luma profile. Comma Capital describes itself as investing at the earliest stages and being based in New York City and San Francisco.[^ongchoco-profile][^comma-source]
 
+## Conversation Notes
+
+- [2026-02-16] Baseline profile normalized to template; no direct conversation notes logged yet.
+
 ## Changelog
 
+- [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation
 - [2026-02-16]: Updated profile data
