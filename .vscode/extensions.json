@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "bierner.github-markdown-preview"
+  ],
+  "unwantedRecommendations": [
+    "bierner.markdown-yaml-preamble"
+  ]
+}
