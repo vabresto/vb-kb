@@ -35,7 +35,7 @@ last-updated-from-source: 2026-02-16
 
 ## Bio
 
-McKinsey describes itself as a global management consulting firm that works with organizations across sectors and geographies.[^mckinsey-source]
+McKinsey & Company is a global management consulting firm that works with organizations across sectors and geographies.[^mckinsey-source]
 
 ## Notes
 
@@ -46,4 +46,4 @@ McKinsey describes itself as a global management consulting firm that works with
 - [2026-02-16]: Updated known-people relationship for Tanay Jaipuria to former with relationship metadata
 - [2026-02-16]: Created page with sourced bio summary
 
-[^mckinsey-source]: Source: [McKinsey Overview](https://www.mckinsey.com/about-us/overview). Verified/accessed on 2026-02-16.
+[^mckinsey-source]: Source: [McKinsey & Company - Wikipedia](https://en.wikipedia.org/wiki/McKinsey_%26_Company). Verified/accessed on 2026-02-16.

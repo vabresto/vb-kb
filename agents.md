@@ -53,3 +53,9 @@ known-people:
 
 - In person profiles, organization mentions in core sections (`Snapshot`, `Employment History`, `Bio`) should link to their org page using a relative path like `[Org Name](../org/org-slug.md)`.
 - If an org page does not exist, create `data/org/org-slug.md` with at least a minimal sourced snapshot and bio.
+
+## First Mention Linking
+
+- Follow a Wikipedia-like rule in page body content: the first mention of each known entity (person or organization) should be linked to its local KB file path.
+- Use relative links (`../person/...` or `../org/...`) in `Snapshot`, `Employment History`, `Bio`, and other narrative sections.
+- If an entity does not yet have a page, create it before adding the first-mention link.

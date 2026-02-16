@@ -29,6 +29,8 @@ looking-for: []
 
 # <Full Name>
 
+First mention of each known person or organization in page body text should be linked to its local KB page.
+
 ## Snapshot
 
 - Why they matter:

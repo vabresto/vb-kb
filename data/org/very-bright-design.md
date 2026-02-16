@@ -30,13 +30,13 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Former company founded by Matthew Brannon.
+- Why this org matters: Former company founded by [Matthew Brannon](../person/matthew-brannon.md).
 - What they do: Client services across design and web/video production.
 - Best way to approach: Lead with scoped project outcomes and clear production needs.
 
 ## Bio
 
-Public bios referencing McGuire Brannon describe Very Bright Design as his prior founder-led creative business.[^vbd-ram]
+Public bios referencing [Matthew (McGuire) Brannon](../person/matthew-brannon.md) describe Very Bright Design as his prior founder-led creative business.[^vbd-ram]
 
 ## Notes
 
@@ -44,6 +44,7 @@ Public bios referencing McGuire Brannon describe Very Bright Design as his prior
 
 ## Changelog
 
+- [2026-02-16]: Linked first mention of Matthew Brannon in page body and fixed broken source URL
 - [2026-02-16]: Created page with sourced bio summary and relationship timeline
 
-[^vbd-ram]: Source: [McGuire Brannon - Ram Tower](https://www.ramtower.com/team/mcguire-brannon/). Verified/accessed on 2026-02-16.
+[^vbd-ram]: Source: [Ram Tower (Team section)](http://www.ramtower.com/#team). Verified/accessed on 2026-02-16.

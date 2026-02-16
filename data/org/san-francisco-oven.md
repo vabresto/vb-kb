@@ -1,7 +1,7 @@
 ---
 org: San Francisco Oven
 alias:
-website: https://www.sanfranciscooven.com
+website:
 hq-location: Lake Mary, Florida, United States
 stages: []
 check-size:
@@ -28,20 +28,22 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Earliest listed role in McGuire Brannon's experience timeline.
+- Why this org matters: Earliest listed role in [Matthew Brannon](../person/matthew-brannon.md)'s experience timeline.
 - What they do: Restaurant operation.
 - Best way to approach: Treat as operations and team-training background context.
 
 ## Bio
 
-Directory listings show San Francisco Oven as a restaurant business in Florida.[^sfo-mapquest]
+In the user-provided LinkedIn experience excerpt, San Francisco Oven is listed as a prior employer where Matthew Brannon worked in restaurant operations.[^sfo-linkedin]
 
 ## Notes
 
 - [2026-02-16] Relationship dates and role details come from user-provided LinkedIn experience excerpt.
+- [2026-02-16] Removed prior MapQuest citation because it now redirects to an unrelated listing.
 
 ## Changelog
 
+- [2026-02-16]: Replaced outdated external citation with user-provided LinkedIn source note
 - [2026-02-16]: Created page with sourced bio summary and relationship timeline
 
-[^sfo-mapquest]: Source: [San Francisco Oven - MapQuest](https://www.mapquest.com/us/florida/san-francisco-oven-291781213). Verified/accessed on 2026-02-16.
+[^sfo-linkedin]: Source: User-provided LinkedIn experience excerpt in chat. Logged on 2026-02-16.

@@ -27,6 +27,8 @@ last-updated-from-source:
 
 # <Organization Name>
 
+First mention of each known person or organization in page body text should be linked to its local KB page.
+
 ## Snapshot
 
 - Why this org matters:
