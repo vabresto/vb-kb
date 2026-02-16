@@ -26,7 +26,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Co-founder and managing partner at Contour Venture Partners with long operating and investing history.
+- Why they matter: Co-founder and managing partner at [Contour Venture Partners](../org/contour-venture-partners.md) with long operating and investing history.
 - Current focus: Financial Services, Enterprise SaaS, and B2B Vertical SaaS.
 - Best way to engage: Lead with enterprise distribution insight and category-specific wedge.
 

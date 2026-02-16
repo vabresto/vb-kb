@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Employment-history node for McGuire Brannon's independent work.
+- Why this org matters: Employment-history node for [McGuire Brannon](../person/matthew-brannon.md)'s independent work.
 - What they do: Independent tutoring, education, and clinician work.
 - Best way to approach: Engage as individual practitioner work history, not a single company entity.
 

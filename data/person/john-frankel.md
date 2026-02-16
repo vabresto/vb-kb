@@ -25,7 +25,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Founding partner of ff Venture Capital with long-running early-stage track record.
+- Why they matter: Founding partner of [ff Venture Capital](../org/ff-venture-capital.md) with long-running early-stage track record.
 - Current focus: Seed and early-stage technology investing.
 - Best way to engage: Position a clear seed-stage opportunity with technical defensibility.
 

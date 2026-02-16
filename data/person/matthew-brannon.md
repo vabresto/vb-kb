@@ -27,7 +27,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Builder and educator with experience creating Webflow University content at [Webflow](../org/webflow.md).
+- Why they matter: Builder and educator with experience creating [Webflow](../org/webflow.md) University content at Webflow.
 - Current focus: Founder of [The Table](../org/the-table.md), where he is creating AI courses for people in tech.
 - Best way to engage: Reach out with concrete collaboration scope and educational audience fit.
 

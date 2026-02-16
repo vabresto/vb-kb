@@ -25,7 +25,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Co-founder and managing partner at Contour Venture Partners with decades of venture experience.
+- Why they matter: Co-founder and managing partner at [Contour Venture Partners](../org/contour-venture-partners.md) with decades of venture experience.
 - Current focus: Investing across stages and sectors through Contour.
 - Best way to engage: Share concise updates tied to sectors where Contour is active.
 

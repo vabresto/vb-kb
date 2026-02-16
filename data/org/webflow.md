@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior organization in Matthew Brannon's profile.
+- Why this org matters: Prior organization in [Matthew Brannon](../person/matthew-brannon.md)'s profile.
 - What they do: Website experience platform for teams building web properties.
 - Best way to approach: Lead with practical workflow improvements for design and marketing teams.
 

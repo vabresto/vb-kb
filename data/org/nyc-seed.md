@@ -30,7 +30,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior organization referenced in Owen Davis's background, including the Seedstart accelerator program.
+- Why this org matters: Prior organization referenced in [Owen Davis](../person/owen-davis.md)'s background, including the Seedstart accelerator program.
 - What they do: Seed-stage investment in startups plus accelerator programming in New York City.
 - Best way to approach: Use concise early-stage traction and NYC ecosystem context.
 

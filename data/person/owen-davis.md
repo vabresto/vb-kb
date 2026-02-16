@@ -25,7 +25,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: General Partner at Contour Venture Partners with NYC seed ecosystem leadership background.
+- Why they matter: General Partner at [Contour Venture Partners](../org/contour-venture-partners.md) with NYC seed ecosystem leadership background.
 - Current focus: Venture investing, informed by prior work at [NYC Seed](../org/nyc-seed.md), including its Seedstart accelerator program.
 - Best way to engage: Send focused updates with clear milestones and market context.
 

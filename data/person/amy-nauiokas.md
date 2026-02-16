@@ -25,7 +25,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Founder and Group CEO of Anthemis Group, with long-term fintech investing leadership.
+- Why they matter: Founder and Group CEO of [Anthemis Group](../org/anthemis-group.md), with long-term fintech investing leadership.
 - Current focus: Building purpose-led organizations at the intersection of access, equity, and innovation in finance.
 - Best way to engage: Lead with a clear fintech thesis and mission alignment.
 

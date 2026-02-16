@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior consulting background reference in Tanay Jaipuria's profile.
+- Why this org matters: Prior consulting background reference in [Tanay Jaipuria](../person/tanay-jaipuria.md)'s profile.
 - What they do: Strategy and management consulting globally.
 - Best way to approach: Present clear business outcomes, constraints, and implementation path.
 

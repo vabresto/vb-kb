@@ -25,7 +25,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Principal at Afore Capital, a dedicated pre-seed firm.
+- Why they matter: Principal at [Afore Capital](../org/afore-capital.md), a dedicated pre-seed firm.
 - Current focus: Pre-seed investments in pre-traction companies.
 - Best way to engage: Send a crisp pre-traction narrative with strong founder-market fit.
 

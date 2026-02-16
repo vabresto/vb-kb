@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior organization referenced in Gabi Monico's bio.
+- Why this org matters: Prior organization referenced in [Gabi Monico](../person/gabi-monico.md)'s bio.
 - What they do: Vertical SaaS-focused software owner/operator model.
 - Best way to approach: Lead with durable niche software economics and operating discipline.
 

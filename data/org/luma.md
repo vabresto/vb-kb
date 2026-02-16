@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Platform referenced in David Ongchoco's profile source.
+- Why this org matters: Platform referenced in [David Ongchoco](../person/david-ongchoco.md)'s profile source.
 - What they do: Event hosting and RSVP tooling with discovery.
 - Best way to approach: Share high-quality events and community traction.
 

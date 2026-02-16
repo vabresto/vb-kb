@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior consulting background reference in Gabi Monico's bio.
+- Why this org matters: Prior consulting background reference in [Gabi Monico](../person/gabi-monico.md)'s bio.
 - What they do: Management consulting for strategy and transformation.
 - Best way to approach: Bring specific operational pain points and measurable targets.
 

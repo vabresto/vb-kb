@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Earlier project in McGuire Brannon's education/creator trajectory.
+- Why this org matters: Earlier project in [McGuire Brannon](../person/matthew-brannon.md)'s education/creator trajectory.
 - What they do: Produced and distributed guided music lessons and related materials.
 - Best way to approach: Frame as curriculum and media-production experience.
 

@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Victor Brestoiu's alma mater.
+- Why this org matters: [Victor Brestoiu](../person/victor-brestoiu.md)'s alma mater.
 - What they do: Undergraduate and graduate education plus research.
 - Best way to approach: Use alumni context for introductions and shared background.
 

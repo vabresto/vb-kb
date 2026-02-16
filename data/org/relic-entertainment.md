@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Early employer in Victor Brestoiu's experience timeline.
+- Why this org matters: Early employer in [Victor Brestoiu](../person/victor-brestoiu.md)'s experience timeline.
 - What they do: Game development, with emphasis on strategy titles.
 - Best way to approach: Discuss gameplay systems, engine constraints, and production execution.
 

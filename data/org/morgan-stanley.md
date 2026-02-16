@@ -30,7 +30,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior employer in Victor Brestoiu's experience timeline.
+- Why this org matters: Prior employer in [Victor Brestoiu](../person/victor-brestoiu.md)'s experience timeline.
 - What they do: Financial services across wealth management, investment management, and institutional securities.
 - Best way to approach: Tailor outreach by business line and capital-markets use case.
 

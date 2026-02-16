@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior employer in Victor Brestoiu's experience timeline.
+- Why this org matters: Prior employer in [Victor Brestoiu](../person/victor-brestoiu.md)'s experience timeline.
 - What they do: AI software platform for investment workflows.
 - Best way to approach: Discuss applied ML for portfolio and research teams.
 

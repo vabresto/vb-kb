@@ -25,7 +25,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Co-founder and investor associated with Comma Capital.
+- Why they matter: Co-founder and investor associated with [Comma Capital](../org/comma-capital.md).
 - Current focus: Earliest-stage investing through Comma Capital.
 - Best way to engage: Send a concise early-stage pitch with clear market and timing signal.
 

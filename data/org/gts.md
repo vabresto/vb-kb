@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Core employer and current company for Victor Brestoiu.
+- Why this org matters: Core employer and current company for [Victor Brestoiu](../person/victor-brestoiu.md).
 - What they do: Electronic market making and proprietary trading across many asset classes.
 - Best way to approach: Target conversations around market microstructure and low-latency systems.
 

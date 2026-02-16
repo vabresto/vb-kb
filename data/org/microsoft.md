@@ -30,7 +30,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior employer in Victor Brestoiu's experience timeline.
+- Why this org matters: Prior employer in [Victor Brestoiu](../person/victor-brestoiu.md)'s experience timeline.
 - What they do: Technology products and platforms spanning cloud, productivity, and AI.
 - Best way to approach: Position solutions with enterprise reliability and developer leverage.
 

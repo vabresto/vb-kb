@@ -30,7 +30,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Early customer-facing and technical-support role in McGuire Brannon's timeline.
+- Why this org matters: Early customer-facing and technical-support role in [McGuire Brannon](../person/matthew-brannon.md)'s timeline.
 - What they do: Consumer electronics retail, fulfillment, and technology support services.
 - Best way to approach: Contextualize as operational and customer workflow experience.
 

@@ -26,7 +26,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Senior Associate at Primary Venture Partners covering multiple applied sectors.
+- Why they matter: Senior Associate at [Primary Venture Partners](../org/primary-venture-partners.md) covering multiple applied sectors.
 - Current focus: Built World, SMB Tech, and Consumer investing.
 - Best way to engage: Share a clear wedge and early traction in one of her focus verticals.
 

@@ -25,7 +25,7 @@ looking-for: []
 
 ## Snapshot
 
-- Why they matter: Senior investor at BoxGroup with broad exposure across earliest-stage companies.
+- Why they matter: Senior investor at [BoxGroup](../org/boxgroup.md) with broad exposure across earliest-stage companies.
 - Current focus: Earliest-stage investing at BoxGroup from pre-seed through Series A.
 - Best way to engage: Share concise updates tied to clear opportunities where BoxGroup can be a first institutional check.
 

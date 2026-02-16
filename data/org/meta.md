@@ -30,7 +30,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Prior product leadership reference in Tanay Jaipuria's profile.
+- Why this org matters: Prior product leadership reference in [Tanay Jaipuria](../person/tanay-jaipuria.md)'s profile.
 - What they do: Consumer technology products including social and messaging platforms.
 - Best way to approach: Focus on distribution, product velocity, and ecosystem leverage.
 

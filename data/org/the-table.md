@@ -29,7 +29,7 @@ last-updated-from-source: 2026-02-16
 
 ## Snapshot
 
-- Why this org matters: Current organization listed for Matthew Brannon.
+- Why this org matters: Current organization listed for [Matthew Brannon](../person/matthew-brannon.md).
 - What they do: Founder-focused community and events.
 - Best way to approach: Start with partnership intent and clear founder value.
 
