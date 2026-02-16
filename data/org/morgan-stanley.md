@@ -1,0 +1,43 @@
+---
+org: Morgan Stanley
+alias:
+website: https://www.morganstanley.com
+hq-location:
+stages: []
+check-size:
+thesis: Global financial services firm serving institutions, governments, and individuals.
+focus-sectors:
+- investment banking
+- wealth management
+- capital markets
+portfolio-examples: []
+created-at: 2026-02-16
+updated-at: 2026-02-16
+relationship-status: research
+known-people:
+- "[Victor Brestoiu](../person/victor-brestoiu.md)"
+intro-paths: []
+last-updated-from-source: 2026-02-16
+---
+
+# Morgan Stanley
+
+## Snapshot
+
+- Why this org matters: Prior employer in Victor Brestoiu's experience timeline.
+- What they do: Financial services across wealth management, investment management, and institutional securities.
+- Best way to approach: Tailor outreach by business line and capital-markets use case.
+
+## Bio
+
+Morgan Stanley says it helps people, institutions, and governments raise, manage, and distribute the capital they need to achieve their goals.[^morgan-source]
+
+## Notes
+
+- [2026-02-16] Organization page created to support linked employment history references.
+
+## Changelog
+
+- [2026-02-16]: Created page with sourced bio summary
+
+[^morgan-source]: Source: [About Us | Morgan Stanley](https://www.morganstanley.com/about-us). Verified/accessed on 2026-02-16.

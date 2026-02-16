@@ -18,6 +18,7 @@ intro-paths: []
 focus-areas:
 - AI-powered applications
 - data and AI infrastructure
+looking-for: []
 ---
 
 # Tanay Jaipuria
@@ -32,7 +33,11 @@ focus-areas:
 
 ![Headshot of Tanay Jaipuria](./images/tanay-jaipuria.avif)[^tanay-source]
 
-Tanay Jaipuria is a Partner at [Wing Venture Capital](../org/wing-venture-capital.md), where his profile says he focuses on AI-powered applications plus data and AI infrastructure. His bio also notes prior product leadership at Meta and consulting work at McKinsey.[^tanay-source]
+Tanay Jaipuria is a Partner at [Wing Venture Capital](../org/wing-venture-capital.md), where his profile says he focuses on AI-powered applications plus data and AI infrastructure. His bio also notes prior product leadership at [Meta](../org/meta.md) and consulting work at [McKinsey & Company](../org/mckinsey-and-company.md).[^tanay-source]
+
+## Looking For
+
+- No active asks recorded.
 
 ## Conversation Notes
 
@@ -40,6 +45,8 @@ Tanay Jaipuria is a Partner at [Wing Venture Capital](../org/wing-venture-capita
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
+- [2026-02-16]: Linked Meta and McKinsey mentions to organization pages
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation

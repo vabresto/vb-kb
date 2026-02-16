@@ -13,7 +13,11 @@ created-at: YYYY-MM-DD
 updated-at: YYYY-MM-DD
 relationship-status: research
 known-people:
-- "[<Full Name>](../person/<person-slug>.md)"
+- person: "[<Full Name>](../person/<person-slug>.md)"
+  relationship: current
+  relationship-details:
+  first-noted-at: YYYY-MM-DD
+  last-verified-at: YYYY-MM-DD
 intro-paths: []
 last-updated-from-source:
 ---

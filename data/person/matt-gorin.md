@@ -19,6 +19,7 @@ focus-areas:
 - financial services
 - enterprise SaaS
 - B2B vertical SaaS
+looking-for: []
 ---
 
 # Matt Gorin
@@ -35,12 +36,17 @@ focus-areas:
 
 Matt Gorin's team profile says he is a co-founder of [Contour Venture Partners](../org/contour-venture-partners.md) with 26 years of experience as an operator, entrepreneur, and seed-stage venture capitalist, focused on Financial Services, Enterprise SaaS, and B2B Vertical SaaS.[^matt-source]
 
+## Looking For
+
+- No active asks recorded.
+
 ## Conversation Notes
 
 - [2026-02-16] Baseline profile normalized to template; no direct conversation notes logged yet.
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation

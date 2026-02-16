@@ -18,6 +18,7 @@ intro-paths: []
 focus-areas:
 - earliest-stage investing
 - pre-seed to Series A
+looking-for: []
 ---
 
 # David Tisch
@@ -34,12 +35,17 @@ focus-areas:
 
 David Tisch appears on [BoxGroup](../org/boxgroup.md)'s team page, which currently lists him as an Investor. BoxGroup's about page describes the firm as an earliest-stage investor focused on being a strong first commitment to founders.[^tisch-team][^boxgroup-about]
 
+## Looking For
+
+- No active asks recorded.
+
 ## Conversation Notes
 
 - [2026-02-16] Baseline profile normalized to template; no direct conversation notes logged yet.
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation

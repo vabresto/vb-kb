@@ -18,6 +18,7 @@ intro-paths: []
 focus-areas:
 - earliest-stage investing
 - New York and San Francisco startup ecosystems
+looking-for: []
 ---
 
 # David Ongchoco
@@ -32,7 +33,11 @@ focus-areas:
 
 ![Headshot of David Ongchoco](./images/david-ongchoco.jpg)[^ongchoco-profile]
 
-David Ongchoco is listed as part of [Comma Capital](../org/comma-capital.md) on his public Luma profile. Comma Capital describes itself as investing at the earliest stages and being based in New York City and San Francisco.[^ongchoco-profile][^comma-source]
+David Ongchoco is listed as part of [Comma Capital](../org/comma-capital.md) on his public [Luma](../org/luma.md) profile. Comma Capital describes itself as investing at the earliest stages and being based in New York City and San Francisco.[^ongchoco-profile][^comma-source]
+
+## Looking For
+
+- No active asks recorded.
 
 ## Conversation Notes
 
@@ -40,6 +45,8 @@ David Ongchoco is listed as part of [Comma Capital](../org/comma-capital.md) on 
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
+- [2026-02-16]: Linked Luma mention to organization page
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation

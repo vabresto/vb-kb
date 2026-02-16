@@ -18,6 +18,7 @@ intro-paths: []
 focus-areas:
 - seed and early-stage investing
 - technology investing
+looking-for: []
 ---
 
 # John Frankel
@@ -34,12 +35,17 @@ focus-areas:
 
 John Frankel's ffVC profile describes him as a technology investor who founded [ff Venture Capital](../org/ff-venture-capital.md) in 2008, and says the firm has funded more than 150 seed and early-stage companies.[^john-source]
 
+## Looking For
+
+- No active asks recorded.
+
 ## Conversation Notes
 
 - [2026-02-16] Baseline profile normalized to template; no direct conversation notes logged yet.
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation

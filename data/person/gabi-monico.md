@@ -19,6 +19,7 @@ focus-areas:
 - built world
 - SMB tech
 - consumer
+looking-for: []
 ---
 
 # Gabi Monico
@@ -33,7 +34,11 @@ focus-areas:
 
 ![Headshot of Gabi Monico](./images/gabi-monico.png)[^gabi-source]
 
-Gabi Monico is described as a Senior Associate at [Primary Venture Partners](../org/primary-venture-partners.md) focused on Built World, SMB Tech, and Consumer, with prior investing experience at Fractal Software and consulting at BCG.[^gabi-source]
+Gabi Monico is described as a Senior Associate at [Primary Venture Partners](../org/primary-venture-partners.md) focused on Built World, SMB Tech, and Consumer, with prior investing experience at [Fractal Software](../org/fractal-software.md) and consulting at [Boston Consulting Group (BCG)](../org/boston-consulting-group.md).[^gabi-source]
+
+## Looking For
+
+- No active asks recorded.
 
 ## Conversation Notes
 
@@ -41,6 +46,8 @@ Gabi Monico is described as a Senior Associate at [Primary Venture Partners](../
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
+- [2026-02-16]: Linked Fractal Software and BCG mentions to organization pages
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation

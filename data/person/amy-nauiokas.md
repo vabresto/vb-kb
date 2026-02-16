@@ -18,6 +18,7 @@ intro-paths: []
 focus-areas:
 - fintech
 - access, equity, and innovation
+looking-for: []
 ---
 
 # Amy Nauiokas
@@ -34,12 +35,17 @@ focus-areas:
 
 Amy Nauiokas's Anthemis profile identifies her as Founder, Group CEO, and General Partner at [Anthemis Group](../org/anthemis-group.md), and describes her as a long-time leader building purpose-led organizations at the intersection of access, equity, and innovation.[^amy-source]
 
+## Looking For
+
+- No active asks recorded.
+
 ## Conversation Notes
 
 - [2026-02-16] Baseline profile normalized to template; no direct conversation notes logged yet.
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation

@@ -3,7 +3,12 @@
 ## Reference Integrity
 
 - In structured reference fields (for example `known-people`), reference entities like people by file path link, not by plain name.
-- Required format for `data/org/*.md` `known-people`: `"[Full Name](../person/person-slug.md)"`.
+- Preferred format for `data/org/*.md` `known-people` is a structured object:
+  - `person`: `"[Full Name](../person/person-slug.md)"`
+  - `relationship`: `current | former | advisor | investor | alumni | other`
+  - `relationship-details`
+  - `first-noted-at`
+  - `last-verified-at`
 - If a referenced person file does not exist, create it before adding the reference.
 - Rationale: names are not unique; file paths are unique and auditable.
 
@@ -11,7 +16,11 @@
 
 ```yaml
 known-people:
-  - "[David Tisch](../person/david-tisch.md)"
+  - person: "[David Tisch](../person/david-tisch.md)"
+    relationship: current
+    relationship-details: Current team member.
+    first-noted-at: 2026-02-16
+    last-verified-at: 2026-02-16
 ```
 
 ## Employment History
@@ -20,3 +29,21 @@ known-people:
 - Record prior roles in a dedicated `## Employment History` section.
 - Use a table with columns: `Period`, `Organization`, `Role`, `Notes`, `Source`.
 - Include source footnotes when public sources exist; use `Internal note` when details come from private context.
+
+## Looking For
+
+- In `data/person/*.md` frontmatter, track asks in `looking-for`.
+- Keep `looking-for: []` when no active asks are known (common for cold contacts).
+- Each `looking-for` item should include at minimum:
+  - `ask`
+  - `details`
+  - `first-asked-at`
+  - `last-checked-at`
+- Recommended additional fields:
+  - `status` (for example `open`, `paused`, `closed`)
+  - `notes`
+
+## Organization Links
+
+- In person profiles, organization mentions in core sections (`Snapshot`, `Employment History`, `Bio`) should link to their org page using a relative path like `[Org Name](../org/org-slug.md)`.
+- If an org page does not exist, create `data/org/org-slug.md` with at least a minimal sourced snapshot and bio.

@@ -17,6 +17,14 @@ follow-up-due:
 next-step:
 intro-paths: []
 focus-areas: []
+looking-for: []
+# looking-for:
+# - ask:
+#   details:
+#   first-asked-at: YYYY-MM-DD
+#   last-checked-at: YYYY-MM-DD
+#   status: open
+#   notes:
 ---
 
 # <Full Name>
@@ -30,11 +38,20 @@ focus-areas: []
 ## Employment History
 
 Use frontmatter `firm` and `role` for the current (or most recent) role only.
+Link organization names to org pages (for example, `[Org Name](../org/org-slug.md)`).
 
 | Period | Organization | Role | Notes | Source |
 | --- | --- | --- | --- | --- |
-| Current | <Organization> | <Role> | <Short context> | [^profile-source] |
-| YYYY-YYYY | <Prior organization> | <Role> | <Short context> | <source or Internal note> |
+| Current | [<Organization>](../org/<org-slug>.md) | <Role> | <Short context> | [^profile-source] |
+| YYYY-YYYY | [<Prior organization>](../org/<org-slug>.md) | <Role> | <Short context> | <source or Internal note> |
+
+## Looking For
+
+Track active asks with frontmatter `looking-for`; leave `looking-for: []` when there is no active ask.
+
+| Ask | Details | First Asked | Last Checked | Status |
+| --- | --- | --- | --- | --- |
+| <Short ask> | <What they want and context> | YYYY-MM-DD | YYYY-MM-DD | open |
 
 ## Bio
 

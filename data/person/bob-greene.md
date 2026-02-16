@@ -18,6 +18,7 @@ intro-paths: []
 focus-areas:
 - multi-stage venture investing
 - information technology
+looking-for: []
 ---
 
 # Bob Greene
@@ -34,12 +35,17 @@ focus-areas:
 
 Bob Greene's Contour profile says he is a co-founder of [Contour Venture Partners](../org/contour-venture-partners.md) and has been a venture capitalist since the late 1980s, investing across multiple stages and sectors.[^bob-source]
 
+## Looking For
+
+- No active asks recorded.
+
 ## Conversation Notes
 
 - [2026-02-16] Baseline profile normalized to template; no direct conversation notes logged yet.
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation

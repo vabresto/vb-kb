@@ -18,6 +18,7 @@ intro-paths: []
 focus-areas:
 - pre-seed investing
 - pre-traction companies
+looking-for: []
 ---
 
 # Jack McClelland
@@ -34,12 +35,17 @@ focus-areas:
 
 Jack McClelland is listed on [Afore Capital](../org/afore-capital.md)'s team as an Investor. Afore describes itself as a pre-seed firm investing $500k to $2M+ in pre-traction companies.[^jack-source]
 
+## Looking For
+
+- No active asks recorded.
+
 ## Conversation Notes
 
 - [2026-02-16] Baseline profile normalized to template; no direct conversation notes logged yet.
 
 ## Changelog
 
+- [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
 - [2026-02-16]: Normalized page to person template fields and sections
 - [2026-02-16]: Added sourced bio and headshot
 - [2026-02-16]: Linked organization in bio with source citation
