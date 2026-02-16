@@ -15,9 +15,27 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Bob Greene](../person/bob-greene.md)"
-- "[Matt Gorin](../person/matt-gorin.md)"
-- "[Owen Davis](../person/owen-davis.md)"
+- person: "[Bob Greene](../person/bob-greene.md)"
+  relationship: current
+  relationship-details:
+  relationship-start-date: null
+  relationship-end-date: null
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
+- person: "[Matt Gorin](../person/matt-gorin.md)"
+  relationship: current
+  relationship-details:
+  relationship-start-date: null
+  relationship-end-date: null
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
+- person: "[Owen Davis](../person/owen-davis.md)"
+  relationship: current
+  relationship-details:
+  relationship-start-date: null
+  relationship-end-date: null
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

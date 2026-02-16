@@ -14,7 +14,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Matthew Brannon](../person/matthew-brannon.md)"
+- person: "[Matthew Brannon](../person/matthew-brannon.md)"
+  relationship: former
+  relationship-details: Former Webflow education leadership roles.
+  relationship-start-date: 2017-11
+  relationship-end-date: 2023-09
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

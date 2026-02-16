@@ -12,7 +12,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Gabi Monico](../person/gabi-monico.md)"
+- person: "[Gabi Monico](../person/gabi-monico.md)"
+  relationship: current
+  relationship-details:
+  relationship-start-date: null
+  relationship-end-date: null
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

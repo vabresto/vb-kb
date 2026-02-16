@@ -14,7 +14,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Matthew Brannon](../person/matthew-brannon.md)"
+- person: "[Matthew Brannon](../person/matthew-brannon.md)"
+  relationship: current
+  relationship-details: Current founder relationship.
+  relationship-start-date: 2023-09
+  relationship-end-date: null
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

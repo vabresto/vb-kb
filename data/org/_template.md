@@ -16,6 +16,9 @@ known-people:
 - person: "[<Full Name>](../person/<person-slug>.md)"
   relationship: current
   relationship-details:
+  # Use null when the start or end date is unknown.
+  relationship-start-date: null
+  relationship-end-date: null
   first-noted-at: YYYY-MM-DD
   last-verified-at: YYYY-MM-DD
 intro-paths: []

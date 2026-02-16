@@ -14,7 +14,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Victor Brestoiu](../person/victor-brestoiu.md)"
+- person: "[Victor Brestoiu](../person/victor-brestoiu.md)"
+  relationship: current
+  relationship-details: Current relationship; includes prior internship and full-time roles.
+  relationship-start-date: 2019-05
+  relationship-end-date: null
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

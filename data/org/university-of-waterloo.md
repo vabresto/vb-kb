@@ -14,7 +14,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Victor Brestoiu](../person/victor-brestoiu.md)"
+- person: "[Victor Brestoiu](../person/victor-brestoiu.md)"
+  relationship: alumni
+  relationship-details: University of Waterloo Class of 2021.
+  relationship-start-date: null
+  relationship-end-date: 2021
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

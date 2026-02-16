@@ -16,7 +16,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Tanay Jaipuria](../person/tanay-jaipuria.md)"
+- person: "[Tanay Jaipuria](../person/tanay-jaipuria.md)"
+  relationship: current
+  relationship-details:
+  relationship-start-date: null
+  relationship-end-date: null
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

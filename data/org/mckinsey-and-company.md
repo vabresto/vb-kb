@@ -17,6 +17,8 @@ known-people:
 - person: "[Tanay Jaipuria](../person/tanay-jaipuria.md)"
   relationship: former
   relationship-details: Prior consulting experience (not a current operating relationship).
+  relationship-start-date: null
+  relationship-end-date: null
   first-noted-at: 2026-02-16
   last-verified-at: 2026-02-16
 intro-paths: []

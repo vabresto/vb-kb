@@ -13,7 +13,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Amy Nauiokas](../person/amy-nauiokas.md)"
+- person: "[Amy Nauiokas](../person/amy-nauiokas.md)"
+  relationship: current
+  relationship-details:
+  relationship-start-date: null
+  relationship-end-date: null
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

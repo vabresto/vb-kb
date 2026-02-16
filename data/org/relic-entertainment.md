@@ -14,7 +14,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Victor Brestoiu](../person/victor-brestoiu.md)"
+- person: "[Victor Brestoiu](../person/victor-brestoiu.md)"
+  relationship: former
+  relationship-details: Former Associate Programmer (Game Development) role.
+  relationship-start-date: 2017-05
+  relationship-end-date: 2017-08
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---

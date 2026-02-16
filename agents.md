@@ -7,8 +7,12 @@
   - `person`: `"[Full Name](../person/person-slug.md)"`
   - `relationship`: `current | former | advisor | investor | alumni | other`
   - `relationship-details`
+  - `relationship-start-date`
+  - `relationship-end-date`
   - `first-noted-at`
   - `last-verified-at`
+- Use `null` for `relationship-start-date` or `relationship-end-date` when dates are unknown.
+- Date values can be `YYYY-MM-DD` when exact, or `YYYY-MM`/`YYYY` when only partial precision is known.
 - If a referenced person file does not exist, create it before adding the reference.
 - Rationale: names are not unique; file paths are unique and auditable.
 
@@ -19,6 +23,8 @@ known-people:
   - person: "[David Tisch](../person/david-tisch.md)"
     relationship: current
     relationship-details: Current team member.
+    relationship-start-date: null
+    relationship-end-date: null
     first-noted-at: 2026-02-16
     last-verified-at: 2026-02-16
 ```

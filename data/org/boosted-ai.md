@@ -14,7 +14,13 @@ created-at: 2026-02-16
 updated-at: 2026-02-16
 relationship-status: research
 known-people:
-- "[Victor Brestoiu](../person/victor-brestoiu.md)"
+- person: "[Victor Brestoiu](../person/victor-brestoiu.md)"
+  relationship: former
+  relationship-details: Former AI Software Engineer role.
+  relationship-start-date: 2020-09
+  relationship-end-date: 2020-12
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
 intro-paths: []
 last-updated-from-source: 2026-02-16
 ---
