@@ -3,17 +3,20 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import http.client
+import ipaddress
 import pathlib
 import re
 import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-URL_RE = re.compile(r"https?://[^\s<>()\"']+")
+URL_RE = re.compile(r"https?://[^\s<>()\"'`]+")
 USER_AGENT = "vb-kb-url-check/1.0"
 
 
@@ -53,13 +56,32 @@ def parse_args() -> argparse.Namespace:
 
 def clean_url(raw_url: str) -> str:
     url = raw_url.strip()
-    while url and url[-1] in ".,;:!?\"'>]}":
+    while url and url[-1] in ".,;:!?\"'`>]}":
         url = url[:-1]
 
     while url.endswith(")") and url.count("(") < url.count(")"):
         url = url[:-1]
 
     return url
+
+
+def should_check_url(url: str) -> bool:
+    try:
+        hostname = urllib.parse.urlsplit(url).hostname
+    except ValueError:
+        return True
+
+    if not hostname:
+        return True
+    if hostname.lower() == "localhost":
+        return False
+
+    try:
+        ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        return True
+
+    return not ip.is_loopback
 
 
 def staged_added_urls() -> list[str]:
@@ -81,7 +103,7 @@ def staged_added_urls() -> list[str]:
 
         for match in URL_RE.findall(line[1:]):
             cleaned = clean_url(match)
-            if cleaned:
+            if cleaned and should_check_url(cleaned):
                 urls.add(cleaned)
 
     return sorted(urls)
@@ -143,7 +165,12 @@ def check_url(url: str, timeout: float, retries: int) -> UrlCheckResult:
                 final_url=final_url,
                 error=f"HTTP {status}",
             )
-        except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+        except (
+            urllib.error.URLError,
+            http.client.InvalidURL,
+            TimeoutError,
+            ValueError,
+        ) as exc:
             if attempt < retries:
                 time.sleep(0.35 * (attempt + 1))
                 continue

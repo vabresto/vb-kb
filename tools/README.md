@@ -30,3 +30,23 @@ uv run python tools/check_new_urls.py
 uvx prek run kb-entity-first-mention-links --files data/person/victor-brestoiu.md
 uvx prek run kb-newly-added-urls-reachable --all-files
 ```
+
+## Local website preview
+
+MkDocs is wired to generate view-only site content from `data/` into `site_docs/` on every build.
+
+```bash
+uv run mkdocs serve
+```
+
+Open the local URL printed by MkDocs (usually `http://127.0.0.1:8000`).
+
+For a production build:
+
+```bash
+uv run mkdocs build
+```
+
+Generated output is written to `site/`.
+
+Presentation overrides for the generated site live in `site_assets/`.

@@ -1,0 +1,49 @@
+site_name: VB Knowledge Base
+site_description: View-only site generated from markdown profiles.
+docs_dir: site_docs
+site_dir: site
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: teal
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - md_in_html
+  - footnotes
+  - tables
+  - attr_list
+  - pymdownx.details
+  - pymdownx.superfences
+
+hooks:
+  - mkdocs_hooks.py
+
+watch:
+  - data
+  - site_assets
+  - tools/build_site_content.py
+  - mkdocs_hooks.py
+
+nav:
+  - Home: index.md
+  - People: people.md
+  - Organizations: orgs.md
+
+validation:
+  nav:
+    omitted_files: ignore
+
+extra_css:
+  - stylesheets/kb.css
