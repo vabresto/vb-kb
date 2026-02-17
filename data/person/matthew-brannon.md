@@ -5,7 +5,7 @@ firm: The Table
 role: Founder
 location: New York, NY
 created-at: 2026-02-16
-updated-at: 2026-02-16
+updated-at: 2026-02-17
 website:
 email: thisismcguire@gmail.com
 linkedin: https://www.linkedin.com/in/mcguirebrannon
@@ -28,7 +28,7 @@ looking-for: []
 ## Snapshot
 
 - Why they matter: Builder and educator with experience creating [Webflow](../org/webflow.md) University content at Webflow.
-- Current focus: Founder of [The Table](../org/the-table.md), where he is creating AI courses for people in tech.
+- Current focus: Founder of [The Table](../org/the-table.md), where he previewed a studio-built AI learning initiative and public waitlist in February 2026.
 - Best way to engage: Reach out with concrete collaboration scope and educational audience fit.
 
 ## Employment History
@@ -54,16 +54,20 @@ LinkedIn lists McGuire Brannon as founder of [The Table](../org/the-table.md) an
 
 Instagram describes McGuire Brannon as a founder, educator, and builder, plus a former [Webflow](../org/webflow.md) exec and creator of Webflow University. He also maintains the @mcguirebrannon YouTube channel.[^matthew-instagram][^matthew-youtube]
 
+In the February 14, 2026 trailer "I've Been Building Something: The Table," he says the project has been in development for over two years, with a dedicated studio build-out and hundreds of interviews/conversations oriented around teaching the full power of AI in an entertaining format.[^matthew-trailer]
+
 ## Looking For
 
 - No active asks recorded.
 
 ## Conversation Notes
 
+- [2026-02-17] Added trailer source documenting current public The Table direction and waitlist announcement.
 - [2026-02-16] Baseline profile normalized to template; no direct conversation notes logged yet.
 
 ## Changelog
 
+- [2026-02-17]: Added new trailer source and updated snapshot/bio with current The Table messaging
 - [2026-02-16]: Updated employment history with detailed LinkedIn timeline and linked all organizations to org pages
 - [2026-02-16]: Added `looking-for` field and `Looking For` section for ask tracking
 - [2026-02-16]: Linked The Table and Webflow mentions to organization pages
@@ -75,3 +79,4 @@ Instagram describes McGuire Brannon as a founder, educator, and builder, plus a 
 [^matthew-instagram]: Source: [McGuire Brannon (@mcguire.brannon) - Instagram](https://www.instagram.com/mcguire.brannon/). Verified/accessed on 2026-02-16.
 [^matthew-youtube]: Source: [@mcguirebrannon - YouTube](https://www.youtube.com/@mcguirebrannon). Verified/accessed on 2026-02-16.
 [^matthew-linkedin]: Source: [Matthew (McGuire) Brannon - LinkedIn](https://www.linkedin.com/in/mcguirebrannon) (Experience section). Verified/accessed on 2026-02-16.
+[^matthew-trailer]: Source: [I've Been Building Something: The Table - YouTube](https://www.youtube.com/watch?v=aTyEU5aqND8) (video title, description, and captions). Verified/accessed on 2026-02-17.
