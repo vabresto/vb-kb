@@ -4,25 +4,29 @@ info:
   version: 1.0.0
 servers:
   - url: https://dex.victorbrestoiu.me
+security:
+  - CloudflareServiceTokenAuth: []
 paths:
   /api/fetch:
     get:
       operationId: fetchPage
-      summary: Fetch a protected KB path and return text or HTML content
+      summary: Fetch a protected KB path and return text or HTML content.
       parameters:
         - name: path
           in: query
           required: true
+          description: Absolute KB path (for example /, /people/, /orgs/).
           schema:
             type: string
-            pattern: "^/.*"
-          description: Absolute KB path (for example `/`, `/people/`, `/orgs/`).
+            pattern: ^/.*
         - name: format
           in: query
           required: false
           schema:
             type: string
-            enum: [text, html]
+            enum:
+              - text
+              - html
             default: text
         - name: maxChars
           in: query
@@ -34,34 +38,47 @@ paths:
             default: 60000
       responses:
         "200":
-          description: Fetched content
+          description: Fetched content.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  path: { type: string }
-                  url: { type: string }
-                  title: { type: string }
-                  contentType: { type: string }
-                  content: { type: string }
-                required: [path, url, contentType, content]
-        "400": { description: Bad request }
-        "403": { description: Forbidden }
-        "404": { description: Not found }
-        "502": { description: Upstream error }
+                $ref: "#/components/schemas/FetchResponse"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Upstream error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/search:
     get:
       operationId: searchPages
-      summary: Search protected KB content using MkDocs search index
+      summary: Search protected KB content using the MkDocs search index.
       parameters:
         - name: q
           in: query
           required: true
+          description: Search query.
           schema:
             type: string
             minLength: 2
-          description: Search query.
         - name: limit
           in: query
           required: false
@@ -73,45 +90,129 @@ paths:
         - name: maxChars
           in: query
           required: false
+          description: Snippet size per result.
           schema:
             type: integer
             minimum: 120
             maximum: 5000
             default: 320
-          description: Snippet size per result.
         - name: pathPrefix
           in: query
           required: false
+          description: Optional path filter (for example /people).
           schema:
             type: string
-            pattern: "^/.*"
-          description: Optional path filter (for example `/people`).
+            pattern: ^/.*
       responses:
         "200":
-          description: Search results
+          description: Search results.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  query: { type: string }
-                  indexPath: { type: string }
-                  totalHits: { type: integer }
-                  count: { type: integer }
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        title: { type: string }
-                        location: { type: string }
-                        path: { type: string }
-                        url: { type: string }
-                        snippet: { type: string }
-                        score: { type: number }
-                      required: [title, location, path, url, snippet, score]
-                required: [query, totalHits, count, results]
-        "400": { description: Bad request }
-        "403": { description: Forbidden }
-        "404": { description: Search index not found }
-        "502": { description: Upstream or index parse error }
+                $ref: "#/components/schemas/SearchResponse"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Search index not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Upstream or index parse error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  securitySchemes:
+    CloudflareServiceTokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        Cloudflare Access service token in single-header mode.
+        Use a JSON object as the header value:
+        {"cf-access-client-id":"<ID>","cf-access-client-secret":"<SECRET>"}
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+      additionalProperties: true
+    FetchResponse:
+      type: object
+      properties:
+        path:
+          type: string
+        url:
+          type: string
+        title:
+          type: string
+        contentType:
+          type: string
+        content:
+          type: string
+      required:
+        - path
+        - url
+        - contentType
+        - content
+      additionalProperties: true
+    SearchResult:
+      type: object
+      properties:
+        title:
+          type: string
+        location:
+          type: string
+        path:
+          type: string
+        url:
+          type: string
+        snippet:
+          type: string
+        score:
+          type: number
+      required:
+        - title
+        - location
+        - path
+        - url
+        - snippet
+        - score
+      additionalProperties: true
+    SearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        indexPath:
+          type: string
+        totalHits:
+          type: integer
+        count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"
+      required:
+        - query
+        - totalHits
+        - count
+        - results
+      additionalProperties: true

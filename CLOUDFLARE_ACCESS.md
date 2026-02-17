@@ -115,3 +115,21 @@ Expected result: JSON payload with `content` (fetch) and ranked `results` (searc
 ### Custom GPT Action OpenAPI
 
 Use `openapi/custom-gpt-action.yaml` as the Action spec with server URL `https://dex.victorbrestoiu.me`.
+
+### Custom GPT auth (single header)
+
+If you enabled `read_service_tokens_from_header: "Authorization"` on the Access app, configure the Action auth as:
+
+- Authentication: `API Key`
+- API Key location: `Header`
+- Header name: `Authorization`
+- Header value:
+
+```text
+{"cf-access-client-id":"<ID>","cf-access-client-secret":"<SECRET>"}
+```
+
+Then test in GPT with:
+
+- `/api/fetch?path=/&format=text`
+- `/api/search?q=webflow&limit=5`
