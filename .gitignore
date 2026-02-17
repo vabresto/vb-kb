@@ -4,3 +4,4 @@ site_docs/
 site_docs/*
 !site_docs/.gitkeep
 __pycache__/
+*.egg-info/
