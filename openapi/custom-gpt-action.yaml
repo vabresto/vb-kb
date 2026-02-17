@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: Dex Knowledge Base Protected API
+  version: 1.0.0
+servers:
+  - url: https://dex.victorbrestoiu.me
+paths:
+  /api/fetch:
+    get:
+      operationId: fetchPage
+      summary: Fetch a protected KB path and return text or HTML content
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: "^/.*"
+          description: Absolute KB path (for example `/`, `/people/`, `/orgs/`).
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [text, html]
+            default: text
+        - name: maxChars
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1000
+            maximum: 200000
+            default: 60000
+      responses:
+        "200":
+          description: Fetched content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path: { type: string }
+                  url: { type: string }
+                  title: { type: string }
+                  contentType: { type: string }
+                  content: { type: string }
+                required: [path, url, contentType, content]
+        "400": { description: Bad request }
+        "403": { description: Forbidden }
+        "404": { description: Not found }
+        "502": { description: Upstream error }
+  /api/search:
+    get:
+      operationId: searchPages
+      summary: Search protected KB content using MkDocs search index
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          description: Search query.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 25
+            default: 8
+        - name: maxChars
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 120
+            maximum: 5000
+            default: 320
+          description: Snippet size per result.
+        - name: pathPrefix
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: "^/.*"
+          description: Optional path filter (for example `/people`).
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query: { type: string }
+                  indexPath: { type: string }
+                  totalHits: { type: integer }
+                  count: { type: integer }
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title: { type: string }
+                        location: { type: string }
+                        path: { type: string }
+                        url: { type: string }
+                        snippet: { type: string }
+                        score: { type: number }
+                      required: [title, location, path, url, snippet, score]
+                required: [query, totalHits, count, results]
+        "400": { description: Bad request }
+        "403": { description: Forbidden }
+        "404": { description: Search index not found }
+        "502": { description: Upstream or index parse error }

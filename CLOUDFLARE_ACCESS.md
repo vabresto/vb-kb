@@ -61,3 +61,57 @@ Test in an incognito session:
 1. Visit the custom domain and confirm Access prompt appears.
 2. Visit the `pages.dev` URL and confirm Access prompt appears there too.
 3. Confirm successful login grants only intended users.
+
+## 6. Enable Custom GPT Actions (still fully protected)
+
+You can keep `https://dex.victorbrestoiu.me` fully behind Access and expose GPT-friendly endpoints via Cloudflare Pages Functions.
+
+Endpoints implemented in this repo:
+
+- `GET /api/fetch?path=/...&format=text|html&maxChars=...`
+- `GET /api/search?q=...&limit=...&maxChars=...&pathPrefix=/...`
+
+These endpoints do **server-side** fetches to the same protected host using a service token. This avoids redirect/header-loss issues from Action clients.
+
+### Required Access policy scope
+
+Create or reuse a Service Token and allow it to access:
+
+- `/api/*` (for GPT Action calls)
+- any content paths fetched by the function (usually easiest is `/*`)
+
+If only `/api/*` is allowed, the function can be called but its internal fetch to protected pages will be blocked.
+
+### Pages environment variables
+
+Set these in Cloudflare Pages (Production + Preview as needed):
+
+- `PUBLIC_BASE_URL=https://dex.victorbrestoiu.me`
+- `CF_ACCESS_CLIENT_ID=<service-token-client-id>`
+- `CF_ACCESS_CLIENT_SECRET=<service-token-client-secret>`
+- `ALLOWED_PREFIXES=/` (or narrow list like `/,/people,/orgs,/search`)
+- optional: `SEARCH_INDEX_PATH=/search/search_index.json`
+
+### Manual API test
+
+Use your service token headers:
+
+```bash
+curl -sS \
+  -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+  "https://dex.victorbrestoiu.me/api/fetch?path=/&format=text"
+```
+
+```bash
+curl -sS \
+  -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+  "https://dex.victorbrestoiu.me/api/search?q=webflow&limit=5"
+```
+
+Expected result: JSON payload with `content` (fetch) and ranked `results` (search).
+
+### Custom GPT Action OpenAPI
+
+Use `openapi/custom-gpt-action.yaml` as the Action spec with server URL `https://dex.victorbrestoiu.me`.

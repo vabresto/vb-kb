@@ -18,6 +18,18 @@ from dataclasses import dataclass
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 URL_RE = re.compile(r"https?://[^\s<>()\"'`]+")
 USER_AGENT = "vb-kb-url-check/1.0"
+SKIPPED_HOSTS = {
+    "localhost",
+    "example.com",
+    "example.net",
+    "example.org",
+}
+SKIPPED_HOST_SUFFIXES = (
+    ".localhost",
+    ".example",
+    ".invalid",
+    ".test",
+)
 
 
 @dataclass(frozen=True)
@@ -73,7 +85,11 @@ def should_check_url(url: str) -> bool:
 
     if not hostname:
         return True
-    if hostname.lower() == "localhost":
+    hostname = hostname.lower()
+
+    if hostname in SKIPPED_HOSTS:
+        return False
+    if any(hostname.endswith(suffix) for suffix in SKIPPED_HOST_SUFFIXES):
         return False
 
     try:

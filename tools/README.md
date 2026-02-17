@@ -21,6 +21,7 @@ This installs `.git/hooks/pre-commit` and runs hooks from `.pre-commit-config.ya
 - Scope: staged diff only.
 - Rule: only URLs introduced in added lines are checked.
 - Pass criteria: request follows redirects and final HTTP status is `2xx`.
+- Excludes placeholder/local hosts such as `localhost`, `*.localhost`, `*.example`, `*.invalid`, and `*.test`.
 
 ## Manual runs
 
