@@ -5,7 +5,7 @@ firm: Meta
 role: Software Engineer
 location: New York, NY
 created-at: 2026-02-18
-updated-at: 2026-02-18
+updated-at: 2026-02-19
 website:
 email:
 linkedin: linkedin.com/in/victoria-lo98
@@ -45,6 +45,8 @@ Victoria Lo is listed on LinkedIn as a Software Engineer at [Meta](../org/meta.m
 
 Her profile also indicates study at the [University of Waterloo](../org/university-of-waterloo.md) and prior roles at [Ava Labs](../org/ava-labs.md) and [Coinbase](../org/coinbase.md).[^victoria-linkedin]
 
+Cross-reference note: a separate public profile and site for another Victoria Lo (focused on technical blogging and developer advocacy) appears to be a different person and was intentionally not merged into this page.[^victoria-disambiguation]
+
 ## Looking For
 
 - No active asks recorded.
@@ -52,9 +54,12 @@ Her profile also indicates study at the [University of Waterloo](../org/universi
 ## Conversation Notes
 
 - [2026-02-18] Added baseline profile from provided LinkedIn summary.
+- [2026-02-19] Ran disambiguation pass on same-name public profiles; retained conservative profile scope.
 
 ## Changelog
 
+- [2026-02-19]: Added disambiguation note after broader web research
 - [2026-02-18]: Created page
 
-[^victoria-linkedin]: Source: Victoria Lo - LinkedIn (linkedin.com/in/victoria-lo-uwaterloo). Verified/accessed on 2026-02-18.
+[^victoria-linkedin]: Source: Victoria Lo - LinkedIn (linkedin.com/in/victoria-lo98). Verified/accessed on 2026-02-19.
+[^victoria-disambiguation]: Source: [Articles by Victoria Lo](https://lo-victoria.com/about). Verified/accessed on 2026-02-19.

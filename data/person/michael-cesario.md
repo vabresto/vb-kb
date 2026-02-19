@@ -5,7 +5,7 @@ firm: Fubo
 role: Senior Software Engineer, Backend
 location: New York, NY
 created-at: 2026-02-18
-updated-at: 2026-02-18
+updated-at: 2026-02-19
 website:
 email:
 linkedin: linkedin.com/in/mscesario
@@ -39,9 +39,13 @@ looking-for: []
 
 ## Bio
 
+![Headshot of Michael Cesario](./images/michael-cesario.png)[^michael-headshot]
+
 Michael Cesario is listed on LinkedIn as a Senior Software Engineer, Backend at [Fubo](../org/fubo.md), with a start date of September 2025 and location shown as New York, NY.[^michael-linkedin]
 
 His LinkedIn education section includes the [University of Waterloo](../org/university-of-waterloo.md).[^michael-linkedin]
+
+A public code-hosting profile exists at `github.com/mscesario` (matching the LinkedIn handle in frontmatter) and was used for the current headshot image attribution.[^michael-gh]
 
 ## Looking For
 
@@ -50,9 +54,13 @@ His LinkedIn education section includes the [University of Waterloo](../org/univ
 ## Conversation Notes
 
 - [2026-02-18] Added baseline profile from provided LinkedIn summary.
+- [2026-02-19] Added cross-reference note and headshot from matching public handle.
 
 ## Changelog
 
+- [2026-02-19]: Added headshot and expanded verification notes
 - [2026-02-18]: Created page
 
-[^michael-linkedin]: Source: Michael Cesario - LinkedIn (linkedin.com/in/michael-cesario-1b451a13). Verified/accessed on 2026-02-18.
+[^michael-linkedin]: Source: Michael Cesario - LinkedIn (linkedin.com/in/mscesario). Verified/accessed on 2026-02-19.
+[^michael-gh]: Source: [MSCesario - GitHub](https://github.com/mscesario). Verified/accessed on 2026-02-19.
+[^michael-headshot]: Source: [avatars.githubusercontent.com/u/234712690?v=4](https://avatars.githubusercontent.com/u/234712690?v=4). Retrieved on 2026-02-19.

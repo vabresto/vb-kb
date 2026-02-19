@@ -5,7 +5,7 @@ firm: Citadel Securities
 role: Quantitative Researcher
 location: New York City Metropolitan Area
 created-at: 2026-02-18
-updated-at: 2026-02-18
+updated-at: 2026-02-19
 website:
 email:
 linkedin: linkedin.com/in/kelvin-yu
@@ -43,6 +43,8 @@ Kelvin Yu is listed on LinkedIn as a Quantitative Researcher at [Citadel Securit
 
 His profile also notes study at the [University of Waterloo](../org/university-of-waterloo.md).[^kelvin-linkedin]
 
+A broader web pass on February 19, 2026 found limited non-LinkedIn public data with high confidence for this specific identity, so role and timeline details here remain primarily LinkedIn-sourced.
+
 ## Looking For
 
 - No active asks recorded.
@@ -50,9 +52,11 @@ His profile also notes study at the [University of Waterloo](../org/university-o
 ## Conversation Notes
 
 - [2026-02-18] Added baseline profile from provided LinkedIn summary.
+- [2026-02-19] Ran cross-reference pass; retained conservative attribution because of limited non-LinkedIn corroboration.
 
 ## Changelog
 
+- [2026-02-19]: Extended verification notes after additional research pass
 - [2026-02-18]: Created page
 
-[^kelvin-linkedin]: Source: [Kelvin Yu - LinkedIn](https://www.linkedin.com/in/kelvinyu1). Verified/accessed on 2026-02-18.
+[^kelvin-linkedin]: Source: Kelvin Yu - LinkedIn (linkedin.com/in/kelvin-yu). Verified/accessed on 2026-02-19.

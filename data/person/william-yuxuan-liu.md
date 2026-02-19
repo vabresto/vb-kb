@@ -5,7 +5,7 @@ firm: Meta
 role: Software Engineer
 location: New York, NY
 created-at: 2026-02-18
-updated-at: 2026-02-18
+updated-at: 2026-02-19
 website:
 email:
 linkedin: linkedin.com/in/williamyuxuanliu
@@ -39,9 +39,13 @@ looking-for: []
 
 ## Bio
 
+![Headshot of William (Yuxuan) Liu](./images/william-yuxuan-liu.jpg)[^william-headshot]
+
 William Liu (who uses Yuxuan as an alias on LinkedIn) is listed as a Software Engineer at [Meta](../org/meta.md) in New York, with a start date of August 2023.[^william-linkedin]
 
 His profile also indicates study at the [University of Waterloo](../org/university-of-waterloo.md).[^william-linkedin]
+
+As of February 19, 2026, additional non-LinkedIn public career sources were limited, so this profile keeps a conservative, LinkedIn-forward attribution scope.
 
 ## Looking For
 
@@ -50,9 +54,12 @@ His profile also indicates study at the [University of Waterloo](../org/universi
 ## Conversation Notes
 
 - [2026-02-18] Added baseline profile from provided LinkedIn summary.
+- [2026-02-19] Added headshot and verification note from additional web pass.
 
 ## Changelog
 
+- [2026-02-19]: Added headshot and extended verification notes
 - [2026-02-18]: Created page
 
-[^william-linkedin]: Source: William Liu (Yuxuan) - LinkedIn (linkedin.com/in/william-liu-yuxuan). Verified/accessed on 2026-02-18.
+[^william-linkedin]: Source: William Liu (Yuxuan) - LinkedIn (linkedin.com/in/williamyuxuanliu). Verified/accessed on 2026-02-19.
+[^william-headshot]: Source: William Liu public profile image metadata (linkedin.com/in/williamyuxuanliu). Retrieved on 2026-02-19.
