@@ -12,7 +12,7 @@ focus-sectors:
 - virtual and mixed reality
 portfolio-examples: []
 created-at: 2026-02-16
-updated-at: 2026-02-16
+updated-at: 2026-02-18
 relationship-status: research
 known-people:
 - person: "[Tanay Jaipuria](../person/tanay-jaipuria.md)"
@@ -22,15 +22,29 @@ known-people:
   relationship-end-date: null
   first-noted-at: 2026-02-16
   last-verified-at: 2026-02-16
+- person: "[William (Yuxuan) Liu](../person/william-yuxuan-liu.md)"
+  relationship: current
+  relationship-details: Current Software Engineer.
+  relationship-start-date: 2023-08
+  relationship-end-date: null
+  first-noted-at: 2026-02-18
+  last-verified-at: 2026-02-18
+- person: "[Victoria Lo](../person/victoria-lo.md)"
+  relationship: current
+  relationship-details: Current Software Engineer.
+  relationship-start-date: 2024-01
+  relationship-end-date: null
+  first-noted-at: 2026-02-18
+  last-verified-at: 2026-02-18
 intro-paths: []
-last-updated-from-source: 2026-02-16
+last-updated-from-source: 2026-02-18
 ---
 
 # Meta
 
 ## Snapshot
 
-- Why this org matters: Prior product leadership reference in [Tanay Jaipuria](../person/tanay-jaipuria.md)'s profile.
+- Why this org matters: Current and former contact hub for [Tanay Jaipuria](../person/tanay-jaipuria.md), [William (Yuxuan) Liu](../person/william-yuxuan-liu.md), and [Victoria Lo](../person/victoria-lo.md).
 - What they do: Consumer technology products including social and messaging platforms.
 - Best way to approach: Focus on distribution, product velocity, and ecosystem leverage.
 
@@ -41,9 +55,11 @@ Wikipedia describes Meta Platforms as a multinational technology conglomerate an
 ## Notes
 
 - [2026-02-16] Organization page created to support linked prior-experience references.
+- [2026-02-18] Added current Meta engineers from new person profiles.
 
 ## Changelog
 
+- [2026-02-18]: Added William (Yuxuan) Liu and Victoria Lo to known-people
 - [2026-02-16]: Updated known-people relationship for Tanay Jaipuria to former with relationship metadata
 - [2026-02-16]: Created page with sourced bio summary
 
