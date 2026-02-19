@@ -5,7 +5,7 @@ repos:
         name: KB Entity First-Mention Links
         entry: uv run python tools/check_entity_links.py
         language: system
-        files: ^data/(person|org)/[^/]+\.md$
+        files: ^(data/(person|org)/[^/]+\.md|data/notes/reflections/long-form/[^/]+\.md)$
       - id: kb-newly-added-urls-reachable
         name: KB Newly Added URLs Reachable
         entry: uv run python tools/check_new_urls.py

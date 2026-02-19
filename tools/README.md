@@ -13,7 +13,7 @@ This installs `.git/hooks/pre-commit` and runs hooks from `.pre-commit-config.ya
 ## Hooks
 
 1. `tools/check_entity_links.py`
-- Scope: staged markdown files matching `data/person/*.md` and `data/org/*.md`.
+- Scope: staged markdown files matching `data/person/*.md`, `data/org/*.md`, and `data/notes/reflections/long-form/*.md`.
 - Rule: first mention of a known KB person/org in page body must be a local markdown link to that entity file.
 - Ignores frontmatter, headings, fenced code blocks, and footnote/link-definition lines.
 
@@ -27,8 +27,10 @@ This installs `.git/hooks/pre-commit` and runs hooks from `.pre-commit-config.ya
 
 ```bash
 uv run python tools/check_entity_links.py data/person/victor-brestoiu.md
+uv run python tools/check_entity_links.py data/notes/reflections/long-form/2026-02-19-post-mortem-inbot.md
 uv run python tools/check_new_urls.py
 uvx prek run kb-entity-first-mention-links --files data/person/victor-brestoiu.md
+uvx prek run kb-entity-first-mention-links --files data/notes/reflections/long-form/2026-02-19-post-mortem-inbot.md
 uvx prek run kb-newly-added-urls-reachable --all-files
 ```
 

@@ -12,7 +12,9 @@ from dataclasses import dataclass
 import yaml
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-TARGET_FILE_RE = re.compile(r"^data/(person|org)/[^/]+\.md$")
+TARGET_FILE_RE = re.compile(
+    r"^(data/(person|org)/[^/]+\.md|data/notes/reflections/long-form/[^/]+\.md)$"
+)
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 LINK_RE = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 FOOTNOTE_DEF_RE = re.compile(r"^\[\^[^\]]+\]:")
@@ -42,8 +44,8 @@ class Token:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Ensure the first mention of known people/orgs in data/person and "
-            "data/org markdown files is linked to the local KB filepath."
+            "Ensure the first mention of known people/orgs in person/org files and "
+            "long-form reflection notes is linked to the local KB filepath."
         )
     )
     parser.add_argument("files", nargs="*", help="Optional list of files to validate.")
@@ -126,8 +128,14 @@ def select_files(raw_files: list[str]) -> list[pathlib.Path]:
     if raw_files:
         candidates = [pathlib.Path(value) for value in raw_files]
     else:
-        candidates = sorted((REPO_ROOT / "data" / "person").glob("*.md")) + sorted(
-            (REPO_ROOT / "data" / "org").glob("*.md")
+        candidates = (
+            sorted((REPO_ROOT / "data" / "person").glob("*.md"))
+            + sorted((REPO_ROOT / "data" / "org").glob("*.md"))
+            + sorted(
+                (REPO_ROOT / "data" / "notes" / "reflections" / "long-form").glob(
+                    "*.md"
+                )
+            )
         )
 
     selected: list[pathlib.Path] = []

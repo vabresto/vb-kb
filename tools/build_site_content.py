@@ -7,6 +7,7 @@ import argparse
 import html
 import re
 import shutil
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,7 @@ MARKDOWN_IMAGE_SRC_RE = re.compile(r"(!\[[^\]]*\]\()(\./)?images/")
 HTML_IMAGE_SRC_RE = re.compile(r"(<img\b[^>]*\ssrc=[\"'])(\./)?images/")
 FOOTNOTE_REF_RE = re.compile(r"\[\^([^\]]+)\](?!:)")
 FOOTNOTE_DEF_RE = re.compile(r"^\[\^([^\]]+)\]:")
+SLUG_SEPARATOR_RE = re.compile(r"[-_]+")
 PERSON_FIELDS: list[tuple[str, str]] = [
     ("firm", "Current Organization"),
     ("role", "Current Role"),
@@ -57,6 +59,16 @@ class Page:
     body: str
 
 
+@dataclass(frozen=True)
+class NotePage:
+    title: str
+    source_path: Path
+    output_path: Path
+    relative_path: Path
+    metadata: dict[str, Any]
+    body: str
+
+
 def split_frontmatter(markdown: str) -> tuple[dict[str, Any], str]:
     match = FRONTMATTER_RE.match(markdown)
     if not match:
@@ -79,6 +91,27 @@ def load_page(path: Path, entity_type: str, output_path: Path) -> Page:
         entity_type=entity_type,
         source_path=path,
         output_path=output_path,
+        metadata=metadata,
+        body=body,
+    )
+
+
+def title_from_slug(slug: str) -> str:
+    parts = [part for part in SLUG_SEPARATOR_RE.split(slug.strip()) if part]
+    if not parts:
+        return "Untitled"
+    return " ".join(parts).title()
+
+
+def load_note_page(path: Path, notes_root: Path, output_path: Path) -> NotePage:
+    markdown = path.read_text(encoding="utf-8")
+    metadata, body = split_frontmatter(markdown)
+    title = str(metadata.get("title") or title_from_slug(path.stem))
+    return NotePage(
+        title=title,
+        source_path=path,
+        output_path=output_path,
+        relative_path=path.relative_to(notes_root),
         metadata=metadata,
         body=body,
     )
@@ -385,6 +418,17 @@ def render_page(page: Page) -> str:
     return "\n".join(sections).strip() + "\n"
 
 
+def render_note_page(page: NotePage) -> str:
+    sections: list[str] = [f"# {page.title}", ""]
+    body = strip_leading_h1(page.body)
+    body = normalize_image_paths(body)
+    body = remove_unreferenced_footnote_definitions(body)
+    if body:
+        sections.append(body.rstrip())
+        sections.append("")
+    return "\n".join(sections).strip() + "\n"
+
+
 def collect_pages(data_dir: Path, docs_dir: Path, entity_type: str) -> list[Page]:
     source_dir = data_dir / entity_type
     output_dir = docs_dir / entity_type
@@ -402,9 +446,34 @@ def collect_pages(data_dir: Path, docs_dir: Path, entity_type: str) -> list[Page
     return pages
 
 
+def collect_note_pages(data_dir: Path, docs_dir: Path) -> list[NotePage]:
+    notes_dir = data_dir / "notes"
+    output_dir = docs_dir / "notes"
+    if not notes_dir.exists():
+        return []
+
+    pages: list[NotePage] = []
+    for source_path in sorted(notes_dir.rglob("*.md")):
+        relative_path = source_path.relative_to(notes_dir)
+        if any(part.startswith("_") for part in relative_path.parts):
+            continue
+        page = load_note_page(
+            path=source_path,
+            notes_root=notes_dir,
+            output_path=output_dir / relative_path,
+        )
+        page.output_path.parent.mkdir(parents=True, exist_ok=True)
+        pages.append(page)
+    return pages
+
+
 def copy_non_markdown_assets(data_dir: Path, docs_dir: Path) -> None:
     for path in sorted(data_dir.rglob("*")):
-        if not path.is_file() or path.suffix.lower() == ".md":
+        if (
+            not path.is_file()
+            or path.suffix.lower() == ".md"
+            or path.name.startswith(".")
+        ):
             continue
         destination = docs_dir / path.relative_to(data_dir)
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -470,20 +539,55 @@ def render_orgs_index(orgs: list[Page]) -> str:
     return "\n".join(lines)
 
 
-def render_home(people: list[Page], orgs: list[Page]) -> str:
+def format_note_category(parts: tuple[str, ...]) -> str:
+    if not parts:
+        return "Uncategorized"
+    return " / ".join(title_from_slug(part) for part in parts)
+
+
+def render_notes_index(notes: list[NotePage]) -> str:
+    lines = [
+        "# Notes",
+        "",
+        f"Generated from `{len(notes)}` source files in `data/notes/`.",
+        "",
+    ]
+    if not notes:
+        lines.extend(["No notes found.", ""])
+        return "\n".join(lines)
+
+    grouped: dict[tuple[str, ...], list[NotePage]] = defaultdict(list)
+    for page in notes:
+        category = tuple(page.relative_path.parts[:-1])
+        grouped[category].append(page)
+
+    for category in sorted(grouped):
+        pages = sorted(grouped[category], key=lambda page: page.relative_path.as_posix())
+        lines.extend([f"## {format_note_category(category)}", ""])
+        for page in pages:
+            relative_path = page.relative_path.as_posix()
+            lines.append(f"- [{page.title}](notes/{relative_path}) (`data/notes/{relative_path}`)")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def render_home(people: list[Page], orgs: list[Page], notes: list[NotePage]) -> str:
     return "\n".join(
         [
             "# Victor's Knowledge Base",
             "",
-            "This site is generated from raw Markdown profiles in `data/person/` and `data/org/`.",
+            "This site is generated from raw Markdown files in `data/person/`, `data/org/`, and `data/notes/`.",
             "",
             f"- People profiles: **{len(people)}**",
             f"- Organization profiles: **{len(orgs)}**",
+            f"- Notes: **{len(notes)}**",
             "",
             "## Collections",
             "",
             "- [People](people.md)",
             "- [Organizations](orgs.md)",
+            "- [Notes](notes.md)",
             "",
             "## Notes",
             "",
@@ -504,16 +608,22 @@ def build_site_content(project_root: Path) -> None:
 
     people = collect_pages(data_dir=data_dir, docs_dir=docs_dir, entity_type="person")
     orgs = collect_pages(data_dir=data_dir, docs_dir=docs_dir, entity_type="org")
+    notes = collect_note_pages(data_dir=data_dir, docs_dir=docs_dir)
 
     for page in [*people, *orgs]:
         page.output_path.write_text(render_page(page), encoding="utf-8")
+    for page in notes:
+        page.output_path.write_text(render_note_page(page), encoding="utf-8")
 
     copy_non_markdown_assets(data_dir=data_dir, docs_dir=docs_dir)
     copy_site_assets(project_root=project_root, docs_dir=docs_dir)
 
-    (docs_dir / "index.md").write_text(render_home(people=people, orgs=orgs), encoding="utf-8")
+    (docs_dir / "index.md").write_text(
+        render_home(people=people, orgs=orgs, notes=notes), encoding="utf-8"
+    )
     (docs_dir / "people.md").write_text(render_people_index(people), encoding="utf-8")
     (docs_dir / "orgs.md").write_text(render_orgs_index(orgs), encoding="utf-8")
+    (docs_dir / "notes.md").write_text(render_notes_index(notes), encoding="utf-8")
     (docs_dir / ".gitkeep").write_text("", encoding="utf-8")
 
 
