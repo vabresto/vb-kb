@@ -61,6 +61,7 @@ export const onRequestGet: PagesFunction<ProtectedDocsEnv> = async ({
     upstream = await fetchProtectedPath(env, path, {
       userAgent: "DexProtectedDocsFetch/1.0",
       accept: "text/html,application/xhtml+xml,text/plain,application/xml,*/*;q=0.1",
+      requestUrl: request.url,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid target path";

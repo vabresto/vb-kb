@@ -175,6 +175,8 @@ components:
     SearchResult:
       type: object
       properties:
+        id:
+          type: string
         title:
           type: string
         location:
@@ -188,6 +190,7 @@ components:
         score:
           type: number
       required:
+        - id
         - title
         - location
         - path

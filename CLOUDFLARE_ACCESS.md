@@ -62,39 +62,74 @@ Test in an incognito session:
 2. Visit the `pages.dev` URL and confirm Access prompt appears there too.
 3. Confirm successful login grants only intended users.
 
-## 6. Enable Custom GPT Actions (still fully protected)
+## 6. Enable GPT APIs + MCP (single service)
 
-You can keep `https://dex.victorbrestoiu.me` fully behind Access and expose GPT-friendly endpoints via Cloudflare Pages Functions.
+This repo now exposes both Action-style APIs and MCP from the same Pages Functions service, reading directly from bundled MkDocs assets (`ASSETS.fetch`) with no internal round-trip to the public hostname.
 
-Endpoints implemented in this repo:
+Implemented endpoints:
 
 - `GET /api/fetch?path=/...&format=text|html&maxChars=...`
 - `GET /api/search?q=...&limit=...&maxChars=...&pathPrefix=/...`
-
-These endpoints do **server-side** fetches to the same protected host using a service token. This avoids redirect/header-loss issues from Action clients.
+- `POST /mcp` (JSON-RPC MCP transport with tools `search` and `fetch`)
+- `GET /authorize` (OAuth authorization entrypoint)
+- `GET /callback` (OAuth callback from Access)
+- `POST /token` (OAuth token exchange)
+- `POST /register` (OAuth client registration)
+- `GET /.well-known/oauth-protected-resource`
+- `GET /.well-known/oauth-authorization-server`
 
 ### Required Access policy scope
 
-Create or reuse a Service Token and allow it to access:
+Keep `/api/*` policy-protected as before if you still use Custom GPT Actions with service tokens.
 
-- `/api/*` (for GPT Action calls)
-- any content paths fetched by the function (usually easiest is `/*`)
+For MCP OAuth routes:
 
-If only `/api/*` is allowed, the function can be called but its internal fetch to protected pages will be blocked.
+- `/mcp`
+- `/register`
+- `/token`
+- `/.well-known/*`
+
+These must be reachable by ChatGPT over the public internet. Access control for MCP is enforced by OAuth bearer tokens issued only after Access login in `/authorize` -> `/callback`.
+
+For browser login flow routes:
+
+- `/authorize`
+- `/callback`
+
+These should remain reachable for your interactive Access login flow.
 
 ### Pages environment variables
 
 Set these in Cloudflare Pages (Production + Preview as needed):
 
-- `PUBLIC_BASE_URL=https://dex.victorbrestoiu.me`
-- `CF_ACCESS_CLIENT_ID=<service-token-client-id>`
-- `CF_ACCESS_CLIENT_SECRET=<service-token-client-secret>`
-- `ALLOWED_PREFIXES=/` (or narrow list like `/,/people,/orgs,/search`)
+- `PUBLIC_BASE_URL=https://<your-host>` (optional, defaults to request origin)
+- `ALLOWED_PREFIXES=/` (or narrow list like `/,/person,/org,/people,/orgs,/search`)
 - optional: `SEARCH_INDEX_PATH=/search/search_index.json`
+- optional: `MCP_SERVER_NAME=VB Knowledge Base`
+- optional: `MCP_SERVER_VERSION=1.0.0`
 
-### Manual API test
+For OAuth discovery metadata (Access for SaaS OIDC):
 
-Use your service token headers:
+- `OAUTH_SIGNING_KEY=<random-long-secret-for-signing-client-and-token-jwts>`
+- optional: `OAUTH_ISSUER=https://<your-host>`
+- optional: `ACCESS_OIDC_ISSUER=<Access issuer URL for id_token iss validation>`
+- `ACCESS_CLIENT_ID=<Access for SaaS OIDC client id>`
+- `ACCESS_CLIENT_SECRET=<Access for SaaS OIDC client secret>`
+- `ACCESS_AUTHORIZATION_URL=<Access authorization endpoint>`
+- `ACCESS_TOKEN_URL=<Access token endpoint>`
+- `ACCESS_JWKS_URL=<Access JWKS endpoint>`
+
+### Access OIDC redirect URL
+
+When configuring the Access-for-SaaS OIDC app, set redirect URL to:
+
+- `https://<your-host>/callback`
+
+Example:
+
+- `https://dex.victorbrestoiu.me/callback`
+
+### Manual API tests
 
 ```bash
 curl -sS \
@@ -110,26 +145,25 @@ curl -sS \
   "https://dex.victorbrestoiu.me/api/search?q=webflow&limit=5"
 ```
 
-Expected result: JSON payload with `content` (fetch) and ranked `results` (search).
+### Manual MCP test
+
+First check discovery docs:
+
+```bash
+curl -sS \
+  "https://dex.victorbrestoiu.me/.well-known/oauth-authorization-server"
+```
+
+Then use OAuth (`/register` -> `/authorize` -> `/callback` -> `/token`) to obtain a bearer token and call MCP:
+
+```bash
+curl -sS \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <mcp_access_token>" \
+  -d '{"jsonrpc":"2.0","id":"1","method":"tools/list"}' \
+  "https://dex.victorbrestoiu.me/mcp"
+```
 
 ### Custom GPT Action OpenAPI
 
 Use `openapi/custom-gpt-action.yaml` as the Action spec with server URL `https://dex.victorbrestoiu.me`.
-
-### Custom GPT auth (single header)
-
-If you enabled `read_service_tokens_from_header: "Authorization"` on the Access app, configure the Action auth as:
-
-- Authentication: `API Key`
-- API Key location: `Header`
-- Header name: `Authorization`
-- Header value:
-
-```text
-{"cf-access-client-id":"<ID>","cf-access-client-secret":"<SECRET>"}
-```
-
-Then test in GPT with:
-
-- `/api/fetch?path=/&format=text`
-- `/api/search?q=webflow&limit=5`
