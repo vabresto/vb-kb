@@ -139,7 +139,7 @@ The decisive signal came when the service experienced extended downtime (~2 busi
 
 While trying to record the required demo flow, two major technical failures emerged:
 - **Deadlocks** in Python FastAPI + async DB access (time sink; hard to reproduce/diagnose).
-- **Segfault** in Stripe client despite Python usage (another deep, destabilizing blocker).
+- **Segfault** in [Stripe](../../../org/stripe.md) client despite Python usage (another deep, destabilizing blocker).
 
 ### **August → Early September 2025 — Full stack rewrite**
 
