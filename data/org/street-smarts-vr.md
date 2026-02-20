@@ -17,6 +17,13 @@ created-at: 2026-02-20
 updated-at: 2026-02-20
 relationship-status: research
 known-people:
+- person: "[Oliver Noteware](../person/oliver-noteware.md)"
+  relationship: current
+  relationship-details: Founder and CEO on Street Smarts VR's About page; listed as CEO and Director in SEC Form D filings.
+  relationship-start-date: null
+  relationship-end-date: null
+  first-noted-at: 2026-02-20
+  last-verified-at: 2026-02-20
 - person: "[Alice Formwalt](../person/alice-formwalt.md)"
   relationship: former
   relationship-details: Listed as President and Director in a 2019 SEC Form D filing for Street Smarts VR.
@@ -48,8 +55,8 @@ Case-study and military-public sources describe an AFIMSC partnership through an
 
 | Filing Date | Form | Total Offering Amount | Total Amount Sold | Notes | Source |
 | --- | --- | --- | --- | --- | --- |
-| 2019-12-31 | D | $2,202,500 | $1,702,500 | Filing lists Oliver Noteware (CEO/Director) and Alice Formwalt (President/Director). | [^ssvr-sec-2019] |
-| 2022-06-07 | D | $4,315,563 | $4,315,563 | Filing lists Oliver Noteware (CEO/Director). | [^ssvr-sec-2022] |
+| 2019-12-31 | D | $2,202,500 | $1,702,500 | Filing lists [Oliver Noteware](../person/oliver-noteware.md) (CEO/Director) and [Alice Formwalt](../person/alice-formwalt.md) (President/Director). | [^ssvr-sec-2019] |
+| 2022-06-07 | D | $4,315,563 | $4,315,563 | Filing lists [Oliver Noteware](../person/oliver-noteware.md) (CEO/Director). | [^ssvr-sec-2022] |
 | 2023-04-19 | D | $12,500,000 | $10,000,000 | Filing includes a larger executive/director roster and references Rule 506(c). | [^ssvr-sec-2023] |
 
 ## Notes
@@ -66,6 +73,7 @@ Case-study and military-public sources describe an AFIMSC partnership through an
 - [2026-02-20]: Added sourcing for financing signals from SEC Form D filings (2019, 2022, 2023)
 - [2026-02-20]: Added partnership and contract references (AFIMSC, AFWERX, AFGSC)
 - [2026-02-20]: Added acquisition note for Chimera XR from public LinkedIn post
+- [2026-02-20]: Added [Oliver Noteware](../person/oliver-noteware.md) to known people and linked financing-table mentions
 
 [^ssvr-home]: Source: [Street Smarts VR - Home](https://www.streetsmartsvr.com). Verified/accessed on 2026-02-20.
 [^ssvr-about]: Source: [Street Smarts VR - About](https://www.streetsmartsvr.com/about). Verified/accessed on 2026-02-20.

@@ -68,7 +68,7 @@ looking-for:
 
 Public source records identify Alice Formwalt as a co-founder and product leader at [Street Smarts VR](../org/street-smarts-vr.md): VRARA describes her as Co-founder and CPO, and a 2019 SEC Form D filing lists her as President and Director.[^alice-vrara][^alice-sec-2019]
 
-A founders post from Street Smarts VR also names Alice as COO alongside Oliver Noteware as CEO, indicating title usage shifted across time and context.[^alice-fb-founders]
+A founders post from Street Smarts VR also names Alice as COO alongside [Oliver Noteware](../person/oliver-noteware.md) as CEO, indicating title usage shifted across time and context.[^alice-fb-founders]
 
 In our 2026-02-19 coffee chat, she discussed interest in PM-type roles in games/multimedia and potential introductions to [Unity](../org/unity.md), while currently exploring [Undisclosed Board Game Prototyping Project](../org/board-game-prototyping-project.md).[^alice-debrief][^alice-followup]
 
