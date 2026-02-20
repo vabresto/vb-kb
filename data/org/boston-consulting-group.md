@@ -11,7 +11,7 @@ focus-sectors:
 - strategy
 portfolio-examples: []
 created-at: 2026-02-16
-updated-at: 2026-02-16
+updated-at: 2026-02-20
 relationship-status: research
 known-people:
 - person: "[Gabi Monico](../person/gabi-monico.md)"
@@ -21,8 +21,15 @@ known-people:
   relationship-end-date: null
   first-noted-at: 2026-02-16
   last-verified-at: 2026-02-16
+- person: "[Hellen Xia](../person/hellen-xia.md)"
+  relationship: current
+  relationship-details: Reported Boston Consulting Group association from user guidance; external public corroboration pending in this pass.
+  relationship-start-date: null
+  relationship-end-date: null
+  first-noted-at: 2026-02-20
+  last-verified-at: 2026-02-20
 intro-paths: []
-last-updated-from-source: 2026-02-16
+last-updated-from-source: 2026-02-20
 ---
 
 # Boston Consulting Group
@@ -40,9 +47,11 @@ Boston Consulting Group describes itself as a global management consulting firm 
 ## Notes
 
 - [2026-02-16] Organization page created to support linked prior-experience references.
+- [2026-02-20] Added [Hellen Xia](../person/hellen-xia.md) as a reported relationship pending direct public-source confirmation.
 
 ## Changelog
 
 - [2026-02-16]: Created page with sourced bio summary
+- [2026-02-20]: Added reported relationship entry for Hellen Xia with explicit verification status
 
 [^bcg-source]: Source: [BCG Overview](https://www.bcg.com/about/overview). Verified/accessed on 2026-02-16.
