@@ -8,7 +8,7 @@ date: 2026-02-19
 
 Literal debrief note captured on 2026-02-19 for [Alice Formwalt](../../person/alice-formwalt.md).
 
-Related entities: [Unity](../../org/unity.md), [Matthew Brannon](../../person/matthew-brannon.md), [Undisclosed Police VR Training Startup](../../org/police-vr-training-startup.md), [Undisclosed Board Game Prototyping Project](../../org/board-game-prototyping-project.md).
+Related entities: [Unity](../../org/unity.md), [Matthew Brannon](../../person/matthew-brannon.md), [Street Smarts VR](../../org/street-smarts-vr.md), [Undisclosed Board Game Prototyping Project](../../org/board-game-prototyping-project.md).
 
 ### Coffee chat debrief notes: Alice
 

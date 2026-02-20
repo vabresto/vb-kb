@@ -44,8 +44,8 @@ looking-for:
 
 ## Snapshot
 
-- Why they matter: Interdisciplinary contact exploring PM paths across games/multimedia and [Unity](../org/unity.md)-adjacent interactive AI opportunities, while incubating a board game tooling concept.
-- Current focus: Building exposure to product manager-type work and exploring [Undisclosed Board Game Prototyping Project](../org/board-game-prototyping-project.md), with ongoing interests in philosophy writing and creative practice.
+- Why they matter: Interdisciplinary operator exploring PM paths across games/multimedia while incubating a board game tooling concept, with prior operating history at [Street Smarts VR](../org/street-smarts-vr.md).[^alice-vrara][^alice-sec-2019]
+- Current focus: Building exposure to product manager-type work and exploring [Undisclosed Board Game Prototyping Project](../org/board-game-prototyping-project.md), with ongoing interests in philosophy writing and creative practice.[^alice-followup]
 - Best way to engage: Warm intros to PM and producer conversations, including [Matthew Brannon](../person/matthew-brannon.md) where relevant.
 
 ## Employment History
@@ -53,7 +53,7 @@ looking-for:
 | Period | Organization | Role | Notes | Source |
 | --- | --- | --- | --- | --- |
 | Current | [Undisclosed Board Game Prototyping Project](../org/board-game-prototyping-project.md) | Founder (Exploration Stage) | Exploring a startup concept to make high-quality board game materials available in smaller batches for easier prototyping. | [^alice-followup] |
-| Prior | [Undisclosed Police VR Training Startup](../org/police-vr-training-startup.md) | Team member (specific role not confirmed) | Previously worked on a startup building VR training equipment for police use cases. | [^alice-followup] |
+| 2017-2019 (documented) | [Street Smarts VR](../org/street-smarts-vr.md) | Co-founder and CPO (2018 source); President and Director (2019 filing) | Worked on immersive VR simulations for law enforcement/public safety training. | [^alice-vrara] [^alice-sec-2019] |
 
 ## Looking For
 
@@ -64,11 +64,17 @@ looking-for:
 
 ## Bio
 
-Alice Formwalt is a contact from a 2026-02-19 coffee chat where she discussed interest in product manager-type roles in games/multimedia and possible introductions to [Unity](../org/unity.md) for interactive AI-related PM conversations.[^alice-debrief]
+![Headshot of Alice Formwalt](./images/alice-formwalt.jpg)[^alice-photo-source]
 
-Follow-up context indicates she previously worked on [Undisclosed Police VR Training Startup](../org/police-vr-training-startup.md) and is currently exploring [Undisclosed Board Game Prototyping Project](../org/board-game-prototyping-project.md), focused on making high-quality board game prototyping materials easier to access in smaller batches.[^alice-followup]
+Public source records identify Alice Formwalt as a co-founder and product leader at [Street Smarts VR](../org/street-smarts-vr.md): VRARA describes her as Co-founder and CPO, and a 2019 SEC Form D filing lists her as President and Director.[^alice-vrara][^alice-sec-2019]
 
-She also shared interests in philosophy and poetry, including potentially sharing past philosophy writing, and discussed creative projects such as clay sculpting during an art cafe outing.[^alice-debrief]
+A founders post from Street Smarts VR also names Alice as COO alongside Oliver Noteware as CEO, indicating title usage shifted across time and context.[^alice-fb-founders]
+
+In our 2026-02-19 coffee chat, she discussed interest in PM-type roles in games/multimedia and potential introductions to [Unity](../org/unity.md), while currently exploring [Undisclosed Board Game Prototyping Project](../org/board-game-prototyping-project.md).[^alice-debrief][^alice-followup]
+
+## Network Notes
+
+- [2026-02-20] She mentioned knowing Jessie, Erika, and Yulin. These names are intentionally tracked as plain text until dedicated person pages are created.[^alice-followup]
 
 ## Notes
 
@@ -78,16 +84,25 @@ She also shared interests in philosophy and poetry, including potentially sharin
 
 - [2026-02-19] Coffee chat debrief: she was excited about speaking with someone at [Unity](../org/unity.md) regarding PM-type work tied to interactive AI.
 - [2026-02-19] Suggested she connect with [Matthew Brannon](../person/matthew-brannon.md) because of his media production background and potential producer needs.
-- [2026-02-19] Background context: previously worked on [Undisclosed Police VR Training Startup](../org/police-vr-training-startup.md) and is now exploring [Undisclosed Board Game Prototyping Project](../org/board-game-prototyping-project.md).
+- [2026-02-19] Background context: previously worked on [Street Smarts VR](../org/street-smarts-vr.md) and is now exploring [Undisclosed Board Game Prototyping Project](../org/board-game-prototyping-project.md).
 - [2026-02-19] Discussed philosophy background (nearly completed major), possibility of sharing an essay/dissertation, poetry interests, and a playful recurring joke about a military intelligence background that she denied.
 - [2026-02-19] Art cafe outing: she made a "goddess of emotion" clay sculpture with an arched, Medusa-like form; I made an "evil plant."
 - [2026-02-20] Saved a verbatim copy of the debrief in [Coffee Chat Debrief Notes - Alice Formwalt (Literal)](../notes/debriefs/2026-02-19-coffee-chat-debrief-alice-formwalt.md).
+- [2026-02-20] Added network context that she knows Jessie, Erika, and Yulin (not yet represented as person pages).
 
 ## Changelog
 
+- [2026-02-20]: Replaced undisclosed prior startup placeholder with identified company [Street Smarts VR](../org/street-smarts-vr.md)
+- [2026-02-20]: Added sourced historical role details (Co-founder/CPO and President/Director)
+- [2026-02-20]: Added headshot image and source
+- [2026-02-20]: Added network note for Jessie, Erika, and Yulin pending person-page creation
 - [2026-02-20]: Added prior police VR startup context and current board game prototyping startup exploration
 - [2026-02-20]: Added link to literal debrief note file under a new notes section
 - [2026-02-20]: Created page from coffee chat debrief notes (2026-02-19)
 
 [^alice-debrief]: Source: [Coffee Chat Debrief Notes - Alice Formwalt (Literal)](../notes/debriefs/2026-02-19-coffee-chat-debrief-alice-formwalt.md). Logged on 2026-02-20.
 [^alice-followup]: Source: User-provided follow-up note in chat on 2026-02-20 (referencing 2026-02-19 context). Logged on 2026-02-20.
+[^alice-vrara]: Source: [Oliver Noteware and Alice Formwalt of Street Smarts VR - VR/AR Association (VRARA)](https://www.thevrara.com/podcast-posts/streetsmarts). Verified/accessed on 2026-02-20.
+[^alice-sec-2019]: Source: [SEC Form D primary document (Street Smarts VR Inc., 2019-12-31 filing)](https://www.sec.gov/Archives/edgar/data/1798227/000179822719000001/primary_doc.xml). Verified/accessed on 2026-02-20.
+[^alice-fb-founders]: Source: [Street Smarts VR founders post (Facebook)](https://www.facebook.com/streetssmartsvr/posts/meet-our-foundersoliver-noteware-ceo-alice-formwalt-coonoteware-deployed-oversea/106571514359837/). Verified/accessed on 2026-02-20.
+[^alice-photo-source]: Source image: [Street Smarts VR founders post (Facebook)](https://www.facebook.com/streetssmartsvr/posts/meet-our-foundersoliver-noteware-ceo-alice-formwalt-coonoteware-deployed-oversea/106571514359837/); local headshot is a crop focused on Alice. Verified/accessed on 2026-02-20.
