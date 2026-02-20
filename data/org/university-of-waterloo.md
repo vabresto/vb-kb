@@ -11,7 +11,7 @@ focus-sectors:
 - research
 portfolio-examples: []
 created-at: 2026-02-16
-updated-at: 2026-02-16
+updated-at: 2026-02-20
 relationship-status: research
 known-people:
 - person: "[Victor Brestoiu](../person/victor-brestoiu.md)"
@@ -21,15 +21,22 @@ known-people:
   relationship-end-date: 2021
   first-noted-at: 2026-02-16
   last-verified-at: 2026-02-16
+- person: "[Kumyl Najeeb](../person/kumyl-najeeb.md)"
+  relationship: alumni
+  relationship-details: Listed with University of Waterloo education in public profile aggregators.
+  relationship-start-date: null
+  relationship-end-date: 2021
+  first-noted-at: 2026-02-20
+  last-verified-at: 2026-02-20
 intro-paths: []
-last-updated-from-source: 2026-02-16
+last-updated-from-source: 2026-02-20
 ---
 
 # University of Waterloo
 
 ## Snapshot
 
-- Why this org matters: [Victor Brestoiu](../person/victor-brestoiu.md)'s alma mater.
+- Why this org matters: Alma mater context for [Victor Brestoiu](../person/victor-brestoiu.md) and [Kumyl Najeeb](../person/kumyl-najeeb.md).
 - What they do: Undergraduate and graduate education plus research.
 - Best way to approach: Use alumni context for introductions and shared background.
 
@@ -40,9 +47,13 @@ The University of Waterloo describes itself as Canada's top innovation universit
 ## Notes
 
 - [2026-02-16] Organization page created to support linked education references.
+- [2026-02-20] Added [Kumyl Najeeb](../person/kumyl-najeeb.md) as alumni based on public profile aggregators.[^uw-kumyl-source][^uw-kumyl-source-rr]
 
 ## Changelog
 
 - [2026-02-16]: Created page with sourced bio summary
+- [2026-02-20]: Added Kumyl Najeeb as known alumni connection
 
 [^uw-source]: Source: [About Waterloo](https://uwaterloo.ca/about/). Verified/accessed on 2026-02-16.
+[^uw-kumyl-source]: Source: [Contact Kumyl Najeeb, Email: k***@riotgames.com & Phone Number | Associate Software Engineer at Riot Games - ZoomInfo (r.jina.ai mirror)](https://r.jina.ai/http://www.zoominfo.com/p/Kumyl-Najeeb/5331181694). Verified/accessed on 2026-02-20.
+[^uw-kumyl-source-rr]: Source: [Kumyl Najeeb Email & Phone Number | Riot Games Associate Software Engineer Contact Information (r.jina.ai mirror)](https://r.jina.ai/http://rocketreach.co/kumyl-najeeb-email_177729119). Verified/accessed on 2026-02-20.
