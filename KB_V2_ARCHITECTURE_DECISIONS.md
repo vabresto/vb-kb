@@ -15,6 +15,7 @@ It is the baseline for migration and implementation work.
 - Keep one canonical source of truth and git-based auditability.
 - Keep querying simple for a small dataset.
 - Keep the door open for MCP-based editing.
+- Keep MCP runtime and mutation logic in Python.
 
 ## Core Decisions
 
@@ -29,6 +30,8 @@ It is the baseline for migration and implementation work.
 8. Any derived views must be reproducible from canonical files and never become a second source of truth.
 9. Initial concurrency model is single-writer with retry-on-busy behavior.
 10. Structured table-like data all conforms to a global schema, maintained via pydantic models and validated after every edit.
+11. The supported MCP server implementation is Python FastMCP (`kb/mcp_server.py`); TypeScript Functions are deprecated.
+12. Interactive MCP auth targets OAuth2 Authorization Code + PKCE (S256); fixed API keys are not the target auth path.
 
 ## Naming and Layout
 

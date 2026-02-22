@@ -1,9 +1,27 @@
 # VB Knowledge Base
 
+## Runtime status
+
+- Canonical runtime is Python (`kb/` package, including `kb/mcp_server.py`).
+- TypeScript/Cloudflare Pages Functions under `functions/` are deprecated and are not the supported path.
+- Canonical v2 source data lives under `data-new/` (with `data/` only as legacy input during migration).
+
 ## Local setup
 
 ```bash
 uv sync
+```
+
+## Validate data
+
+```bash
+uv run kb validate --pretty
+```
+
+Validate only changed files:
+
+```bash
+uv run kb validate --changed --pretty
 ```
 
 ## Run a local view-only site
@@ -42,6 +60,19 @@ For HTTP transport:
 uv run kb mcp-server --transport streamable-http --host 127.0.0.1 --port 8001 --path /mcp
 ```
 
+Use a shared local auth token when needed:
+
+```bash
+KB_MCP_AUTH_TOKEN=dev-secret \
+uv run kb mcp-server --transport streamable-http --host 127.0.0.1 --port 8001 --path /mcp
+```
+
+## MCP auth model
+
+- ChatGPT MCP supports OAuth2 Authorization Code + PKCE (S256) and does not support fixed API keys.
+- Production ChatGPT integrations should use PKCE OAuth in front of the Python MCP endpoint.
+- The in-repo write server supports an optional shared token gate (`KB_MCP_AUTH_TOKEN`) for trusted/local flows.
+
 ## Transformation layer
 
 Source files are canonical under `data-new/` for v2 records (`data-new/person/`, `data-new/org/`, and `data-new/note/`). Legacy notes from `data/notes/` are migrated into `note@...` folders with canonical IDs.
@@ -55,6 +86,6 @@ Edit `tools/build_site_content.py` to change how frontmatter appears on final pa
 
 Site styles are in `site_assets/stylesheets/kb.css`.
 
-## Cloudflare Access
+## Deployment notes
 
-Deployment and access-control notes are in `CLOUDFLARE_ACCESS.md`.
+Python MCP deployment and auth notes (including deprecated TypeScript path details) are in `CLOUDFLARE_ACCESS.md`.

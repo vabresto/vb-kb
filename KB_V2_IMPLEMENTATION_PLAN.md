@@ -137,7 +137,7 @@ Exit criteria:
 
 Scope:
 
-- Add MCP mutating commands for entity/edge operations.
+- Add Python FastMCP mutating commands for entity/edge operations.
 - Route all writes through one write transaction flow:
   - acquire repo write lock
   - apply edits
@@ -145,7 +145,8 @@ Scope:
   - commit if valid
   - release lock
 - Return retryable conflict/busy errors when lock is held.
-- OAuth for user auth (possibly verified against a user whitelist to prevent public sign ups).
+- Implement OAuth2 Authorization Code + PKCE (S256) for interactive user auth.
+- Keep deprecated TypeScript Functions out of the supported MCP write path.
 
 Exit criteria:
 
