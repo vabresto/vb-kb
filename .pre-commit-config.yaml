@@ -1,11 +1,17 @@
 repos:
   - repo: local
     hooks:
+      - id: kb-v2-validate
+        name: KB v2 Validate Changed Scope
+        entry: uv run kb validate --changed
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: kb-entity-first-mention-links
         name: KB Entity First-Mention Links
         entry: uv run python tools/check_entity_links.py
         language: system
-        files: ^(data/(person|org)/[^/]+\.md|data/notes/reflections/long-form/[^/]+\.md)$
+        files: ^(data-new/(person|org)/[^/]+/(person|org)@[^/]+/index\.md|data-new/note/[^/]+/note@reflections-long-form-[^/]+/index\.md|data/(person|org)/[^/]+\.md|data/notes/reflections/long-form/[^/]+\.md)$
       - id: kb-newly-added-urls-reachable
         name: KB Newly Added URLs Reachable
         entry: uv run python tools/check_new_urls.py

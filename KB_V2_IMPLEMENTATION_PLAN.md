@@ -1,6 +1,6 @@
 # KB v2 Implementation Plan
 
-Status: Draft for execution  
+Status: In progress  
 Date: 2026-02-22
 
 ## Objective
@@ -82,10 +82,12 @@ Rules:
 
 - Preserve provenance during extraction.
 - Preserve link integrity for first entity mentions in narrative sections.
+- Migrate legacy notes into canonical note folders with `note@<id>` frontmatter IDs.
 
 Exit criteria:
 
 - Current structured person/org data represented in JSONL.
+- Legacy notes represented as canonical `data-new/note/**/note@*/index.md` records.
 - Spot checks on representative entities pass schema and content parity checks.
 
 ## Phase 4: Edge Canonicalization and Backlink Symlinks
@@ -110,6 +112,7 @@ Scope:
 - Render narrative from `index.md`.
 - Render structured sections (`Employment History`, `Looking For`, `Changelog`) from JSONL tables.
 - Optionally render a relations section from canonical edges/backlinks.
+- Render note pages from canonical note records in `data-new/note/` (fallback: legacy `data/notes/`).
 
 Exit criteria:
 
@@ -149,6 +152,7 @@ Exit criteria:
 - MCP can safely create/update entities and edges.
 - Validation is fail-closed.
 - Concurrency behavior is predictable for callers.
+- FastMCP transport is available for local/stdin and HTTP deployment modes.
 
 ## Phase 8: Multi-Writer Investigation (Deferred)
 
@@ -176,4 +180,4 @@ Decision gate:
 
 ## Immediate Next Task
 
-Implement Phase 1 in a migration branch with a scripted move and a compatibility shim so that the web UI remains functional throughout migration.
+Run Phase 8 investigation for multi-writer semantics once the single-writer FastMCP write path sees regular usage.

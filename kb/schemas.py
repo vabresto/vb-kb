@@ -10,12 +10,16 @@ PARTIAL_DATE_RE = re.compile(r"^\d{4}(?:-\d{2})?(?:-\d{2})?$")
 ENTITY_REL_PATH_RE = re.compile(
     r"^(?P<kind>person|org)/(?P<shard>[a-z0-9]{2})/(?P<prefix>person|org)@(?P<slug>[a-z0-9][a-z0-9-]*)$"
 )
-SOURCE_PATH_RE = re.compile(r"^data/(person|org|notes)/.+\.md$")
+SOURCE_PATH_RE = re.compile(
+    r"^(data/(person|org|notes)/.+\.md|data-new/(person|org|note)/.+\.md)$"
+)
 SNAKE_TOKEN_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 EDGE_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 EMPLOYMENT_ROW_ID_RE = re.compile(r"^employment-\d{3}$")
 LOOKING_FOR_ROW_ID_RE = re.compile(r"^ask-\d{3}$")
 CHANGELOG_ROW_ID_RE = re.compile(r"^change-\d{3}$")
+NOTE_ID_RE = re.compile(r"^note@[a-z0-9]+(?:-[a-z0-9]+)*$")
+NOTE_TYPE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
 class KBBaseModel(BaseModel):
@@ -150,7 +154,7 @@ class EmploymentHistoryRow(KBBaseModel):
     def validate_source_path(cls, value: str) -> str:
         text = value.strip()
         if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must match data/(person|org|notes)/**/*.md")
+            raise ValueError("source_path must point to a markdown file under data/ or data-new/")
         return text
 
     @field_validator("source_section")
@@ -214,7 +218,7 @@ class LookingForRow(KBBaseModel):
     def validate_source_path(cls, value: str) -> str:
         text = value.strip()
         if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must match data/(person|org|notes)/**/*.md")
+            raise ValueError("source_path must point to a markdown file under data/ or data-new/")
         return text
 
     @field_validator("source_section")
@@ -273,7 +277,7 @@ class ChangelogRow(KBBaseModel):
     def validate_source_path(cls, value: str) -> str:
         text = value.strip()
         if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must match data/(person|org|notes)/**/*.md")
+            raise ValueError("source_path must point to a markdown file under data/ or data-new/")
         return text
 
     @field_validator("changed_at")
@@ -289,6 +293,70 @@ class ChangelogRow(KBBaseModel):
         if value < 1:
             raise ValueError("source_row must be >= 1")
         return value
+
+
+class NoteRecord(KBBaseModel):
+    id: str
+    title: str
+    note_type: str = Field(alias="note-type")
+    date: str | None = None
+    source_path: str = Field(alias="source-path")
+    source_category: str | None = Field(alias="source-category", default=None)
+    updated_at: str | None = Field(alias="updated-at", default=None)
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        text = value.strip()
+        if not NOTE_ID_RE.match(text):
+            raise ValueError("id must match note@<kebab-case>")
+        return text
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("title must be non-empty")
+        return text
+
+    @field_validator("note_type")
+    @classmethod
+    def validate_note_type(cls, value: str) -> str:
+        text = value.strip()
+        if not NOTE_TYPE_RE.match(text):
+            raise ValueError("note-type must be snake_case")
+        return text
+
+    @field_validator("date", "updated_at")
+    @classmethod
+    def validate_dates(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip()
+        if not text:
+            return None
+        return parse_partial_date(text)
+
+    @field_validator("source_path")
+    @classmethod
+    def validate_source_path(cls, value: str) -> str:
+        text = value.strip()
+        if not SOURCE_PATH_RE.match(text):
+            raise ValueError("source-path must point to a markdown file under data/ or data-new/")
+        return text
+
+    @field_validator("source_category")
+    @classmethod
+    def validate_source_category(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip().strip("/")
+        if not text:
+            return None
+        if ".." in text:
+            raise ValueError("source-category cannot contain '..'")
+        return text
 
 
 class EdgeRecord(KBBaseModel):

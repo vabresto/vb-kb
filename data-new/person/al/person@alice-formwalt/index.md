@@ -52,7 +52,7 @@ In our 2026-02-19 coffee chat, she discussed interest in PM-type roles in games/
 
 ## Notes
 
-- Literal source note: [Coffee Chat Debrief Notes - Alice Formwalt (Literal)](../notes/debriefs/2026-02-19-coffee-chat-debrief-alice-formwalt.md)
+- Literal source note: [Coffee Chat Debrief Notes - Alice Formwalt (Literal)](../../../note/de/note@debriefs-2026-02-19-coffee-chat-debrief-alice-formwalt/index.md)
 
 ## Conversation Notes
 
@@ -61,5 +61,5 @@ In our 2026-02-19 coffee chat, she discussed interest in PM-type roles in games/
 - [2026-02-19] Background context: previously worked on [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md) and is now exploring [Undisclosed Board Game Prototyping Project](../../../org/bo/org@board-game-prototyping-project/index.md).
 - [2026-02-19] Discussed philosophy background (nearly completed major), possibility of sharing an essay/dissertation, poetry interests, and a playful recurring joke about a military intelligence background that she denied.
 - [2026-02-19] Art cafe outing: she made a "goddess of emotion" clay sculpture with an arched, Medusa-like form; I made an "evil plant."
-- [2026-02-20] Saved a verbatim copy of the debrief in [Coffee Chat Debrief Notes - Alice Formwalt (Literal)](../notes/debriefs/2026-02-19-coffee-chat-debrief-alice-formwalt.md).
+- [2026-02-20] Saved a verbatim copy of the debrief in [Coffee Chat Debrief Notes - Alice Formwalt (Literal)](../../../note/de/note@debriefs-2026-02-19-coffee-chat-debrief-alice-formwalt/index.md).
 - [2026-02-20] Added network context that she knows Jessie, Erika, and Yulin (not yet represented as person pages).

@@ -11,6 +11,7 @@ Entity directories:
 
 - `person@<id>`
 - `org@<id>`
+- `note@<id>`
 - `edge@<id>.json`
 
 Root for migration rollout:
@@ -23,11 +24,28 @@ Sharding rule (v1):
 - Canonical entity paths:
   - `data-new/person/<shard>/person@<slug>/`
   - `data-new/org/<shard>/org@<slug>/`
+  - `data-new/note/<shard>/note@<slug>/`
 
 Required files per entity (v1):
 
 - Person: `index.md`, `employment-history.jsonl`, `looking-for.jsonl`, `changelog.jsonl`, `edges/`
 - Org: `index.md`, `changelog.jsonl`, `edges/`
+- Note: `index.md`
+
+## Note Frontmatter Schema Freeze (v1)
+
+`index.md` frontmatter required keys:
+
+- `id` (string, format: `note@<slug>`)
+- `title` (string)
+- `note-type` (snake_case string)
+- `source-path` (string, path to legacy note source)
+
+Optional keys:
+
+- `date` (partial date: `YYYY` | `YYYY-MM` | `YYYY-MM-DD`)
+- `source-category` (string)
+- `updated-at` (partial date)
 
 ## JSONL Schema Freeze (v1)
 
@@ -110,6 +128,10 @@ Person markdown:
 Org markdown:
 
 - `data/org/<slug>.md` -> `data-new/org/<shard>/org@<slug>/index.md`
+
+Notes markdown:
+
+- `data/notes/<...>/<slug>.md` -> `data-new/note/<shard>/note@<normalized-path-slug>/index.md`
 
 Entity links in markdown/frontmatter:
 

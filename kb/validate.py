@@ -3,14 +3,18 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import yaml
 from pydantic import ValidationError
 
-from kb.schemas import ChangelogRow, EdgeRecord, EmploymentHistoryRow, LookingForRow
+from kb.schemas import ChangelogRow, EdgeRecord, EmploymentHistoryRow, LookingForRow, NoteRecord
+
+FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 
 
 @dataclass(frozen=True)
@@ -26,6 +30,14 @@ class EntityRecord:
 class EdgeFile:
     path: Path
     rel_path: str
+
+
+@dataclass(frozen=True)
+class NoteFile:
+    note_id: str
+    rel_dir: str
+    directory: Path
+    index_path: Path
 
 
 @dataclass(frozen=True)
@@ -129,6 +141,26 @@ def gather_edge_files(data_root: Path) -> list[EdgeFile]:
     return files
 
 
+def gather_note_files(data_root: Path) -> dict[str, NoteFile]:
+    notes: dict[str, NoteFile] = {}
+    note_root = data_root / "note"
+    if not note_root.exists():
+        return notes
+
+    for index_path in sorted(note_root.rglob("index.md")):
+        note_dir = index_path.parent
+        if not note_dir.name.startswith("note@"):
+            continue
+        rel_dir = note_dir.relative_to(data_root).as_posix()
+        notes[rel_dir] = NoteFile(
+            note_id=note_dir.name,
+            rel_dir=rel_dir,
+            directory=note_dir,
+            index_path=index_path,
+        )
+    return notes
+
+
 def collect_changed_paths(project_root: Path, data_root: Path) -> set[Path]:
     rel_data_root = data_root.relative_to(project_root).as_posix()
 
@@ -226,6 +258,22 @@ def is_edge_in_scope(edge: EdgeFile, scope_paths: set[Path] | None) -> bool:
         if is_within(scoped, edge.path.parent):
             return True
         if is_within(edge.path, scoped):
+            return True
+    return False
+
+
+def is_note_in_scope(note: NoteFile, scope_paths: set[Path] | None) -> bool:
+    if scope_paths is None:
+        return True
+    if len(scope_paths) == 0:
+        return False
+
+    for scoped in scope_paths:
+        if scoped == note.directory or scoped == note.index_path:
+            return True
+        if is_within(scoped, note.directory):
+            return True
+        if is_within(note.directory, scoped):
             return True
     return False
 
@@ -351,6 +399,59 @@ def validate_jsonl(
     return rows
 
 
+def read_note_frontmatter(
+    *,
+    path: Path,
+    issues: list[ValidationIssue],
+    project_root: Path,
+) -> dict[str, Any] | None:
+    if not path.exists():
+        append_issue(
+            issues,
+            code="missing_file",
+            path=path,
+            message="missing file",
+            project_root=project_root,
+        )
+        return None
+
+    text = path.read_text(encoding="utf-8")
+    match = FRONTMATTER_RE.match(text)
+    if not match:
+        append_issue(
+            issues,
+            code="missing_frontmatter",
+            path=path,
+            message="note index.md must include YAML frontmatter",
+            project_root=project_root,
+        )
+        return None
+
+    try:
+        payload = yaml.safe_load(match.group(1)) or {}
+    except yaml.YAMLError as exc:
+        append_issue(
+            issues,
+            code="invalid_frontmatter",
+            path=path,
+            message=f"invalid YAML frontmatter: {exc}",
+            project_root=project_root,
+        )
+        return None
+
+    if not isinstance(payload, dict):
+        append_issue(
+            issues,
+            code="invalid_frontmatter",
+            path=path,
+            message="frontmatter must be a YAML mapping",
+            project_root=project_root,
+        )
+        return None
+
+    return payload
+
+
 def validate_entities(
     *,
     project_root: Path,
@@ -429,6 +530,74 @@ def validate_entities(
                 )
 
     return loaded_rows
+
+
+def validate_notes(
+    *,
+    project_root: Path,
+    notes: dict[str, NoteFile],
+    scope_paths: set[Path] | None,
+    issues: list[ValidationIssue],
+) -> dict[str, NoteRecord]:
+    validated: dict[str, NoteRecord] = {}
+
+    for rel_dir in sorted(notes):
+        note = notes[rel_dir]
+        if not is_note_in_scope(note, scope_paths):
+            continue
+
+        if not note.index_path.exists():
+            append_issue(
+                issues,
+                code="missing_file",
+                path=note.index_path,
+                message="missing index.md",
+                project_root=project_root,
+            )
+            continue
+
+        frontmatter = read_note_frontmatter(
+            path=note.index_path,
+            issues=issues,
+            project_root=project_root,
+        )
+        if frontmatter is None:
+            continue
+
+        try:
+            record = NoteRecord.model_validate(frontmatter)
+        except ValidationError as exc:
+            append_issue(
+                issues,
+                code="schema_error",
+                path=note.index_path,
+                message=exc.errors()[0]["msg"],
+                project_root=project_root,
+            )
+            continue
+
+        if record.id != note.note_id:
+            append_issue(
+                issues,
+                code="note_id_mismatch",
+                path=note.index_path,
+                message=f"frontmatter id {record.id} does not match directory {note.note_id}",
+                project_root=project_root,
+            )
+
+        source_path = (project_root / record.source_path).absolute()
+        if not source_path.exists():
+            append_issue(
+                issues,
+                code="invalid_reference",
+                path=note.index_path,
+                message=f"source-path not found: {record.source_path}",
+                project_root=project_root,
+            )
+
+        validated[rel_dir] = record
+
+    return validated
 
 
 def validate_edge_files(
@@ -646,17 +815,26 @@ def run_validation(
             scope_label=scope_label,
             issues=issues,
             checked_entities=0,
+            checked_notes=0,
             checked_edges=0,
             checked_jsonl_files=0,
         )
 
     entities = gather_entities(data_root)
+    notes = gather_note_files(data_root)
     edge_files = gather_edge_files(data_root)
 
     loaded_rows = validate_entities(
         project_root=project_root,
         data_root=data_root,
         entities=entities,
+        scope_paths=scope_paths,
+        issues=issues,
+    )
+
+    validate_notes(
+        project_root=project_root,
+        notes=notes,
         scope_paths=scope_paths,
         issues=issues,
     )
@@ -671,6 +849,7 @@ def run_validation(
     )
 
     checked_entities = len([entity for entity in entities.values() if is_entity_in_scope(entity, scope_paths)])
+    checked_notes = len([note for note in notes.values() if is_note_in_scope(note, scope_paths)])
     checked_edges = len([edge for edge in edge_files if is_edge_in_scope(edge, scope_paths)])
     checked_jsonl_files = 0
     for entity_rel_dir in loaded_rows:
@@ -685,6 +864,7 @@ def run_validation(
         scope_label=scope_label,
         issues=issues,
         checked_entities=checked_entities,
+        checked_notes=checked_notes,
         checked_edges=checked_edges,
         checked_jsonl_files=checked_jsonl_files,
     )
@@ -697,6 +877,7 @@ def format_result(
     scope_label: str,
     issues: list[ValidationIssue],
     checked_entities: int,
+    checked_notes: int,
     checked_edges: int,
     checked_jsonl_files: int,
 ) -> dict[str, Any]:
@@ -721,6 +902,7 @@ def format_result(
         "data_root": data_root_rel,
         "checked": {
             "entities": checked_entities,
+            "notes": checked_notes,
             "edge_files": checked_edges,
             "jsonl_files": checked_jsonl_files,
         },

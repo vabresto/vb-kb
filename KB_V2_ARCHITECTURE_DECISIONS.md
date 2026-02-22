@@ -20,6 +20,7 @@ It is the baseline for migration and implementation work.
 
 1. Canonical data stays file-based under `data/`, committed to git.
 2. Entities move from single files to folders with `<type>@<id>` names.
+2a. Notes move from flat markdown paths to folder records with `note@<id>` names.
 3. Subfolder sharding is allowed for scale and path hygiene (for example `data/person/al/person@alice-formwalt/`).
 4. Canonical edges live in one place: `data/edge/.../edge@<id>.json`.
 5. Each endpoint entity has a relative symlink backlink in `edges/` to the canonical edge file.
@@ -64,6 +65,10 @@ data/
         index.md
         edges/
           edge@e-20260219-alice-introduced-by-oliver.json -> ../../../edge/e2/edge@e-20260219-alice-introduced-by-oliver.json
+  note/
+    de/
+      note@debriefs-2026-02-19-coffee-chat-debrief-alice-formwalt/
+        index.md
   edge/
     e2/
       edge@e-20260219-alice-introduced-by-oliver.json
@@ -74,6 +79,7 @@ data/
 Canonical:
 
 - `index.md` for each entity narrative and identity metadata.
+- `index.md` for each note record under `data-new/note/**/note@*/`.
 - JSONL tables under entity folders (`employment-history.jsonl`, `looking-for.jsonl`, `changelog.jsonl`).
 - Canonical edge JSON files under `data/edge/`.
 

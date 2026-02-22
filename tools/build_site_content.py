@@ -98,11 +98,14 @@ def infer_entity_data_root(project_root: Path) -> Path:
 
 
 def infer_notes_root(project_root: Path, entity_data_root: Path) -> Path:
-    candidate = entity_data_root / "notes"
-    if candidate.exists():
-        return candidate
-    fallback = project_root / "data" / "notes"
-    return fallback
+    for candidate in (
+        entity_data_root / "note",
+        entity_data_root / "notes",
+        project_root / "data" / "notes",
+    ):
+        if candidate.exists():
+            return candidate
+    return project_root / "data" / "notes"
 
 
 def load_jsonl_rows(path: Path, model_cls: type) -> list[Any]:
@@ -182,6 +185,36 @@ def load_note_page(path: Path, notes_root: Path, output_path: Path) -> NotePage:
         source_path=path,
         output_path=output_path,
         relative_path=path.relative_to(notes_root),
+        metadata=metadata,
+        body=body,
+    )
+
+
+def load_note_page_v2(index_path: Path, notes_root: Path, output_root: Path) -> NotePage:
+    markdown = index_path.read_text(encoding="utf-8")
+    metadata, body = split_frontmatter(markdown)
+
+    raw_id = str(metadata.get("id") or "").strip()
+    fallback = index_path.parent.name
+    if raw_id.startswith("note@"):
+        slug = raw_id[len("note@") :]
+    elif fallback.startswith("note@"):
+        slug = fallback[len("note@") :]
+    else:
+        slug = fallback
+
+    source_category = str(metadata.get("source-category") or "").strip().strip("/")
+    if source_category:
+        relative_path = Path(source_category) / f"{slug}.md"
+    else:
+        relative_path = Path(f"{slug}.md")
+
+    title = str(metadata.get("title") or title_from_slug(slug))
+    return NotePage(
+        title=title,
+        source_path=index_path,
+        output_path=output_root / relative_path,
+        relative_path=relative_path,
         metadata=metadata,
         body=body,
     )
@@ -839,6 +872,20 @@ def collect_note_pages(notes_root: Path, docs_dir: Path) -> list[NotePage]:
     if not notes_root.exists():
         return []
 
+    if notes_root.name == "note":
+        pages: list[NotePage] = []
+        for index_path in sorted(notes_root.rglob("index.md")):
+            if not index_path.parent.name.startswith("note@"):
+                continue
+            page = load_note_page_v2(
+                index_path=index_path,
+                notes_root=notes_root,
+                output_root=output_dir,
+            )
+            page.output_path.parent.mkdir(parents=True, exist_ok=True)
+            pages.append(page)
+        return pages
+
     pages: list[NotePage] = []
     for source_path in sorted(notes_root.rglob("*.md")):
         relative_path = source_path.relative_to(notes_root)
@@ -1015,7 +1062,11 @@ def render_home(
     )
 
 
-def build_source_to_output_map(project_root: Path, pages: list[Page]) -> dict[Path, Path]:
+def build_source_to_output_map(
+    project_root: Path,
+    pages: list[Page],
+    notes: list[NotePage],
+) -> dict[Path, Path]:
     mapping: dict[Path, Path] = {}
     for page in pages:
         mapping[page.index_path.resolve()] = page.output_path
@@ -1023,6 +1074,13 @@ def build_source_to_output_map(project_root: Path, pages: list[Page]) -> dict[Pa
         legacy_flat = project_root / "data" / page.entity_type / f"{page.slug}.md"
         if legacy_flat.exists():
             mapping[legacy_flat.resolve()] = page.output_path
+
+    for note in notes:
+        mapping[note.source_path.resolve()] = note.output_path
+        raw_source_path = str(note.metadata.get("source-path") or "").strip()
+        if raw_source_path:
+            legacy_note = (project_root / raw_source_path).resolve()
+            mapping[legacy_note] = note.output_path
 
     return mapping
 
@@ -1042,7 +1100,11 @@ def build_site_content(project_root: Path) -> None:
 
     pages = [*people, *orgs]
     pages_by_entity_rel_path = {page.entity_rel_path: page for page in pages}
-    source_to_output = build_source_to_output_map(project_root, pages)
+    source_to_output = build_source_to_output_map(
+        project_root=project_root,
+        pages=pages,
+        notes=notes,
+    )
 
     for page in pages:
         page.output_path.write_text(
