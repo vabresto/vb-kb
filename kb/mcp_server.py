@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import fcntl
 import json
+import os
 import re
+import secrets
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path
@@ -18,6 +20,7 @@ from kb.validate import infer_data_root, run_validation
 
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LOCK_FILENAME = ".kb-write.lock"
+AUTH_TOKEN_ENV_VAR = "KB_MCP_AUTH_TOKEN"
 
 
 class BusyLockError(RuntimeError):
@@ -132,6 +135,37 @@ def default_commit_message(operation: str, path: str) -> str:
     return f"mcp(kbv2): {operation} {path}"
 
 
+def rollback_changed_paths(project_root: Path, changed_paths: list[str]) -> None:
+    scoped = sorted({path for path in changed_paths if path})
+    if not scoped:
+        return
+
+    run_git(
+        project_root,
+        ["restore", "--staged", "--worktree", "--", *scoped],
+        check=False,
+    )
+    run_git(
+        project_root,
+        ["clean", "-fd", "--", *scoped],
+        check=False,
+    )
+
+
+def verify_auth_token(auth_token: str | None) -> None:
+    expected = (os.getenv(AUTH_TOKEN_ENV_VAR) or "").strip()
+    if not expected:
+        return
+
+    provided = (auth_token or "").strip()
+    if not provided or not secrets.compare_digest(provided, expected):
+        raise PermissionError("invalid or missing auth token")
+
+
+def unauthorized_error(message: str) -> dict[str, Any]:
+    return {"ok": False, "error": {"code": "unauthorized", "retryable": False, "message": message}}
+
+
 def run_transaction(
     *,
     project_root: Path,
@@ -141,7 +175,16 @@ def run_transaction(
 ) -> dict[str, Any]:
     with repo_write_lock(project_root):
         before = list_data_changes(project_root, data_root)
-        apply_meta = apply_changes()
+        try:
+            apply_meta = apply_changes()
+        except Exception:
+            try:
+                after_failed_apply = list_data_changes(project_root, data_root)
+                rollback_changed_paths(project_root, sorted(after_failed_apply - before))
+            except Exception:
+                pass
+            raise
+
         after = list_data_changes(project_root, data_root)
 
         delta = sorted(after - before)
@@ -155,13 +198,19 @@ def run_transaction(
             }
 
         scope_paths = {(project_root / rel).absolute() for rel in delta}
-        validation_result = run_validation(
-            project_root=project_root,
-            data_root=data_root,
-            scope_paths=scope_paths,
-            scope_label="mcp-transaction",
-        )
+        try:
+            validation_result = run_validation(
+                project_root=project_root,
+                data_root=data_root,
+                scope_paths=scope_paths,
+                scope_label="mcp-transaction",
+            )
+        except Exception:
+            rollback_changed_paths(project_root, delta)
+            raise
+
         if not validation_result["ok"]:
+            rollback_changed_paths(project_root, delta)
             return {
                 "ok": False,
                 "error": {
@@ -174,13 +223,19 @@ def run_transaction(
                 "validation": validation_result,
             }
 
-        run_git(project_root, ["add", "-A", "--", *delta])
-        commit = run_git(
-            project_root,
-            ["commit", "-m", commit_message, "--", *delta],
-            check=False,
-        )
+        try:
+            run_git(project_root, ["add", "-A", "--", *delta])
+            commit = run_git(
+                project_root,
+                ["commit", "-m", commit_message, "--", *delta],
+                check=False,
+            )
+        except Exception:
+            rollback_changed_paths(project_root, delta)
+            raise
+
         if commit.returncode != 0:
+            rollback_changed_paths(project_root, delta)
             return {
                 "ok": False,
                 "error": {
@@ -312,8 +367,10 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
         frontmatter: dict[str, Any] | None = None,
         body: str = "",
         commit_message: str | None = None,
+        auth_token: str | None = None,
     ) -> dict[str, Any]:
         try:
+            verify_auth_token(auth_token)
             payload = EntityUpsertInput(
                 kind=kind,
                 slug=slug,
@@ -321,6 +378,8 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
                 body=body,
                 commit_message=commit_message,
             )
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
         except ValidationError as exc:
             return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
 
@@ -366,14 +425,18 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
         frontmatter: dict[str, Any] | None = None,
         body: str = "",
         commit_message: str | None = None,
+        auth_token: str | None = None,
     ) -> dict[str, Any]:
         try:
+            verify_auth_token(auth_token)
             payload = NoteUpsertInput(
                 slug=slug,
                 frontmatter=frontmatter or {},
                 body=body,
                 commit_message=commit_message,
             )
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
         except ValidationError as exc:
             return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
 
@@ -414,7 +477,13 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
     def upsert_edge(
         edge: dict[str, Any],
         commit_message: str | None = None,
+        auth_token: str | None = None,
     ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+
         def apply() -> dict[str, Any]:
             edge_path, apply_meta = upsert_edge_file(
                 project_root=project_root,
