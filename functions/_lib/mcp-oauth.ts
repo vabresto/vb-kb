@@ -190,6 +190,51 @@ export function parseBearerToken(request: Request): string {
   return match[1].trim();
 }
 
+export function bearerAuthErrorResponse(
+  error: unknown,
+  options?: {
+    headers?: Record<string, string>;
+  }
+): Response {
+  const defaultChallenge =
+    'Bearer error="invalid_token", error_description="Invalid or missing access token"';
+  const extraHeaders = options?.headers || {};
+
+  if (error instanceof OAuthRouteError) {
+    const response = oauthErrorResponse(error);
+    const headers = new Headers(response.headers);
+    for (const [key, value] of Object.entries(extraHeaders)) {
+      headers.set(key, value);
+    }
+    headers.set("www-authenticate", defaultChallenge);
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  }
+
+  const headers = new Headers({
+    "cache-control": "no-store",
+    "content-type": "application/json; charset=utf-8",
+    pragma: "no-cache",
+    "www-authenticate": defaultChallenge,
+  });
+  for (const [key, value] of Object.entries(extraHeaders)) {
+    headers.set(key, value);
+  }
+  return new Response(
+    JSON.stringify({
+      error: "invalid_token",
+      error_description: "Unable to validate access token",
+    }),
+    {
+      status: 401,
+      headers,
+    }
+  );
+}
+
 export async function verifyMcpAccessToken(
   token: string,
   env: ProtectedDocsEnv,

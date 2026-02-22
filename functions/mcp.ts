@@ -19,8 +19,7 @@ import {
   rankSearchResults,
 } from "./_lib/search-index";
 import {
-  OAuthRouteError,
-  oauthErrorResponse,
+  bearerAuthErrorResponse,
   parseBearerToken,
   verifyMcpAccessToken,
 } from "./_lib/mcp-oauth";
@@ -77,37 +76,7 @@ export const onRequest: PagesFunction<ProtectedDocsEnv> = async ({ request, env 
     const bearer = parseBearerToken(request);
     await verifyMcpAccessToken(bearer, env, request);
   } catch (error) {
-    if (error instanceof OAuthRouteError) {
-      const response = oauthErrorResponse(error);
-      const headers = new Headers(response.headers);
-      for (const [key, value] of Object.entries(corsHeaders(request))) {
-        headers.set(key, value);
-      }
-      headers.set(
-        "www-authenticate",
-        'Bearer error="invalid_token", error_description="Invalid or missing access token"'
-      );
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
-      });
-    }
-    return new Response(
-      JSON.stringify({
-        error: "invalid_token",
-        error_description: "Unable to validate access token",
-      }),
-      {
-        status: 401,
-        headers: {
-          ...corsHeaders(request),
-          "content-type": "application/json; charset=utf-8",
-          "www-authenticate":
-            'Bearer error="invalid_token", error_description="Unable to validate access token"',
-        },
-      }
-    );
+    return bearerAuthErrorResponse(error, { headers: corsHeaders(request) });
   }
 
   let payload: unknown;

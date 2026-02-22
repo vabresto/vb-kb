@@ -5,7 +5,7 @@ info:
 servers:
   - url: https://dex.victorbrestoiu.me
 security:
-  - CloudflareServiceTokenAuth: []
+  - OAuth2PKCE: [openid, email, profile]
 paths:
   /api/fetch:
     get:
@@ -136,14 +136,17 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 components:
   securitySchemes:
-    CloudflareServiceTokenAuth:
-      type: apiKey
-      in: header
-      name: Authorization
-      description: |
-        Cloudflare Access service token in single-header mode.
-        Use a JSON object as the header value:
-        {"cf-access-client-id":"<ID>","cf-access-client-secret":"<SECRET>"}
+    OAuth2PKCE:
+      type: oauth2
+      description: OAuth2 Authorization Code with PKCE (S256) for protected KB APIs.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://dex.victorbrestoiu.me/authorize
+          tokenUrl: https://dex.victorbrestoiu.me/token
+          scopes:
+            openid: OpenID identity scope
+            email: Access verified email
+            profile: Access display profile
   schemas:
     ErrorResponse:
       type: object

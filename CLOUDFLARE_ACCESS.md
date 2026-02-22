@@ -80,16 +80,18 @@ Implemented endpoints:
 
 ### Required Access policy scope
 
-Keep `/api/*` policy-protected as before if you still use Custom GPT Actions with service tokens.
+All read endpoints now require OAuth bearer tokens minted by this service.
 
-For MCP OAuth routes:
+For OAuth-protected API routes:
 
+- `/api/fetch`
+- `/api/search`
 - `/mcp`
 - `/register`
 - `/token`
 - `/.well-known/*`
 
-These must be reachable by ChatGPT over the public internet. Access control for MCP is enforced by OAuth bearer tokens issued only after Access login in `/authorize` -> `/callback`.
+These must be reachable by ChatGPT over the public internet. Access control is enforced by OAuth bearer tokens issued only after Access login in `/authorize` -> `/callback`.
 
 For browser login flow routes:
 
@@ -133,15 +135,13 @@ Example:
 
 ```bash
 curl -sS \
-  -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+  -H "Authorization: Bearer <mcp_access_token>" \
   "https://dex.victorbrestoiu.me/api/fetch?path=/&format=text"
 ```
 
 ```bash
 curl -sS \
-  -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+  -H "Authorization: Bearer <mcp_access_token>" \
   "https://dex.victorbrestoiu.me/api/search?q=webflow&limit=5"
 ```
 
@@ -154,7 +154,7 @@ curl -sS \
   "https://dex.victorbrestoiu.me/.well-known/oauth-authorization-server"
 ```
 
-Then use OAuth (`/register` -> `/authorize` -> `/callback` -> `/token`) to obtain a bearer token and call MCP:
+Then use OAuth with PKCE (`/register` -> `/authorize` -> `/callback` -> `/token`) to obtain a bearer token and call MCP:
 
 ```bash
 curl -sS \

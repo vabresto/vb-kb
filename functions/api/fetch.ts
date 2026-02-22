@@ -13,6 +13,11 @@ import {
   validatePublicBaseUrl,
   type ProtectedDocsEnv,
 } from "../_lib/protected-docs";
+import {
+  bearerAuthErrorResponse,
+  parseBearerToken,
+  verifyMcpAccessToken,
+} from "../_lib/mcp-oauth";
 
 export const onRequestGet: PagesFunction<ProtectedDocsEnv> = async ({
   request,
@@ -29,6 +34,13 @@ export const onRequestGet: PagesFunction<ProtectedDocsEnv> = async ({
   }
   const baseUrlError = validatePublicBaseUrl(env.PUBLIC_BASE_URL);
   if (baseUrlError) return json({ error: baseUrlError }, 500);
+
+  try {
+    const bearer = parseBearerToken(request);
+    await verifyMcpAccessToken(bearer, env, request);
+  } catch (error) {
+    return bearerAuthErrorResponse(error);
+  }
 
   const requestUrl = new URL(request.url);
   const path = (requestUrl.searchParams.get("path") || "").trim();
