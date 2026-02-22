@@ -41,7 +41,7 @@ uv run kb sync-edges
 
 ## Local website preview
 
-MkDocs is wired to generate view-only site content from `data/` into `site_docs/` on every build.
+MkDocs is wired to generate view-only site content from `data-new/` (fallback: `data/`) into `site_docs/` on every build.
 
 ```bash
 uv run mkdocs serve

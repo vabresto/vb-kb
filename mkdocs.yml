@@ -32,6 +32,7 @@ hooks:
 
 watch:
   - data
+  - data-new
   - site_assets
   - tools/build_site_content.py
   - mkdocs_hooks.py

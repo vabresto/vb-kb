@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Generate MkDocs pages from KB Markdown source files."""
+"""Generate MkDocs pages from KB source files."""
 
 from __future__ import annotations
 
 import argparse
 import html
+import json
+import os
 import re
 import shutil
 from collections import defaultdict
@@ -14,6 +16,9 @@ from typing import Any
 from urllib.parse import urlparse
 
 import yaml
+from pydantic import ValidationError
+
+from kb.schemas import ChangelogRow, EdgeRecord, EmploymentHistoryRow, LookingForRow
 
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
 IMAGE_ONLY_RE = re.compile(
@@ -24,6 +29,8 @@ HTML_IMAGE_SRC_RE = re.compile(r"(<img\b[^>]*\ssrc=[\"'])(\./)?images/")
 FOOTNOTE_REF_RE = re.compile(r"\[\^([^\]]+)\](?!:)")
 FOOTNOTE_DEF_RE = re.compile(r"^\[\^([^\]]+)\]:")
 SLUG_SEPARATOR_RE = re.compile(r"[-_]+")
+MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
+
 PERSON_FIELDS: list[tuple[str, str]] = [
     ("firm", "Current Organization"),
     ("role", "Current Role"),
@@ -53,10 +60,15 @@ class Page:
     slug: str
     title: str
     entity_type: str
-    source_path: Path
+    entity_rel_path: str
+    index_path: Path
+    source_dir: Path
     output_path: Path
     metadata: dict[str, Any]
     body: str
+    employment_rows: list[EmploymentHistoryRow]
+    looking_for_rows: list[LookingForRow]
+    changelog_rows: list[ChangelogRow]
 
 
 @dataclass(frozen=True)
@@ -78,21 +90,79 @@ def split_frontmatter(markdown: str) -> tuple[dict[str, Any], str]:
     return metadata, body
 
 
-def load_page(path: Path, entity_type: str, output_path: Path) -> Page:
-    markdown = path.read_text(encoding="utf-8")
+def infer_entity_data_root(project_root: Path) -> Path:
+    candidate = project_root / "data-new"
+    if (candidate / "person").exists() and (candidate / "org").exists():
+        return candidate
+    return project_root / "data"
+
+
+def infer_notes_root(project_root: Path, entity_data_root: Path) -> Path:
+    candidate = entity_data_root / "notes"
+    if candidate.exists():
+        return candidate
+    fallback = project_root / "data" / "notes"
+    return fallback
+
+
+def load_jsonl_rows(path: Path, model_cls: type) -> list[Any]:
+    if not path.exists():
+        return []
+
+    rows: list[Any] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            text = line.strip()
+            if not text:
+                continue
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{path.as_posix()}:{line_number} JSON parse error: {exc.msg}") from exc
+            try:
+                rows.append(model_cls.model_validate(payload))
+            except ValidationError as exc:
+                raise ValueError(
+                    f"{path.as_posix()}:{line_number} schema error: {exc.errors()[0]['msg']}"
+                ) from exc
+    return rows
+
+
+def load_entity_page(index_path: Path, entity_type: str, output_path: Path, data_root: Path) -> Page:
+    entity_dir = index_path.parent
+    prefix = f"{entity_type}@"
+    if not entity_dir.name.startswith(prefix):
+        raise ValueError(f"Unexpected entity directory name: {entity_dir.as_posix()}")
+
+    slug = entity_dir.name[len(prefix) :]
+    markdown = index_path.read_text(encoding="utf-8")
     metadata, body = split_frontmatter(markdown)
+
     if entity_type == "person":
-        title = str(metadata.get("person") or path.stem.replace("-", " ").title())
+        title = str(metadata.get("person") or slug.replace("-", " ").title())
+        employment_rows = load_jsonl_rows(entity_dir / "employment-history.jsonl", EmploymentHistoryRow)
+        looking_for_rows = load_jsonl_rows(entity_dir / "looking-for.jsonl", LookingForRow)
     else:
-        title = str(metadata.get("org") or path.stem.replace("-", " ").title())
+        title = str(metadata.get("org") or slug.replace("-", " ").title())
+        employment_rows = []
+        looking_for_rows = []
+
+    changelog_rows = load_jsonl_rows(entity_dir / "changelog.jsonl", ChangelogRow)
+
+    entity_rel_path = entity_dir.relative_to(data_root).as_posix()
     return Page(
-        slug=path.stem,
+        slug=slug,
         title=title,
         entity_type=entity_type,
-        source_path=path,
+        entity_rel_path=entity_rel_path,
+        index_path=index_path,
+        source_dir=entity_dir,
         output_path=output_path,
         metadata=metadata,
         body=body,
+        employment_rows=employment_rows,
+        looking_for_rows=looking_for_rows,
+        changelog_rows=changelog_rows,
     )
 
 
@@ -337,9 +407,9 @@ def insert_affiliated_people_above_bio(body: str, metadata: dict[str, Any]) -> s
     return join_h2_sections(preamble, sections)
 
 
-def render_reference_section(page: Page) -> list[str]:
+def render_reference_section(page: Page, metadata: dict[str, Any]) -> list[str]:
     fields = PERSON_FIELDS if page.entity_type == "person" else ORG_FIELDS
-    items = render_reference_field_items(page.metadata, fields)
+    items = render_reference_field_items(metadata, fields)
     if not items:
         return []
     return [
@@ -378,7 +448,6 @@ def inject_bio_photo_wrap(body: str) -> str:
 
 
 def normalize_image_paths(body: str) -> str:
-    """Adjust image paths for MkDocs directory-style URLs."""
     body = MARKDOWN_IMAGE_SRC_RE.sub(r"\1../images/", body)
     body = HTML_IMAGE_SRC_RE.sub(r"\1../images/", body)
     return body
@@ -395,32 +464,338 @@ def remove_unreferenced_footnote_definitions(body: str) -> str:
     return "\n".join(filtered_lines)
 
 
-def render_page(page: Page) -> str:
+def is_external_destination(destination: str) -> bool:
+    lowered = destination.lower()
+    return lowered.startswith(("http://", "https://", "mailto:", "#"))
+
+
+def split_destination(destination: str) -> tuple[str, str]:
+    if "#" not in destination:
+        return destination, ""
+    path, fragment = destination.split("#", 1)
+    return path, f"#{fragment}"
+
+
+def resolve_destination(source_path: Path, destination: str) -> Path | None:
+    if not destination or is_external_destination(destination):
+        return None
+    path_part, _ = split_destination(destination)
+    if not path_part:
+        return None
+    return (source_path.parent / path_part).resolve()
+
+
+def rewrite_entity_links_in_text(
+    text: str,
+    *,
+    source_path: Path,
+    output_path: Path,
+    source_to_output: dict[Path, Path],
+) -> str:
+    def replace(match: re.Match[str]) -> str:
+        label = match.group(1)
+        destination = match.group(2)
+        resolved = resolve_destination(source_path, destination)
+        if resolved is None:
+            return match.group(0)
+
+        target = source_to_output.get(resolved)
+        if target is None:
+            return match.group(0)
+
+        _, fragment = split_destination(destination)
+        rel = os.path.relpath(target, start=output_path.parent).replace(os.sep, "/")
+        return f"[{label}]({rel}{fragment})"
+
+    return MARKDOWN_LINK_RE.sub(replace, text)
+
+
+def rewrite_links_in_value(
+    value: Any,
+    *,
+    source_path: Path,
+    output_path: Path,
+    source_to_output: dict[Path, Path],
+) -> Any:
+    if isinstance(value, str):
+        return rewrite_entity_links_in_text(
+            value,
+            source_path=source_path,
+            output_path=output_path,
+            source_to_output=source_to_output,
+        )
+    if isinstance(value, list):
+        return [
+            rewrite_links_in_value(
+                item,
+                source_path=source_path,
+                output_path=output_path,
+                source_to_output=source_to_output,
+            )
+            for item in value
+        ]
+    if isinstance(value, dict):
+        return {
+            key: rewrite_links_in_value(
+                item,
+                source_path=source_path,
+                output_path=output_path,
+                source_to_output=source_to_output,
+            )
+            for key, item in value.items()
+        }
+    return value
+
+
+def render_employment_history_section(
+    page: Page,
+    pages_by_entity_rel_path: dict[str, Page],
+    source_to_output: dict[Path, Path],
+) -> list[str]:
+    if page.entity_type != "person" or not page.employment_rows:
+        return []
+
+    lines = [
+        "## Employment History",
+        "",
+        "| Period | Organization | Role | Notes | Source |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+
+    for row in page.employment_rows:
+        org_text = row.organization
+        if row.organization_ref:
+            linked_page = pages_by_entity_rel_path.get(row.organization_ref)
+            if linked_page is not None:
+                rel = os.path.relpath(linked_page.output_path, start=page.output_path.parent).replace(
+                    os.sep, "/"
+                )
+                org_text = f"[{org_text}]({rel})"
+
+        notes_value = row.notes or "-"
+        if notes_value != "-":
+            notes_value = rewrite_entity_links_in_text(
+                notes_value,
+                source_path=page.index_path,
+                output_path=page.output_path,
+                source_to_output=source_to_output,
+            )
+
+        source_value = row.source or "-"
+        if source_value != "-":
+            source_value = rewrite_entity_links_in_text(
+                source_value,
+                source_path=page.index_path,
+                output_path=page.output_path,
+                source_to_output=source_to_output,
+            )
+
+        lines.append(
+            "| {period} | {org} | {role} | {notes} | {source} |".format(
+                period=clean_cell(row.period),
+                org=clean_cell(org_text),
+                role=clean_cell(row.role),
+                notes=clean_cell(notes_value),
+                source=clean_cell(source_value),
+            )
+        )
+
+    lines.append("")
+    return lines
+
+
+def render_looking_for_section(
+    page: Page,
+    source_to_output: dict[Path, Path],
+) -> list[str]:
+    if page.entity_type != "person" or not page.looking_for_rows:
+        return []
+
+    lines = [
+        "## Looking For",
+        "",
+        "| Ask | Details | Status | First Asked | Last Checked | Notes |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+
+    for row in page.looking_for_rows:
+        ask = rewrite_entity_links_in_text(
+            row.ask,
+            source_path=page.index_path,
+            output_path=page.output_path,
+            source_to_output=source_to_output,
+        )
+
+        details = row.details or "-"
+        if details != "-":
+            details = rewrite_entity_links_in_text(
+                details,
+                source_path=page.index_path,
+                output_path=page.output_path,
+                source_to_output=source_to_output,
+            )
+
+        notes = row.notes or "-"
+        if notes != "-":
+            notes = rewrite_entity_links_in_text(
+                notes,
+                source_path=page.index_path,
+                output_path=page.output_path,
+                source_to_output=source_to_output,
+            )
+
+        lines.append(
+            "| {ask} | {details} | {status} | {first_asked_at} | {last_checked_at} | {notes} |".format(
+                ask=clean_cell(ask),
+                details=clean_cell(details),
+                status=clean_cell(row.status.value),
+                first_asked_at=clean_cell(row.first_asked_at or "-"),
+                last_checked_at=clean_cell(row.last_checked_at or "-"),
+                notes=clean_cell(notes),
+            )
+        )
+
+    lines.append("")
+    return lines
+
+
+def render_changelog_section(page: Page, source_to_output: dict[Path, Path]) -> list[str]:
+    if not page.changelog_rows:
+        return []
+
+    lines = ["## Changelog", ""]
+    for row in page.changelog_rows:
+        summary = rewrite_entity_links_in_text(
+            row.summary,
+            source_path=page.index_path,
+            output_path=page.output_path,
+            source_to_output=source_to_output,
+        )
+        lines.append(f"- [{row.changed_at}] {summary}")
+    lines.append("")
+    return lines
+
+
+def relation_display(value: str) -> str:
+    return value.replace("_", " ")
+
+
+def load_entity_edges(page: Page) -> list[EdgeRecord]:
+    edges_dir = page.source_dir / "edges"
+    if not edges_dir.exists() or not edges_dir.is_dir():
+        return []
+
+    by_id: dict[str, EdgeRecord] = {}
+    for link_path in sorted(edges_dir.glob("edge@*.json"), key=lambda path: path.as_posix()):
+        target = link_path.resolve() if link_path.is_symlink() else link_path
+        if not target.exists():
+            continue
+        payload = json.loads(target.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            continue
+        record = EdgeRecord.model_validate(payload)
+        by_id[record.id] = record
+
+    return [by_id[key] for key in sorted(by_id)]
+
+
+def render_relations_section(page: Page, pages_by_entity_rel_path: dict[str, Page]) -> list[str]:
+    records = load_entity_edges(page)
+    if not records:
+        return []
+
+    lines = ["## Relations", ""]
+    for record in records:
+        if record.from_entity == page.entity_rel_path:
+            other = record.to_entity
+            arrow = "->"
+        elif record.to_entity == page.entity_rel_path:
+            other = record.from_entity
+            arrow = "<-"
+        else:
+            continue
+
+        other_page = pages_by_entity_rel_path.get(other)
+        if other_page is not None:
+            rel = os.path.relpath(other_page.output_path, start=page.output_path.parent).replace(os.sep, "/")
+            other_label = f"[{other_page.title}]({rel})"
+        else:
+            other_label = f"`{other}`"
+
+        lines.append(
+            f"- {relation_display(record.relation.value)} {arrow} {other_label} "
+            f"(first noted: {record.first_noted_at}, last verified: {record.last_verified_at}, edge: `{record.id}`)"
+        )
+
+    if len(lines) == 2:
+        return []
+
+    lines.append("")
+    return lines
+
+
+def render_page(
+    page: Page,
+    *,
+    source_to_output: dict[Path, Path],
+    pages_by_entity_rel_path: dict[str, Page],
+) -> str:
+    rewritten_metadata = rewrite_links_in_value(
+        page.metadata,
+        source_path=page.index_path,
+        output_path=page.output_path,
+        source_to_output=source_to_output,
+    )
+
     sections: list[str] = [f"# {page.title}", ""]
 
     if page.entity_type == "person":
-        sections.extend(render_person_quick_links(page.metadata))
+        sections.extend(render_person_quick_links(rewritten_metadata))
     else:
-        sections.extend(render_org_website_link(page.metadata))
+        sections.extend(render_org_website_link(rewritten_metadata))
 
     body = strip_leading_h1(page.body)
+    body = rewrite_entity_links_in_text(
+        body,
+        source_path=page.index_path,
+        output_path=page.output_path,
+        source_to_output=source_to_output,
+    )
     body = inject_bio_photo_wrap(body)
     body = normalize_image_paths(body)
     if page.entity_type == "person":
         body = move_looking_for_after_snapshot(body)
     else:
-        body = insert_affiliated_people_above_bio(body, page.metadata)
+        body = insert_affiliated_people_above_bio(body, rewritten_metadata)
     body = remove_unreferenced_footnote_definitions(body)
     if body:
         sections.append(body.rstrip())
         sections.append("")
-    sections.extend(render_reference_section(page))
+
+    sections.extend(
+        render_employment_history_section(
+            page,
+            pages_by_entity_rel_path=pages_by_entity_rel_path,
+            source_to_output=source_to_output,
+        )
+    )
+    sections.extend(render_looking_for_section(page, source_to_output=source_to_output))
+    sections.extend(render_changelog_section(page, source_to_output=source_to_output))
+    sections.extend(render_relations_section(page, pages_by_entity_rel_path=pages_by_entity_rel_path))
+    sections.extend(render_reference_section(page, metadata=rewritten_metadata))
+
     return "\n".join(sections).strip() + "\n"
 
 
-def render_note_page(page: NotePage) -> str:
-    sections: list[str] = [f"# {page.title}", ""]
-    body = strip_leading_h1(page.body)
+def render_note_page(note: NotePage, source_to_output: dict[Path, Path]) -> str:
+    sections: list[str] = [f"# {note.title}", ""]
+    body = strip_leading_h1(note.body)
+    body = rewrite_entity_links_in_text(
+        body,
+        source_path=note.source_path,
+        output_path=note.output_path,
+        source_to_output=source_to_output,
+    )
     body = normalize_image_paths(body)
     body = remove_unreferenced_footnote_definitions(body)
     if body:
@@ -429,37 +804,49 @@ def render_note_page(page: NotePage) -> str:
     return "\n".join(sections).strip() + "\n"
 
 
-def collect_pages(data_dir: Path, docs_dir: Path, entity_type: str) -> list[Page]:
-    source_dir = data_dir / entity_type
+def collect_entity_pages(data_root: Path, docs_dir: Path, entity_type: str) -> list[Page]:
+    source_dir = data_root / entity_type
     output_dir = docs_dir / entity_type
     output_dir.mkdir(parents=True, exist_ok=True)
+
     pages: list[Page] = []
-    for source_path in sorted(source_dir.glob("*.md")):
-        if source_path.stem.startswith("_"):
+    seen_slugs: set[str] = set()
+
+    for index_path in sorted(source_dir.rglob("index.md")):
+        entity_dir = index_path.parent
+        prefix = f"{entity_type}@"
+        if not entity_dir.name.startswith(prefix):
             continue
-        page = load_page(
-            path=source_path,
+
+        slug = entity_dir.name[len(prefix) :]
+        if slug in seen_slugs:
+            raise ValueError(f"Duplicate {entity_type} slug in data root: {slug}")
+        seen_slugs.add(slug)
+
+        page = load_entity_page(
+            index_path=index_path,
             entity_type=entity_type,
-            output_path=output_dir / source_path.name,
+            output_path=output_dir / f"{slug}.md",
+            data_root=data_root,
         )
         pages.append(page)
+
     return pages
 
 
-def collect_note_pages(data_dir: Path, docs_dir: Path) -> list[NotePage]:
-    notes_dir = data_dir / "notes"
+def collect_note_pages(notes_root: Path, docs_dir: Path) -> list[NotePage]:
     output_dir = docs_dir / "notes"
-    if not notes_dir.exists():
+    if not notes_root.exists():
         return []
 
     pages: list[NotePage] = []
-    for source_path in sorted(notes_dir.rglob("*.md")):
-        relative_path = source_path.relative_to(notes_dir)
+    for source_path in sorted(notes_root.rglob("*.md")):
+        relative_path = source_path.relative_to(notes_root)
         if any(part.startswith("_") for part in relative_path.parts):
             continue
         page = load_note_page(
             path=source_path,
-            notes_root=notes_dir,
+            notes_root=notes_root,
             output_path=output_dir / relative_path,
         )
         page.output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -467,15 +854,36 @@ def collect_note_pages(data_dir: Path, docs_dir: Path) -> list[NotePage]:
     return pages
 
 
-def copy_non_markdown_assets(data_dir: Path, docs_dir: Path) -> None:
-    for path in sorted(data_dir.rglob("*")):
-        if (
-            not path.is_file()
-            or path.suffix.lower() == ".md"
-            or path.name.startswith(".")
-        ):
+def copy_entity_images(pages: list[Page], docs_dir: Path) -> None:
+    for page in pages:
+        images_dir = page.source_dir / "images"
+        if not images_dir.exists() or not images_dir.is_dir():
             continue
-        destination = docs_dir / path.relative_to(data_dir)
+
+        destination_dir = docs_dir / page.entity_type / "images"
+        destination_dir.mkdir(parents=True, exist_ok=True)
+
+        for source_path in sorted(images_dir.iterdir(), key=lambda path: path.as_posix()):
+            if not source_path.is_file() or source_path.name.startswith("."):
+                continue
+
+            destination = destination_dir / source_path.name
+            if destination.exists():
+                if destination.read_bytes() == source_path.read_bytes():
+                    continue
+                raise ValueError(f"Image filename collision with different content: {destination.as_posix()}")
+            shutil.copy2(source_path, destination)
+
+
+def copy_note_assets(notes_root: Path, docs_dir: Path) -> None:
+    if not notes_root.exists():
+        return
+
+    destination_root = docs_dir / "notes"
+    for path in sorted(notes_root.rglob("*")):
+        if not path.is_file() or path.suffix.lower() == ".md" or path.name.startswith("."):
+            continue
+        destination = destination_root / path.relative_to(notes_root)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)
 
@@ -492,11 +900,11 @@ def copy_site_assets(project_root: Path, docs_dir: Path) -> None:
         shutil.copy2(path, destination)
 
 
-def render_people_index(people: list[Page]) -> str:
+def render_people_index(people: list[Page], source_label: str) -> str:
     lines = [
         "# People",
         "",
-        f"Generated from `{len(people)}` source files in `data/person/`.",
+        f"Generated from `{len(people)}` entity pages in `{source_label}/person/`.",
         "",
         "| Person | Current Role | Organization | Relationship | Updated |",
         "| --- | --- | --- | --- | --- |",
@@ -516,11 +924,11 @@ def render_people_index(people: list[Page]) -> str:
     return "\n".join(lines)
 
 
-def render_orgs_index(orgs: list[Page]) -> str:
+def render_orgs_index(orgs: list[Page], source_label: str) -> str:
     lines = [
         "# Organizations",
         "",
-        f"Generated from `{len(orgs)}` source files in `data/org/`.",
+        f"Generated from `{len(orgs)}` entity pages in `{source_label}/org/`.",
         "",
         "| Organization | Thesis | Relationship | Updated |",
         "| --- | --- | --- | --- |",
@@ -545,11 +953,11 @@ def format_note_category(parts: tuple[str, ...]) -> str:
     return " / ".join(title_from_slug(part) for part in parts)
 
 
-def render_notes_index(notes: list[NotePage]) -> str:
+def render_notes_index(notes: list[NotePage], source_label: str) -> str:
     lines = [
         "# Notes",
         "",
-        f"Generated from `{len(notes)}` source files in `data/notes/`.",
+        f"Generated from `{len(notes)}` source files in `{source_label}`.",
         "",
     ]
     if not notes:
@@ -566,18 +974,25 @@ def render_notes_index(notes: list[NotePage]) -> str:
         lines.extend([f"## {format_note_category(category)}", ""])
         for page in pages:
             relative_path = page.relative_path.as_posix()
-            lines.append(f"- [{page.title}](notes/{relative_path}) (`data/notes/{relative_path}`)")
+            lines.append(f"- [{page.title}](notes/{relative_path}) (`{source_label}/{relative_path}`)")
         lines.append("")
 
     return "\n".join(lines)
 
 
-def render_home(people: list[Page], orgs: list[Page], notes: list[NotePage]) -> str:
+def render_home(
+    people: list[Page],
+    orgs: list[Page],
+    notes: list[NotePage],
+    *,
+    entity_source_label: str,
+    notes_source_label: str,
+) -> str:
     return "\n".join(
         [
             "# Victor's Knowledge Base",
             "",
-            "This site is generated from raw Markdown files in `data/person/`, `data/org/`, and `data/notes/`.",
+            f"This site is generated from `{entity_source_label}/person/`, `{entity_source_label}/org/`, and `{notes_source_label}`.",
             "",
             f"- People profiles: **{len(people)}**",
             f"- Organization profiles: **{len(orgs)}**",
@@ -592,6 +1007,7 @@ def render_home(people: list[Page], orgs: list[Page], notes: list[NotePage]) -> 
             "## Notes",
             "",
             "- Pages are generated as view-only output from source files.",
+            "- Structured sections are rendered from JSONL for entity pages.",
             "- Frontmatter is rendered in a compact, collapsible reference section per page.",
             "- Edit `tools/build_site_content.py` to change how source data is rendered.",
             "",
@@ -599,31 +1015,73 @@ def render_home(people: list[Page], orgs: list[Page], notes: list[NotePage]) -> 
     )
 
 
+def build_source_to_output_map(project_root: Path, pages: list[Page]) -> dict[Path, Path]:
+    mapping: dict[Path, Path] = {}
+    for page in pages:
+        mapping[page.index_path.resolve()] = page.output_path
+
+        legacy_flat = project_root / "data" / page.entity_type / f"{page.slug}.md"
+        if legacy_flat.exists():
+            mapping[legacy_flat.resolve()] = page.output_path
+
+    return mapping
+
+
 def build_site_content(project_root: Path) -> None:
-    data_dir = project_root / "data"
+    entity_data_root = infer_entity_data_root(project_root)
+    notes_root = infer_notes_root(project_root, entity_data_root)
+
     docs_dir = project_root / "site_docs"
     if docs_dir.exists():
         shutil.rmtree(docs_dir)
     docs_dir.mkdir(parents=True, exist_ok=True)
 
-    people = collect_pages(data_dir=data_dir, docs_dir=docs_dir, entity_type="person")
-    orgs = collect_pages(data_dir=data_dir, docs_dir=docs_dir, entity_type="org")
-    notes = collect_note_pages(data_dir=data_dir, docs_dir=docs_dir)
+    people = collect_entity_pages(data_root=entity_data_root, docs_dir=docs_dir, entity_type="person")
+    orgs = collect_entity_pages(data_root=entity_data_root, docs_dir=docs_dir, entity_type="org")
+    notes = collect_note_pages(notes_root=notes_root, docs_dir=docs_dir)
 
-    for page in [*people, *orgs]:
-        page.output_path.write_text(render_page(page), encoding="utf-8")
-    for page in notes:
-        page.output_path.write_text(render_note_page(page), encoding="utf-8")
+    pages = [*people, *orgs]
+    pages_by_entity_rel_path = {page.entity_rel_path: page for page in pages}
+    source_to_output = build_source_to_output_map(project_root, pages)
 
-    copy_non_markdown_assets(data_dir=data_dir, docs_dir=docs_dir)
+    for page in pages:
+        page.output_path.write_text(
+            render_page(
+                page,
+                source_to_output=source_to_output,
+                pages_by_entity_rel_path=pages_by_entity_rel_path,
+            ),
+            encoding="utf-8",
+        )
+    for note in notes:
+        note.output_path.write_text(render_note_page(note, source_to_output=source_to_output), encoding="utf-8")
+
+    copy_entity_images(pages=pages, docs_dir=docs_dir)
+    copy_note_assets(notes_root=notes_root, docs_dir=docs_dir)
     copy_site_assets(project_root=project_root, docs_dir=docs_dir)
 
+    entity_source_label = entity_data_root.relative_to(project_root).as_posix()
+    notes_source_label = notes_root.relative_to(project_root).as_posix()
+
     (docs_dir / "index.md").write_text(
-        render_home(people=people, orgs=orgs, notes=notes), encoding="utf-8"
+        render_home(
+            people=people,
+            orgs=orgs,
+            notes=notes,
+            entity_source_label=entity_source_label,
+            notes_source_label=notes_source_label,
+        ),
+        encoding="utf-8",
     )
-    (docs_dir / "people.md").write_text(render_people_index(people), encoding="utf-8")
-    (docs_dir / "orgs.md").write_text(render_orgs_index(orgs), encoding="utf-8")
-    (docs_dir / "notes.md").write_text(render_notes_index(notes), encoding="utf-8")
+    (docs_dir / "people.md").write_text(
+        render_people_index(people=people, source_label=entity_source_label), encoding="utf-8"
+    )
+    (docs_dir / "orgs.md").write_text(
+        render_orgs_index(orgs=orgs, source_label=entity_source_label), encoding="utf-8"
+    )
+    (docs_dir / "notes.md").write_text(
+        render_notes_index(notes=notes, source_label=notes_source_label), encoding="utf-8"
+    )
     (docs_dir / ".gitkeep").write_text("", encoding="utf-8")
 
 
@@ -633,7 +1091,7 @@ def parse_args() -> argparse.Namespace:
         "--project-root",
         default=Path(__file__).resolve().parents[1],
         type=Path,
-        help="Repository root containing data/ and mkdocs.yml.",
+        help="Repository root containing data roots and mkdocs.yml.",
     )
     return parser.parse_args()
 
