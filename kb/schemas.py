@@ -7,6 +7,15 @@ from enum import Enum
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 PARTIAL_DATE_RE = re.compile(r"^\d{4}(?:-\d{2})?(?:-\d{2})?$")
+ENTITY_REL_PATH_RE = re.compile(
+    r"^(?P<kind>person|org)/(?P<shard>[a-z0-9]{2})/(?P<prefix>person|org)@(?P<slug>[a-z0-9][a-z0-9-]*)$"
+)
+SOURCE_PATH_RE = re.compile(r"^data/(person|org|notes)/.+\.md$")
+SNAKE_TOKEN_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+EDGE_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+EMPLOYMENT_ROW_ID_RE = re.compile(r"^employment-\d{3}$")
+LOOKING_FOR_ROW_ID_RE = re.compile(r"^ask-\d{3}$")
+CHANGELOG_ROW_ID_RE = re.compile(r"^change-\d{3}$")
 
 
 class KBBaseModel(BaseModel):
@@ -21,18 +30,26 @@ class LookingForStatus(str, Enum):
 
 class EdgeRelation(str, Enum):
     works_at = "works_at"
-    worked_at = "worked_at"
-    founded = "founded"
-    co_founded = "co_founded"
-    invested_in = "invested_in"
+    founds = "founds"
+    co_founds = "co_founds"
+    invests_in = "invests_in"
     advises = "advises"
-    introduced = "introduced"
+    introduces = "introduces"
     knows = "knows"
-    partnered_with = "partnered_with"
-    acquired = "acquired"
+    partners_with = "partners_with"
+    acquires = "acquires"
 
 
 EDGE_RELATIONS_V1 = tuple(item.value for item in EdgeRelation)
+LEGACY_EDGE_RELATION_ALIASES = {
+    "worked_at": "works_at",
+    "founded": "founds",
+    "co_founded": "co_founds",
+    "invested_in": "invests_in",
+    "introduced": "introduces",
+    "partnered_with": "partners_with",
+    "acquired": "acquires",
+}
 
 
 def parse_partial_date(value: str) -> str:
@@ -61,7 +78,43 @@ def parse_partial_date(value: str) -> str:
     return text
 
 
-ENTITY_PATH_RE = re.compile(r"^(person|org)/[^/]+/(person|org)@[^/]+$")
+def partial_date_sort_key(value: str) -> tuple[int, int, int]:
+    text = parse_partial_date(value)
+    parts = [int(part) for part in text.split("-")]
+    year = parts[0]
+    month = parts[1] if len(parts) > 1 else 0
+    day = parts[2] if len(parts) > 2 else 0
+    return (year, month, day)
+
+
+def shard_for_slug(slug: str) -> str:
+    letters = re.sub(r"[^a-z0-9]", "", slug.lower())
+    if not letters:
+        return "zz"
+    if len(letters) == 1:
+        return f"{letters}z"
+    return letters[:2]
+
+
+def validate_entity_rel_path(value: str) -> str:
+    text = value.strip()
+    match = ENTITY_REL_PATH_RE.match(text)
+    if not match:
+        raise ValueError("must match person/<shard>/person@<slug> or org/<shard>/org@<slug>")
+
+    kind = match.group("kind")
+    prefix = match.group("prefix")
+    shard = match.group("shard")
+    slug = match.group("slug")
+
+    if kind != prefix:
+        raise ValueError("entity kind and folder prefix must match")
+
+    expected_shard = shard_for_slug(slug)
+    if shard != expected_shard:
+        raise ValueError(f"invalid shard for slug {slug}; expected {expected_shard}")
+
+    return text
 
 
 class EmploymentHistoryRow(KBBaseModel):
@@ -76,12 +129,36 @@ class EmploymentHistoryRow(KBBaseModel):
     source_section: str
     source_row: int | None = None
 
-    @field_validator("id", "period", "organization", "role", "source_path", "source_section")
+    @field_validator("period", "organization", "role")
     @classmethod
     def validate_non_empty_text(cls, value: str) -> str:
         text = value.strip()
         if not text:
             raise ValueError("must be non-empty")
+        return text
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        text = value.strip()
+        if not EMPLOYMENT_ROW_ID_RE.match(text):
+            raise ValueError("id must match employment-<3 digits>")
+        return text
+
+    @field_validator("source_path")
+    @classmethod
+    def validate_source_path(cls, value: str) -> str:
+        text = value.strip()
+        if not SOURCE_PATH_RE.match(text):
+            raise ValueError("source_path must match data/(person|org|notes)/**/*.md")
+        return text
+
+    @field_validator("source_section")
+    @classmethod
+    def validate_source_section(cls, value: str) -> str:
+        text = value.strip()
+        if not SNAKE_TOKEN_RE.match(text):
+            raise ValueError("source_section must be snake_case")
         return text
 
     @field_validator("source_row")
@@ -101,9 +178,7 @@ class EmploymentHistoryRow(KBBaseModel):
         text = value.strip()
         if not text:
             return None
-        if not ENTITY_PATH_RE.match(text):
-            raise ValueError("organization_ref must point to person/*/person@* or org/*/org@*")
-        return text
+        return validate_entity_rel_path(text)
 
 
 class LookingForRow(KBBaseModel):
@@ -118,12 +193,36 @@ class LookingForRow(KBBaseModel):
     source_section: str
     source_row: int | None = None
 
-    @field_validator("id", "ask", "source_path", "source_section")
+    @field_validator("ask")
     @classmethod
     def validate_non_empty_text(cls, value: str) -> str:
         text = value.strip()
         if not text:
             raise ValueError("must be non-empty")
+        return text
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        text = value.strip()
+        if not LOOKING_FOR_ROW_ID_RE.match(text):
+            raise ValueError("id must match ask-<3 digits>")
+        return text
+
+    @field_validator("source_path")
+    @classmethod
+    def validate_source_path(cls, value: str) -> str:
+        text = value.strip()
+        if not SOURCE_PATH_RE.match(text):
+            raise ValueError("source_path must match data/(person|org|notes)/**/*.md")
+        return text
+
+    @field_validator("source_section")
+    @classmethod
+    def validate_source_section(cls, value: str) -> str:
+        text = value.strip()
+        if not SNAKE_TOKEN_RE.match(text):
+            raise ValueError("source_section must be snake_case")
         return text
 
     @field_validator("source_row")
@@ -153,12 +252,28 @@ class ChangelogRow(KBBaseModel):
     source_path: str
     source_row: int | None = None
 
-    @field_validator("id", "summary", "source_path")
+    @field_validator("summary")
     @classmethod
     def validate_non_empty_text(cls, value: str) -> str:
         text = value.strip()
         if not text:
             raise ValueError("must be non-empty")
+        return text
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        text = value.strip()
+        if not CHANGELOG_ROW_ID_RE.match(text):
+            raise ValueError("id must match change-<3 digits>")
+        return text
+
+    @field_validator("source_path")
+    @classmethod
+    def validate_source_path(cls, value: str) -> str:
+        text = value.strip()
+        if not SOURCE_PATH_RE.match(text):
+            raise ValueError("source_path must match data/(person|org|notes)/**/*.md")
         return text
 
     @field_validator("changed_at")
@@ -193,17 +308,22 @@ class EdgeRecord(KBBaseModel):
     @classmethod
     def validate_id(cls, value: str) -> str:
         text = value.strip()
-        if not text:
-            raise ValueError("id must be non-empty")
+        if not EDGE_ID_RE.match(text):
+            raise ValueError("id must be lowercase kebab-case")
         return text
+
+    @field_validator("relation", mode="before")
+    @classmethod
+    def normalize_relation(cls, value: str | EdgeRelation) -> str | EdgeRelation:
+        if isinstance(value, EdgeRelation):
+            return value
+        text = str(value).strip()
+        return LEGACY_EDGE_RELATION_ALIASES.get(text, text)
 
     @field_validator("from_entity", "to_entity")
     @classmethod
     def validate_entity_paths(cls, value: str) -> str:
-        text = value.strip()
-        if not ENTITY_PATH_RE.match(text):
-            raise ValueError("must be person/*/person@* or org/*/org@*")
-        return text
+        return validate_entity_rel_path(value)
 
     @field_validator("first_noted_at", "last_verified_at", "valid_from", "valid_to")
     @classmethod
@@ -220,6 +340,8 @@ class EdgeRecord(KBBaseModel):
             text = str(item).strip()
             if not text:
                 continue
+            if text in normalized:
+                continue
             normalized.append(text)
         if not normalized:
             raise ValueError("sources must contain at least one non-empty item")
@@ -229,4 +351,12 @@ class EdgeRecord(KBBaseModel):
     def validate_edge_consistency(self) -> "EdgeRecord":
         if self.from_entity == self.to_entity:
             raise ValueError("from and to must be different entities")
+
+        if partial_date_sort_key(self.last_verified_at) < partial_date_sort_key(self.first_noted_at):
+            raise ValueError("last_verified_at must be on/after first_noted_at")
+
+        if self.valid_from and self.valid_to:
+            if partial_date_sort_key(self.valid_to) < partial_date_sort_key(self.valid_from):
+                raise ValueError("valid_to must be on/after valid_from")
+
         return self

@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/da/person@david-ongchoco",
+  "id": "employment-david-ongchoco-employment-001",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Co-founder and Investor | Period: Current | Details: Extracted from frontmatter firm/role.",
+  "relation": "works_at",
+  "sources": [
+    "person/da/person@david-ongchoco/employment-history.jsonl#employment-001",
+    "data/person/david-ongchoco.md",
+    "frontmatter"
+  ],
+  "to": "org/co/org@comma-capital",
+  "valid_from": null,
+  "valid_to": null
+}

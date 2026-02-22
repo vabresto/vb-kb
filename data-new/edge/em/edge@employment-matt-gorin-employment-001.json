@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/ma/person@matt-gorin",
+  "id": "employment-matt-gorin-employment-001",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Co-founder and Managing Partner | Period: Current | Details: Extracted from frontmatter firm/role.",
+  "relation": "works_at",
+  "sources": [
+    "person/ma/person@matt-gorin/employment-history.jsonl#employment-001",
+    "data/person/matt-gorin.md",
+    "frontmatter"
+  ],
+  "to": "org/co/org@contour-venture-partners",
+  "valid_from": null,
+  "valid_to": null
+}

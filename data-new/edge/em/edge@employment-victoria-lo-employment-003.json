@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/vi/person@victoria-lo",
+  "id": "employment-victoria-lo-employment-003",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Senior Software Engineer | Period: Jan 2022 - Aug 2022 | Details: Prior full-time role.",
+  "relation": "works_at",
+  "sources": [
+    "person/vi/person@victoria-lo/employment-history.jsonl#employment-003",
+    "data/person/victoria-lo.md",
+    "[^victoria-linkedin]"
+  ],
+  "to": "org/co/org@coinbase",
+  "valid_from": null,
+  "valid_to": null
+}

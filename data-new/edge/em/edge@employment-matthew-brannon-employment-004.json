@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/ma/person@matthew-brannon",
+  "id": "employment-matthew-brannon-employment-004",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Director of Education | Period: Mar 2020 - Mar 2021 | Details: Expanded production and curriculum operations; helped launch Webflow University 2.0.",
+  "relation": "works_at",
+  "sources": [
+    "person/ma/person@matthew-brannon/employment-history.jsonl#employment-004",
+    "data/person/matthew-brannon.md",
+    "[^matthew-linkedin]"
+  ],
+  "to": "org/we/org@webflow",
+  "valid_from": null,
+  "valid_to": null
+}

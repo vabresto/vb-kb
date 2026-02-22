@@ -150,7 +150,7 @@ def collect_changed_paths(project_root: Path, data_root: Path) -> set[Path]:
             value = line.strip()
             if not value:
                 continue
-            changed.add((project_root / value).resolve())
+            changed.add((project_root / value).absolute())
 
     untracked_cmd = [
         "git",
@@ -173,7 +173,7 @@ def collect_changed_paths(project_root: Path, data_root: Path) -> set[Path]:
             value = line.strip()
             if not value:
                 continue
-            changed.add((project_root / value).resolve())
+            changed.add((project_root / value).absolute())
 
     return changed
 
@@ -183,9 +183,9 @@ def normalize_scope_paths(project_root: Path, paths: list[str]) -> set[Path]:
     for raw in paths:
         candidate = Path(raw)
         if not candidate.is_absolute():
-            candidate = (project_root / candidate).resolve()
+            candidate = (project_root / candidate).absolute()
         else:
-            candidate = candidate.resolve()
+            candidate = candidate.absolute()
         scoped.add(candidate)
     return scoped
 
@@ -289,6 +289,7 @@ def validate_jsonl(
     project_root: Path,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
     if not path.exists():
         append_issue(
             issues,
@@ -330,7 +331,22 @@ def validate_jsonl(
                 )
                 continue
 
-            rows.append(record.model_dump(by_alias=True))
+            normalized = record.model_dump(by_alias=True)
+            row_id = str(normalized.get("id") or "").strip()
+            if row_id:
+                if row_id in seen_ids:
+                    append_issue(
+                        issues,
+                        code="duplicate_row_id",
+                        path=path,
+                        message=f"duplicate row id {row_id}",
+                        line=line_number,
+                        project_root=project_root,
+                    )
+                    continue
+                seen_ids.add(row_id)
+
+            rows.append(normalized)
 
     return rows
 
@@ -446,6 +462,17 @@ def validate_edge_files(
             )
             continue
 
+        raw_relation = payload.get("relation")
+        canonical_relation = record.relation.value
+        if isinstance(raw_relation, str) and raw_relation.strip() != canonical_relation:
+            append_issue(
+                issues,
+                code="non_canonical_relation",
+                path=edge_file.path,
+                message=f"use canonical relation '{canonical_relation}' instead of '{raw_relation.strip()}'",
+                project_root=project_root,
+            )
+
         expected_name = f"edge@{record.id}.json"
         if edge_file.path.name != expected_name:
             append_issue(
@@ -493,9 +520,20 @@ def validate_edge_files(
     symlinks_by_edge_file: dict[str, list[Path]] = {}
     edge_root = data_root / "edge"
 
-    for rel_dir, entity in sorted(entities.items()):
-        if not is_entity_in_scope(entity, scope_paths):
-            continue
+    scan_entities: dict[str, EntityRecord] = {}
+    if scope_paths is None:
+        scan_entities = dict(entities)
+    else:
+        for rel_dir, entity in entities.items():
+            if is_entity_in_scope(entity, scope_paths):
+                scan_entities[rel_dir] = entity
+        for record, _ in edge_by_id.values():
+            if record.from_entity in entities:
+                scan_entities[record.from_entity] = entities[record.from_entity]
+            if record.to_entity in entities:
+                scan_entities[record.to_entity] = entities[record.to_entity]
+
+    for rel_dir, entity in sorted(scan_entities.items()):
 
         edges_dir = entity.directory / "edges"
         if not edges_dir.exists() or not edges_dir.is_dir():
@@ -551,7 +589,10 @@ def validate_edge_files(
             continue
 
         canonical_edge = edge_file.path.resolve().as_posix()
-        observed_symlinks = sorted(symlinks_by_edge_file.get(canonical_edge, []))
+        observed_symlinks = sorted(
+            symlinks_by_edge_file.get(canonical_edge, []),
+            key=lambda path: path.as_posix(),
+        )
 
         expected_paths: list[Path] = []
         if record.from_entity in entities:
@@ -559,7 +600,7 @@ def validate_edge_files(
         if record.to_entity in entities:
             expected_paths.append(entities[record.to_entity].directory / "edges" / f"edge@{record.id}.json")
 
-        unique_observed = {path.resolve().as_posix() for path in observed_symlinks}
+        unique_observed = {path.as_posix() for path in observed_symlinks}
         if len(unique_observed) != 2:
             append_issue(
                 issues,

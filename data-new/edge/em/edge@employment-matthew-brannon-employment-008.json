@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/ma/person@matthew-brannon",
+  "id": "employment-matthew-brannon-employment-008",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Creator, Writer, and Director | Period: Jan 2009 - Jan 2014 | Details: Wrote/directed 170 music lessons and published instructional books.",
+  "relation": "works_at",
+  "sources": [
+    "person/ma/person@matthew-brannon/employment-history.jsonl#employment-008",
+    "data/person/matthew-brannon.md",
+    "[^matthew-linkedin]"
+  ],
+  "to": "org/pr/org@pro-series-guided-practice",
+  "valid_from": null,
+  "valid_to": null
+}

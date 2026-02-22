@@ -70,15 +70,18 @@ Required files per entity (v1):
 Frozen enum values:
 
 - `works_at`
-- `worked_at`
-- `founded`
-- `co_founded`
-- `invested_in`
+- `founds`
+- `co_founds`
+- `invests_in`
 - `advises`
-- `introduced`
+- `introduces`
 - `knows`
-- `partnered_with`
-- `acquired`
+- `partners_with`
+- `acquires`
+
+Normalization rule:
+
+- Legacy past-tense spellings (`worked_at`, `founded`, `co_founded`, `invested_in`, `introduced`, `partnered_with`, `acquired`) are accepted on read and normalized to the present-tense canonical enum during validation/write paths.
 
 ## Edge Required Fields (v1)
 

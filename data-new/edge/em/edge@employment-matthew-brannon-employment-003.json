@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/ma/person@matthew-brannon",
+  "id": "employment-matthew-brannon-employment-003",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: VP of Education | Period: Mar 2021 - Mar 2022 | Details: Scaled education function across video, docs, and education design.",
+  "relation": "works_at",
+  "sources": [
+    "person/ma/person@matthew-brannon/employment-history.jsonl#employment-003",
+    "data/person/matthew-brannon.md",
+    "[^matthew-linkedin]"
+  ],
+  "to": "org/we/org@webflow",
+  "valid_from": null,
+  "valid_to": null
+}

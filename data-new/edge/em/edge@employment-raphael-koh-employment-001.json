@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/ra/person@raphael-koh",
+  "id": "employment-raphael-koh-employment-001",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Software Engineer | Period: Aug 2021 - Present | Details: Full-time role in New York, NY.",
+  "relation": "works_at",
+  "sources": [
+    "person/ra/person@raphael-koh/employment-history.jsonl#employment-001",
+    "data/person/raphael-koh.md",
+    "[^raphael-linkedin]"
+  ],
+  "to": "org/ja/org@jane-street",
+  "valid_from": null,
+  "valid_to": null
+}

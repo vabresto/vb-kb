@@ -35,6 +35,8 @@ uvx prek run kb-newly-added-urls-reachable --all-files
 uv run kb validate --pretty
 uv run kb validate --changed --pretty
 uv run kb migrate-v2 --output-dir data-new
+uv run kb derive-employment-edges
+uv run kb sync-edges
 ```
 
 ## Local website preview

@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/an/person@andrei-serban",
+  "id": "employment-andrei-serban-employment-001",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Founder | Period: 2024 - Present (documented) | Details: TechCrunch reports Serban left Rippling and founded Console in 2024.",
+  "relation": "works_at",
+  "sources": [
+    "person/an/person@andrei-serban/employment-history.jsonl#employment-001",
+    "data/person/andrei-serban.md",
+    "[^andrei-techcrunch]"
+  ],
+  "to": "org/co/org@console",
+  "valid_from": null,
+  "valid_to": null
+}

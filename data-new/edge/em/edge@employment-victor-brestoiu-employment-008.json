@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/vi/person@victor-brestoiu",
+  "id": "employment-victor-brestoiu-employment-008",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Associate Programmer (Game Development) | Period: May 2017 - Aug 2017 | Details: 4-month role in Vancouver, Canada Area.",
+  "relation": "works_at",
+  "sources": [
+    "person/vi/person@victor-brestoiu/employment-history.jsonl#employment-008",
+    "data/person/victor-brestoiu.md",
+    "[^victor-linkedin]"
+  ],
+  "to": "org/re/org@relic-entertainment",
+  "valid_from": null,
+  "valid_to": null
+}

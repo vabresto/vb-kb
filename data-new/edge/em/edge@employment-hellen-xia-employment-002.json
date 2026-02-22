@@ -1,0 +1,17 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-22",
+  "from": "person/he/person@hellen-xia",
+  "id": "employment-hellen-xia-employment-002",
+  "last_verified_at": "2026-02-22",
+  "notes": "Role: Senior Associate | Period: 2019 (documented) | Details: Listed on University of Waterloo SAF SVF Fall 2019 team page.",
+  "relation": "works_at",
+  "sources": [
+    "person/he/person@hellen-xia/employment-history.jsonl#employment-002",
+    "data/person/hellen-xia.md",
+    "[^hellen-svf-team]"
+  ],
+  "to": "org/un/org@university-of-waterloo-student-venture-fund",
+  "valid_from": null,
+  "valid_to": null
+}
