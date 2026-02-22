@@ -32,6 +32,9 @@ uv run python tools/check_new_urls.py
 uvx prek run kb-entity-first-mention-links --files data/person/victor-brestoiu.md
 uvx prek run kb-entity-first-mention-links --files data/notes/reflections/long-form/2026-02-19-post-mortem-inbot.md
 uvx prek run kb-newly-added-urls-reachable --all-files
+uv run kb validate --pretty
+uv run kb validate --changed --pretty
+uv run kb migrate-v2 --output-dir data-new
 ```
 
 ## Local website preview
