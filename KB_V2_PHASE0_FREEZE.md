@@ -77,11 +77,8 @@ Optional keys:
 
 `changelog.jsonl` row shape:
 
-- `id` (string)
-- `changed_at` (partial date: `YYYY` | `YYYY-MM` | `YYYY-MM-DD`)
-- `summary` (string)
-- `source_path` (string)
-- `source_row` (nullable integer >= 1)
+- `date` (partial date: `YYYY` | `YYYY-MM` | `YYYY-MM-DD`)
+- `note` (string)
 
 ## Edge Relation Enum v1
 

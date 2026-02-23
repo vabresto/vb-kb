@@ -750,15 +750,20 @@ def render_changelog_section(page: Page, source_to_output: dict[Path, Path]) -> 
     if not page.changelog_rows:
         return []
 
-    lines = ["## Changelog", ""]
+    lines = [
+        "## Changelog",
+        "",
+        "| Date | Note |",
+        "| --- | --- |",
+    ]
     for row in page.changelog_rows:
-        summary = rewrite_entity_links_in_text(
-            row.summary,
+        note = rewrite_entity_links_in_text(
+            row.note,
             source_path=page.index_path,
             output_path=page.output_path,
             source_to_output=source_to_output,
         )
-        lines.append(f"- [{row.changed_at}] {summary}")
+        lines.append(f"| {clean_cell(row.date)} | {clean_cell(note)} |")
     lines.append("")
     return lines
 

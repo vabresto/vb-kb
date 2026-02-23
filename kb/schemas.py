@@ -18,7 +18,6 @@ SNAKE_TOKEN_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 EDGE_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 EMPLOYMENT_ROW_ID_RE = re.compile(r"^employment-\d{3}$")
 LOOKING_FOR_ROW_ID_RE = re.compile(r"^ask-\d{3}$")
-CHANGELOG_ROW_ID_RE = re.compile(r"^change-\d{3}$")
 SOURCE_ID_RE = re.compile(r"^source@[a-z0-9]+(?:-[a-z0-9]+)*$")
 CITATION_KEY_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 NOTE_TYPE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -302,13 +301,10 @@ class LookingForRow(KBBaseModel):
 
 
 class ChangelogRow(KBBaseModel):
-    id: str
-    changed_at: str
-    summary: str
-    source_path: str
-    source_row: int | None = None
+    date: str
+    note: str
 
-    @field_validator("summary")
+    @field_validator("note")
     @classmethod
     def validate_non_empty_text(cls, value: str) -> str:
         text = value.strip()
@@ -316,32 +312,10 @@ class ChangelogRow(KBBaseModel):
             raise ValueError("must be non-empty")
         return text
 
-    @field_validator("id")
+    @field_validator("date")
     @classmethod
-    def validate_id(cls, value: str) -> str:
-        text = value.strip()
-        if not CHANGELOG_ROW_ID_RE.match(text):
-            raise ValueError("id must match change-<3 digits>")
-        return text
-
-    @field_validator("source_path")
-    @classmethod
-    def validate_source_path(cls, value: str) -> str:
-        return validate_canonical_index_path(value, field_name="source_path")
-
-    @field_validator("changed_at")
-    @classmethod
-    def validate_changed_at(cls, value: str) -> str:
+    def validate_date(cls, value: str) -> str:
         return parse_partial_date(value)
-
-    @field_validator("source_row")
-    @classmethod
-    def validate_source_row(cls, value: int | None) -> int | None:
-        if value is None:
-            return None
-        if value < 1:
-            raise ValueError("source_row must be >= 1")
-        return value
 
 
 class SourceRecord(KBBaseModel):
