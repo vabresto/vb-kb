@@ -12,6 +12,14 @@
 uv sync
 ```
 
+## Command discovery
+
+```bash
+just
+```
+
+The `justfile` in the repo root lists common workflows (validation, migrations, tests, site build/serve, and MCP server commands).
+
 ## Validate data
 
 ```bash
