@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/jo/person@john-frankel",
+  "id": "citation-person-john-frankel-frontmatter",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^frontmatter] in person/jo/person@john-frankel",
+  "relation": "cites",
+  "sources": [
+    "source/fr/source@frontmatter"
+  ],
+  "to": "source/fr/source@frontmatter",
+  "valid_from": null,
+  "valid_to": null
+}

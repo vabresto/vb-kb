@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/ga/person@gabi-monico",
   "id": "employment-gabi-monico-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Senior Associate | Period: Current | Details: Extracted from frontmatter firm/role.",
   "relation": "works_at",
   "sources": [
-    "person/ga/person@gabi-monico/employment-history.jsonl#employment-001",
-    "data/person/gabi-monico.md",
-    "frontmatter"
+    "source/fr/source@frontmatter"
   ],
   "to": "org/pr/org@primary-venture-partners",
   "valid_from": null,

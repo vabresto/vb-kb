@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/al/person@alex-petrut",
   "id": "employment-alex-petrut-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Team hire (role not publicly detailed in open article body) | Period: 2021 (documented) | Details: SBJ metadata states Alex Petrut was recently hired as Stoked expanded.",
   "relation": "works_at",
   "sources": [
-    "person/al/person@alex-petrut/employment-history.jsonl#employment-001",
-    "data/person/alex-petrut.md",
-    "[^alex-sbj]"
+    "source/al/source@alex-sbj"
   ],
   "to": "org/st/org@stoked-management",
   "valid_from": null,

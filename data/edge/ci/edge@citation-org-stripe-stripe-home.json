@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/st/org@stripe",
+  "id": "citation-org-stripe-stripe-home",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^stripe-home] in org/st/org@stripe",
+  "relation": "cites",
+  "sources": [
+    "source/st/source@stripe-home"
+  ],
+  "to": "source/st/source@stripe-home",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/ve/org@very-bright-design",
+  "id": "citation-org-very-bright-design-vbd-ram",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^vbd-ram] in org/ve/org@very-bright-design",
+  "relation": "cites",
+  "sources": [
+    "source/vb/source@vbd-ram"
+  ],
+  "to": "source/vb/source@vbd-ram",
+  "valid_from": null,
+  "valid_to": null
+}

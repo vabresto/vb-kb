@@ -11,7 +11,7 @@ Entity directories:
 
 - `person@<id>`
 - `org@<id>`
-- `note@<id>`
+- `source@<id>`
 - `edge@<id>.json`
 
 Canonical root:
@@ -24,7 +24,7 @@ Sharding rule (v1):
 - Canonical entity paths:
   - `data/person/<shard>/person@<slug>/`
   - `data/org/<shard>/org@<slug>/`
-  - `data/note/<shard>/note@<slug>/`
+  - `data/source/<shard>/source@<slug>/`
 
 Required files per entity (v1):
 
@@ -36,7 +36,7 @@ Required files per entity (v1):
 
 `index.md` frontmatter required keys:
 
-- `id` (string, format: `note@<slug>`)
+- `id` (string, format: `source@<slug>`)
 - `title` (string)
 - `note-type` (snake_case string)
 - `source-path` (string, path to legacy note source)
@@ -129,9 +129,9 @@ Org markdown:
 
 - `data-old/org/<slug>.md` -> `data/org/<shard>/org@<slug>/index.md`
 
-Notes markdown:
+Sources markdown:
 
-- `data-old/notes/<...>/<slug>.md` -> `data/note/<shard>/note@<normalized-path-slug>/index.md`
+- `data-old/notes/<...>/<slug>.md` -> `data/source/<shard>/source@<normalized-path-slug>/index.md`
 
 Entity links in markdown/frontmatter:
 

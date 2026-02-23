@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/fu/org@fuzzbuzz",
+  "id": "citation-org-fuzzbuzz-fuzzbuzz-yc",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^fuzzbuzz-yc] in org/fu/org@fuzzbuzz",
+  "relation": "cites",
+  "sources": [
+    "source/fu/source@fuzzbuzz-yc"
+  ],
+  "to": "source/fu/source@fuzzbuzz-yc",
+  "valid_from": null,
+  "valid_to": null
+}

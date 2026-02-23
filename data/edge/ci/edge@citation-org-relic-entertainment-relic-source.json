@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/re/org@relic-entertainment",
+  "id": "citation-org-relic-entertainment-relic-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^relic-source] in org/re/org@relic-entertainment",
+  "relation": "cites",
+  "sources": [
+    "source/re/source@relic-source"
+  ],
+  "to": "source/re/source@relic-source",
+  "valid_from": null,
+  "valid_to": null
+}

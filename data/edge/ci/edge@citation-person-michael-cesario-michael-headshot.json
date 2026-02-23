@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/mi/person@michael-cesario",
+  "id": "citation-person-michael-cesario-michael-headshot",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^michael-headshot] in person/mi/person@michael-cesario",
+  "relation": "cites",
+  "sources": [
+    "source/mi/source@michael-headshot"
+  ],
+  "to": "source/mi/source@michael-headshot",
+  "valid_from": null,
+  "valid_to": null
+}

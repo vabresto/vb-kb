@@ -45,12 +45,12 @@ def test_run_transaction_rolls_back_new_file_on_validation_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     project_root, data_root = _init_repo(tmp_path)
-    target = data_root / "note" / "te" / "note@test-note" / "index.md"
+    target = data_root / "source" / "te" / "source@test-note" / "index.md"
 
     def apply_changes() -> dict[str, object]:
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text("---\nid: note@test-note\n---\n\ncontent\n", encoding="utf-8")
-        return {"index_path": "data/note/te/note@test-note/index.md"}
+        target.write_text("---\nid: source@test-note\n---\n\ncontent\n", encoding="utf-8")
+        return {"index_path": "data/source/te/source@test-note/index.md"}
 
     monkeypatch.setattr(
         mcp_server,
@@ -83,7 +83,7 @@ def test_run_transaction_rolls_back_modified_file_on_commit_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     project_root, data_root = _init_repo(tmp_path)
-    target = data_root / "note" / "te" / "note@test-note" / "index.md"
+    target = data_root / "source" / "te" / "source@test-note" / "index.md"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("before\n", encoding="utf-8")
     _run_git(project_root, "add", ".")
@@ -117,7 +117,7 @@ def test_run_transaction_rolls_back_modified_file_on_commit_failure(
 
     def apply_changes() -> dict[str, object]:
         target.write_text("after\n", encoding="utf-8")
-        return {"index_path": "data/note/te/note@test-note/index.md"}
+        return {"index_path": "data/source/te/source@test-note/index.md"}
 
     result = mcp_server.run_transaction(
         project_root=project_root,

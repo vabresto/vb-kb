@@ -81,12 +81,12 @@ Rules:
 
 - Preserve provenance during extraction.
 - Preserve link integrity for first entity mentions in narrative sections.
-- Migrate legacy notes into canonical note folders with `note@<id>` frontmatter IDs.
+- Migrate legacy notes into canonical source folders with `source@<id>` frontmatter IDs (`source-type: note`).
 
 Exit criteria:
 
 - Current structured person/org data represented in JSONL.
-- Legacy notes represented as canonical `data/note/**/note@*/index.md` records.
+- Legacy notes represented as canonical `data/source/**/source@*/index.md` records.
 - Spot checks on representative entities pass schema and content parity checks.
 
 ## Phase 4: Edge Canonicalization and Backlink Symlinks
@@ -111,7 +111,7 @@ Scope:
 - Render narrative from `index.md`.
 - Render structured sections (`Employment History`, `Looking For`, `Changelog`) from JSONL tables.
 - Optionally render a relations section from canonical edges/backlinks.
-- Render note pages from canonical note records in `data/note/`.
+- Render source pages from canonical source records in `data/source/`.
 
 Exit criteria:
 

@@ -7,12 +7,15 @@ import re
 from pathlib import Path
 from typing import Any
 
+import yaml
 from pydantic import ValidationError
 
-from kb.schemas import EdgeRecord, EmploymentHistoryRow, parse_partial_date
-from kb.validate import gather_edge_files, gather_entities
+from kb.schemas import EdgeRecord, EmploymentHistoryRow, SourceRecord, parse_partial_date
+from kb.validate import gather_edge_files, gather_entities, gather_source_files
 
 EDGE_ID_SANITIZE_RE = re.compile(r"[^a-z0-9]+")
+FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
+FOOTNOTE_REF_RE = re.compile(r"\[\^([^\]]+)\](?!:)")
 
 
 def relpath(path: Path, project_root: Path) -> str:
@@ -38,8 +41,73 @@ def shard_for_value(value: str) -> str:
 
 
 def relation_for_employment() -> str:
-    # Canonical edge relations use present-tense verbs.
     return "works_at"
+
+
+def relation_for_citation() -> str:
+    return "cites"
+
+
+def extract_citation_keys(text: str | None) -> list[str]:
+    if not text:
+        return []
+
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for match in FOOTNOTE_REF_RE.finditer(text):
+        key = match.group(1).strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        ordered.append(key)
+    return ordered
+
+
+def parse_frontmatter(path: Path) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    match = FRONTMATTER_RE.match(text)
+    if not match:
+        return {}
+    payload = yaml.safe_load(match.group(1)) or {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload
+
+
+def load_source_lookup(data_root: Path, project_root: Path) -> tuple[dict[str, str], list[dict[str, Any]]]:
+    source_by_citation_key: dict[str, str] = {}
+    issues: list[dict[str, Any]] = []
+
+    for rel_dir, source in sorted(gather_source_files(data_root).items()):
+        frontmatter = parse_frontmatter(source.index_path)
+        try:
+            record = SourceRecord.model_validate(frontmatter)
+        except ValidationError as exc:
+            issues.append(
+                {
+                    "code": "schema_error",
+                    "path": relpath(source.index_path, project_root),
+                    "message": exc.errors()[0]["msg"],
+                }
+            )
+            continue
+
+        existing = source_by_citation_key.get(record.citation_key)
+        if existing and existing != rel_dir:
+            issues.append(
+                {
+                    "code": "duplicate_citation_key",
+                    "path": relpath(source.index_path, project_root),
+                    "message": (
+                        f"citation-key {record.citation_key} already mapped to "
+                        f"{existing}"
+                    ),
+                }
+            )
+            continue
+        source_by_citation_key[record.citation_key] = rel_dir
+
+    return source_by_citation_key, issues
 
 
 def load_employment_rows(path: Path, project_root: Path) -> tuple[list[EmploymentHistoryRow], list[dict[str, Any]]]:
@@ -82,21 +150,23 @@ def load_employment_rows(path: Path, project_root: Path) -> tuple[list[Employmen
     return rows, issues
 
 
-def build_edge_sources(person_rel_dir: str, row: EmploymentHistoryRow) -> list[str]:
-    values = [
-        f"{person_rel_dir}/employment-history.jsonl#{row.id}",
-        row.source_path,
-    ]
-    if row.source:
-        values.append(row.source)
+def resolve_citation_source_refs(
+    raw_source_value: str | None,
+    source_by_citation_key: dict[str, str],
+) -> tuple[list[str], list[str]]:
+    refs: list[str] = []
+    missing_keys: list[str] = []
 
-    deduped: list[str] = []
-    for value in values:
-        text = str(value).strip()
-        if not text or text in deduped:
+    for key in extract_citation_keys(raw_source_value):
+        source_ref = source_by_citation_key.get(key)
+        if source_ref is None:
+            if key not in missing_keys:
+                missing_keys.append(key)
             continue
-        deduped.append(text)
-    return deduped
+        if source_ref not in refs:
+            refs.append(source_ref)
+
+    return refs, missing_keys
 
 
 def build_edge_notes(row: EmploymentHistoryRow) -> str:
@@ -107,6 +177,67 @@ def build_edge_notes(row: EmploymentHistoryRow) -> str:
     if row.notes:
         parts.append(f"Details: {row.notes}")
     return " | ".join(parts)
+
+
+def index_existing_edges(data_root: Path) -> tuple[dict[str, Path], set[str]]:
+    edge_path_by_id: dict[str, Path] = {}
+    duplicate_existing_ids: set[str] = set()
+
+    for edge_file in gather_edge_files(data_root):
+        if not edge_file.path.name.startswith("edge@") or not edge_file.path.name.endswith(".json"):
+            continue
+        edge_id = edge_file.path.name[len("edge@") : -len(".json")]
+        if edge_id in edge_path_by_id:
+            duplicate_existing_ids.add(edge_id)
+            continue
+        edge_path_by_id[edge_id] = edge_file.path
+
+    return edge_path_by_id, duplicate_existing_ids
+
+
+def write_edge_record(
+    *,
+    edge_record: EdgeRecord,
+    edge_root: Path,
+    project_root: Path,
+    edge_path_by_id: dict[str, Path],
+    created_paths: list[str],
+    updated_paths: list[str],
+    issues: list[dict[str, Any]],
+) -> bool:
+    edge_id = edge_record.id
+    edge_path = edge_root / shard_for_value(edge_id) / f"edge@{edge_id}.json"
+    edge_path.parent.mkdir(parents=True, exist_ok=True)
+    rendered = json.dumps(edge_record.model_dump(by_alias=True), indent=2, sort_keys=True) + "\n"
+
+    existing_path = edge_path_by_id.get(edge_id)
+    if existing_path is not None and existing_path != edge_path:
+        issues.append(
+            {
+                "code": "edge_path_conflict",
+                "path": relpath(existing_path, project_root),
+                "message": (
+                    f"edge id {edge_id} exists at {relpath(existing_path, project_root)}; "
+                    f"expected {relpath(edge_path, project_root)}"
+                ),
+            }
+        )
+        return False
+
+    if edge_path.exists():
+        current = edge_path.read_text(encoding="utf-8")
+        if current == rendered:
+            return False
+
+    edge_path.write_text(rendered, encoding="utf-8")
+    edge_path_by_id[edge_id] = edge_path
+
+    rel = relpath(edge_path, project_root)
+    if existing_path is None:
+        created_paths.append(rel)
+    else:
+        updated_paths.append(rel)
+    return True
 
 
 def derive_employment_edges(
@@ -120,20 +251,12 @@ def derive_employment_edges(
     edge_root = data_root / "edge"
     edge_root.mkdir(parents=True, exist_ok=True)
 
-    edge_path_by_id: dict[str, Path] = {}
-    duplicate_existing_ids: set[str] = set()
-    for edge_file in gather_edge_files(data_root):
-        if not edge_file.path.name.startswith("edge@") or not edge_file.path.name.endswith(".json"):
-            continue
-        edge_id = edge_file.path.name[len("edge@") : -len(".json")]
-        if edge_id in edge_path_by_id:
-            duplicate_existing_ids.add(edge_id)
-            continue
-        edge_path_by_id[edge_id] = edge_file.path
+    source_by_citation_key, source_issues = load_source_lookup(data_root, project_root)
 
+    edge_path_by_id, duplicate_existing_ids = index_existing_edges(data_root)
     created_paths: list[str] = []
     updated_paths: list[str] = []
-    issues: list[dict[str, Any]] = []
+    issues: list[dict[str, Any]] = [*source_issues]
     person_entities_scanned = 0
     employment_rows_scanned = 0
     candidate_rows = 0
@@ -174,6 +297,26 @@ def derive_employment_edges(
                 )
                 continue
 
+            source_refs, missing_keys = resolve_citation_source_refs(row.source, source_by_citation_key)
+            for citation_key in missing_keys:
+                issues.append(
+                    {
+                        "code": "invalid_reference",
+                        "path": relpath(employment_path, project_root),
+                        "message": f"unknown citation key in source field: {citation_key}",
+                    }
+                )
+
+            if not source_refs:
+                issues.append(
+                    {
+                        "code": "missing_source_reference",
+                        "path": relpath(employment_path, project_root),
+                        "message": f"employment row {row.id} does not resolve to any source references",
+                    }
+                )
+                continue
+
             edge_id = sanitize_fragment(f"employment-{entity.entity_id}-{row.id}")
 
             edge_record = EdgeRecord.model_validate(
@@ -187,45 +330,26 @@ def derive_employment_edges(
                     "last_verified_at": effective_as_of,
                     "valid_from": None,
                     "valid_to": None,
-                    "sources": build_edge_sources(entity.rel_dir, row),
+                    "sources": source_refs,
                     "notes": build_edge_notes(row),
                 }
             )
 
-            edge_path = edge_root / shard_for_value(edge_id) / f"edge@{edge_id}.json"
-            edge_path.parent.mkdir(parents=True, exist_ok=True)
-            rendered = json.dumps(edge_record.model_dump(by_alias=True), indent=2, sort_keys=True) + "\n"
-
-            existing_path = edge_path_by_id.get(edge_id)
-            if existing_path is not None and existing_path != edge_path:
-                issues.append(
-                    {
-                        "code": "edge_path_conflict",
-                        "path": relpath(existing_path, project_root),
-                        "message": (
-                            f"edge id {edge_id} exists at {relpath(existing_path, project_root)}; "
-                            f"expected {relpath(edge_path, project_root)}"
-                        ),
-                    }
-                )
-                continue
-
-            if edge_path.exists():
-                current = edge_path.read_text(encoding="utf-8")
-                if current == rendered:
-                    unchanged_existing += 1
-                    continue
-
-            edge_path.write_text(
-                rendered,
-                encoding="utf-8",
+            changed = write_edge_record(
+                edge_record=edge_record,
+                edge_root=edge_root,
+                project_root=project_root,
+                edge_path_by_id=edge_path_by_id,
+                created_paths=created_paths,
+                updated_paths=updated_paths,
+                issues=issues,
             )
-            edge_path_by_id[edge_id] = edge_path
-            rel = relpath(edge_path, project_root)
-            if existing_path is None:
-                created_paths.append(rel)
-            else:
-                updated_paths.append(rel)
+            if not changed and edge_id in edge_path_by_id:
+                edge_path = edge_root / shard_for_value(edge_id) / f"edge@{edge_id}.json"
+                if edge_path.exists() and edge_path.read_text(encoding="utf-8") == (
+                    json.dumps(edge_record.model_dump(by_alias=True), indent=2, sort_keys=True) + "\n"
+                ):
+                    unchanged_existing += 1
 
     created_paths.sort()
     updated_paths.sort()
@@ -236,6 +360,149 @@ def derive_employment_edges(
         "person_entities_scanned": person_entities_scanned,
         "employment_rows_scanned": employment_rows_scanned,
         "candidate_rows_with_org_ref": candidate_rows,
+        "created_edge_files": len(created_paths),
+        "updated_edge_files": len(updated_paths),
+        "unchanged_existing": unchanged_existing,
+        "issue_count": len(issues),
+        "issues": issues,
+        "created_paths": created_paths,
+        "updated_paths": updated_paths,
+    }
+
+
+def read_citations_from_jsonl(path: Path) -> set[str]:
+    citations: set[str] = set()
+    if not path.exists():
+        return citations
+
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            text = line.strip()
+            if not text:
+                continue
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(payload, dict):
+                continue
+            for value in payload.values():
+                if isinstance(value, str):
+                    citations.update(extract_citation_keys(value))
+
+    return citations
+
+
+def read_citations_from_markdown(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+    return set(extract_citation_keys(path.read_text(encoding="utf-8")))
+
+
+def derive_citation_edges(
+    *,
+    project_root: Path,
+    data_root: Path,
+    as_of: str | None = None,
+) -> dict[str, Any]:
+    effective_as_of = parse_partial_date(as_of or dt.date.today().isoformat())
+    entities = gather_entities(data_root)
+    edge_root = data_root / "edge"
+    edge_root.mkdir(parents=True, exist_ok=True)
+
+    source_by_citation_key, source_issues = load_source_lookup(data_root, project_root)
+
+    edge_path_by_id, duplicate_existing_ids = index_existing_edges(data_root)
+    created_paths: list[str] = []
+    updated_paths: list[str] = []
+    issues: list[dict[str, Any]] = [*source_issues]
+    entities_scanned = 0
+    citation_links_scanned = 0
+    unchanged_existing = 0
+
+    for edge_id in sorted(duplicate_existing_ids):
+        issues.append(
+            {
+                "code": "duplicate_edge_id",
+                "path": relpath(edge_path_by_id[edge_id], project_root),
+                "message": f"duplicate existing edge id {edge_id}",
+            }
+        )
+
+    for rel_dir in sorted(entities):
+        entity = entities[rel_dir]
+        entities_scanned += 1
+        citation_keys = read_citations_from_markdown(entity.index_path)
+
+        if entity.kind == "person":
+            citation_keys.update(read_citations_from_jsonl(entity.directory / "employment-history.jsonl"))
+            citation_keys.update(read_citations_from_jsonl(entity.directory / "looking-for.jsonl"))
+            citation_keys.update(read_citations_from_jsonl(entity.directory / "changelog.jsonl"))
+        elif entity.kind == "org":
+            citation_keys.update(read_citations_from_jsonl(entity.directory / "changelog.jsonl"))
+
+        for citation_key in sorted(citation_keys):
+            citation_links_scanned += 1
+            target_source_rel = source_by_citation_key.get(citation_key)
+            if target_source_rel is None:
+                issues.append(
+                    {
+                        "code": "unresolved_citation",
+                        "path": relpath(entity.index_path, project_root),
+                        "message": f"citation key has no source record: {citation_key}",
+                    }
+                )
+                continue
+
+            if target_source_rel == entity.rel_dir:
+                continue
+
+            edge_id = sanitize_fragment(
+                f"citation-{entity.kind}-{entity.entity_id}-{citation_key}"
+            )
+            edge_record = EdgeRecord.model_validate(
+                {
+                    "id": edge_id,
+                    "relation": relation_for_citation(),
+                    "directed": True,
+                    "from": entity.rel_dir,
+                    "to": target_source_rel,
+                    "first_noted_at": effective_as_of,
+                    "last_verified_at": effective_as_of,
+                    "valid_from": None,
+                    "valid_to": None,
+                    "sources": [target_source_rel],
+                    "notes": (
+                        f"Derived citation edge from footnote [^{citation_key}] "
+                        f"in {entity.rel_dir}"
+                    ),
+                }
+            )
+
+            changed = write_edge_record(
+                edge_record=edge_record,
+                edge_root=edge_root,
+                project_root=project_root,
+                edge_path_by_id=edge_path_by_id,
+                created_paths=created_paths,
+                updated_paths=updated_paths,
+                issues=issues,
+            )
+            if not changed and edge_id in edge_path_by_id:
+                edge_path = edge_root / shard_for_value(edge_id) / f"edge@{edge_id}.json"
+                if edge_path.exists() and edge_path.read_text(encoding="utf-8") == (
+                    json.dumps(edge_record.model_dump(by_alias=True), indent=2, sort_keys=True) + "\n"
+                ):
+                    unchanged_existing += 1
+
+    created_paths.sort()
+    updated_paths.sort()
+    return {
+        "ok": len(issues) == 0,
+        "data_root": relpath(data_root, project_root),
+        "as_of": effective_as_of,
+        "entities_scanned": entities_scanned,
+        "citation_links_scanned": citation_links_scanned,
         "created_edge_files": len(created_paths),
         "updated_edge_files": len(updated_paths),
         "unchanged_existing": unchanged_existing,

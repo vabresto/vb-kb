@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/he/person@hellen-xia",
+  "id": "citation-person-hellen-xia-hellen-svf-catalog",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^hellen-svf-catalog] in person/he/person@hellen-xia",
+  "relation": "cites",
+  "sources": [
+    "source/he/source@hellen-svf-catalog"
+  ],
+  "to": "source/he/source@hellen-svf-catalog",
+  "valid_from": null,
+  "valid_to": null
+}

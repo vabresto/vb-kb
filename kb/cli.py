@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from kb.edges import derive_employment_edges, sync_edge_backlinks
+from kb.edges import derive_citation_edges, derive_employment_edges, sync_edge_backlinks
 from kb.mcp_server import run_server as run_fastmcp_server
 from kb.validate import run_validation, infer_data_root, collect_changed_paths, normalize_scope_paths
 
@@ -70,6 +70,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="Date stamp for first_noted_at/last_verified_at (default: today, YYYY-MM-DD).",
     )
     derive_edges_parser.add_argument(
+        "--no-sync",
+        action="store_true",
+        help="Skip running sync-edges after derivation.",
+    )
+
+    derive_citation_parser = subparsers.add_parser(
+        "derive-citation-edges",
+        help="Create canonical citation edges from footnote references to source records.",
+    )
+    derive_citation_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Repository root path.",
+    )
+    derive_citation_parser.add_argument(
+        "--data-root",
+        default=None,
+        help="Data root directory (default: data).",
+    )
+    derive_citation_parser.add_argument(
+        "--as-of",
+        default=None,
+        help="Date stamp for first_noted_at/last_verified_at (default: today, YYYY-MM-DD).",
+    )
+    derive_citation_parser.add_argument(
         "--no-sync",
         action="store_true",
         help="Skip running sync-edges after derivation.",
@@ -160,6 +186,28 @@ def run_derive_employment_edges(args: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+def run_derive_citation_edges(args: argparse.Namespace) -> int:
+    project_root = args.project_root.resolve()
+    data_root = infer_data_root(project_root, args.data_root)
+
+    derive_result = derive_citation_edges(
+        project_root=project_root,
+        data_root=data_root,
+        as_of=args.as_of,
+    )
+
+    output: dict[str, object] = {"derive": derive_result}
+    ok = derive_result["ok"]
+
+    if not args.no_sync:
+        sync_result = sync_edge_backlinks(project_root=project_root, data_root=data_root)
+        output["sync"] = sync_result
+        ok = ok and sync_result["ok"]
+
+    print(json.dumps(output, sort_keys=True))
+    return 0 if ok else 1
+
+
 def run_mcp_server(args: argparse.Namespace) -> int:
     project_root = args.project_root.resolve()
     data_root = infer_data_root(project_root, args.data_root)
@@ -184,6 +232,8 @@ def main() -> int:
         return run_sync_edges(args)
     if args.command == "derive-employment-edges":
         return run_derive_employment_edges(args)
+    if args.command == "derive-citation-edges":
+        return run_derive_citation_edges(args)
     if args.command == "mcp-server":
         return run_mcp_server(args)
     parser.error(f"Unknown command: {args.command}")

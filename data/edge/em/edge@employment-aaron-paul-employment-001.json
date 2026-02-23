@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/aa/person@aaron-paul",
   "id": "employment-aaron-paul-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Founder | Period: 2019 - Present (documented on YC profile) | Details: YC profile lists Aaron Paul as founder and describes TyltGO's same-day delivery thesis.",
   "relation": "works_at",
   "sources": [
-    "person/aa/person@aaron-paul/employment-history.jsonl#employment-001",
-    "data/person/aaron-paul.md",
-    "[^aaron-yc-tyltgo]"
+    "source/aa/source@aaron-yc-tyltgo"
   ],
   "to": "org/ty/org@tyltgo",
   "valid_from": null,

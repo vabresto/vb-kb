@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/ja/person@jack-mcclelland",
   "id": "employment-jack-mcclelland-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Principal; Investor | Period: Current | Details: Extracted from frontmatter firm/role.",
   "relation": "works_at",
   "sources": [
-    "person/ja/person@jack-mcclelland/employment-history.jsonl#employment-001",
-    "data/person/jack-mcclelland.md",
-    "frontmatter"
+    "source/fr/source@frontmatter"
   ],
   "to": "org/af/org@afore-capital",
   "valid_from": null,

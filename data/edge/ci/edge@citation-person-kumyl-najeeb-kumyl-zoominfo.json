@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/ku/person@kumyl-najeeb",
+  "id": "citation-person-kumyl-najeeb-kumyl-zoominfo",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^kumyl-zoominfo] in person/ku/person@kumyl-najeeb",
+  "relation": "cites",
+  "sources": [
+    "source/ku/source@kumyl-zoominfo"
+  ],
+  "to": "source/ku/source@kumyl-zoominfo",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/vl/person@vlad-magdalin",
+  "id": "citation-person-vlad-magdalin-vlad-wfc24",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^vlad-wfc24] in person/vl/person@vlad-magdalin",
+  "relation": "cites",
+  "sources": [
+    "source/vl/source@vlad-wfc24"
+  ],
+  "to": "source/vl/source@vlad-wfc24",
+  "valid_from": null,
+  "valid_to": null
+}

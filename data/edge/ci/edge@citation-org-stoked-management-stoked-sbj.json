@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/st/org@stoked-management",
+  "id": "citation-org-stoked-management-stoked-sbj",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^stoked-sbj] in org/st/org@stoked-management",
+  "relation": "cites",
+  "sources": [
+    "source/st/source@stoked-sbj"
+  ],
+  "to": "source/st/source@stoked-sbj",
+  "valid_from": null,
+  "valid_to": null
+}

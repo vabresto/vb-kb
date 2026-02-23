@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/wi/person@william-yuxuan-liu",
   "id": "employment-william-yuxuan-liu-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Software Engineer | Period: Aug 2023 - Present | Details: Full-time role in New York, NY.",
   "relation": "works_at",
   "sources": [
-    "person/wi/person@william-yuxuan-liu/employment-history.jsonl#employment-001",
-    "data/person/william-yuxuan-liu.md",
-    "[^william-linkedin]"
+    "source/wi/source@william-linkedin"
   ],
   "to": "org/me/org@meta",
   "valid_from": null,

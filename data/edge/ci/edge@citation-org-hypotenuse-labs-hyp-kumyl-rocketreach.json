@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/hy/org@hypotenuse-labs",
+  "id": "citation-org-hypotenuse-labs-hyp-kumyl-rocketreach",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^hyp-kumyl-rocketreach] in org/hy/org@hypotenuse-labs",
+  "relation": "cites",
+  "sources": [
+    "source/hy/source@hyp-kumyl-rocketreach"
+  ],
+  "to": "source/hy/source@hyp-kumyl-rocketreach",
+  "valid_from": null,
+  "valid_to": null
+}

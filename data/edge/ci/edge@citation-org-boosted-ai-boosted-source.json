@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/bo/org@boosted-ai",
+  "id": "citation-org-boosted-ai-boosted-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^boosted-source] in org/bo/org@boosted-ai",
+  "relation": "cites",
+  "sources": [
+    "source/bo/source@boosted-source"
+  ],
+  "to": "source/bo/source@boosted-source",
+  "valid_from": null,
+  "valid_to": null
+}

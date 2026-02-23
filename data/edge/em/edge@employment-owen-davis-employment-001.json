@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/ow/person@owen-davis",
   "id": "employment-owen-davis-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: General Partner | Period: Current | Details: Extracted from frontmatter firm/role.",
   "relation": "works_at",
   "sources": [
-    "person/ow/person@owen-davis/employment-history.jsonl#employment-001",
-    "data/person/owen-davis.md",
-    "frontmatter"
+    "source/fr/source@frontmatter"
   ],
   "to": "org/co/org@contour-venture-partners",
   "valid_from": null,

@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/gr/person@grimur-grimsson",
+  "id": "citation-person-grimur-grimsson-grimur-ncc21-speakers",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^grimur-ncc21-speakers] in person/gr/person@grimur-grimsson",
+  "relation": "cites",
+  "sources": [
+    "source/gr/source@grimur-ncc21-speakers"
+  ],
+  "to": "source/gr/source@grimur-ncc21-speakers",
+  "valid_from": null,
+  "valid_to": null
+}

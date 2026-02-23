@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/vi/person@victor-brestoiu",
   "id": "employment-victor-brestoiu-employment-004",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: AI Software Engineer | Period: Sep 2020 - Dec 2020 | Details: 4-month role.",
   "relation": "works_at",
   "sources": [
-    "person/vi/person@victor-brestoiu/employment-history.jsonl#employment-004",
-    "data/person/victor-brestoiu.md",
-    "[^victor-linkedin]"
+    "source/vi/source@victor-linkedin"
   ],
   "to": "org/bo/org@boosted-ai",
   "valid_from": null,

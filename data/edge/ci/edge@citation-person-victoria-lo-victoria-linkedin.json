@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/vi/person@victoria-lo",
+  "id": "citation-person-victoria-lo-victoria-linkedin",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^victoria-linkedin] in person/vi/person@victoria-lo",
+  "relation": "cites",
+  "sources": [
+    "source/vi/source@victoria-linkedin"
+  ],
+  "to": "source/vi/source@victoria-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

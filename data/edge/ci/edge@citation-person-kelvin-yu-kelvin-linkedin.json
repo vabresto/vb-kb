@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/ke/person@kelvin-yu",
+  "id": "citation-person-kelvin-yu-kelvin-linkedin",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^kelvin-linkedin] in person/ke/person@kelvin-yu",
+  "relation": "cites",
+  "sources": [
+    "source/ke/source@kelvin-linkedin"
+  ],
+  "to": "source/ke/source@kelvin-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -41,7 +41,7 @@ class Token:
 def target_matches(relative_path: str) -> bool:
     if re.match(r"^data/(person|org)/[^/]+/(person|org)@[^/]+/index\.md$", relative_path):
         return True
-    if re.match(r"^data/note/[^/]+/note@reflections-long-form-[^/]+/index\.md$", relative_path):
+    if re.match(r"^data/source/[^/]+/source@reflections-long-form-[^/]+/index\.md$", relative_path):
         return True
     return False
 
@@ -137,7 +137,7 @@ def select_files(raw_files: list[str]) -> list[pathlib.Path]:
         candidates = (
             sorted((REPO_ROOT / "data" / "person").rglob("index.md"))
             + sorted((REPO_ROOT / "data" / "org").rglob("index.md"))
-            + sorted((REPO_ROOT / "data" / "note").rglob("note@reflections-long-form-*/index.md"))
+            + sorted((REPO_ROOT / "data" / "source").rglob("source@reflections-long-form-*/index.md"))
         )
 
     selected: list[pathlib.Path] = []

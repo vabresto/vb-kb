@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/gr/person@grimur-grimsson",
+  "id": "citation-person-grimur-grimsson-grimur-photo-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^grimur-photo-source] in person/gr/person@grimur-grimsson",
+  "relation": "cites",
+  "sources": [
+    "source/gr/source@grimur-photo-source"
+  ],
+  "to": "source/gr/source@grimur-photo-source",
+  "valid_from": null,
+  "valid_to": null
+}

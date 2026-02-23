@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/vi/person@victoria-lo",
   "id": "employment-victoria-lo-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Software Engineer | Period: Jan 2024 - Present | Details: Full-time role in New York, NY.",
   "relation": "works_at",
   "sources": [
-    "person/vi/person@victoria-lo/employment-history.jsonl#employment-001",
-    "data/person/victoria-lo.md",
-    "[^victoria-linkedin]"
+    "source/vi/source@victoria-linkedin"
   ],
   "to": "org/me/org@meta",
   "valid_from": null,

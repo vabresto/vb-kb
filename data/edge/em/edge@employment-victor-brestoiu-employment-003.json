@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/vi/person@victor-brestoiu",
   "id": "employment-victor-brestoiu-employment-003",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Software Engineer | Period: Jul 2021 - Sep 2025 | Details: Permanent full-time role in New York City Metropolitan Area.",
   "relation": "works_at",
   "sources": [
-    "person/vi/person@victor-brestoiu/employment-history.jsonl#employment-003",
-    "data/person/victor-brestoiu.md",
-    "[^victor-linkedin]"
+    "source/vi/source@victor-linkedin"
   ],
   "to": "org/gt/org@gts",
   "valid_from": null,

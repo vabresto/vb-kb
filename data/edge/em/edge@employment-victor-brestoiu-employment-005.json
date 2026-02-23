@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/vi/person@victor-brestoiu",
   "id": "employment-victor-brestoiu-employment-005",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: C/C++ Developer, Core Trading Infrastructure | Period: May 2019 - Aug 2019 | Details: 4-month role in Greater New York City Area.",
   "relation": "works_at",
   "sources": [
-    "person/vi/person@victor-brestoiu/employment-history.jsonl#employment-005",
-    "data/person/victor-brestoiu.md",
-    "[^victor-linkedin]"
+    "source/vi/source@victor-linkedin"
   ],
   "to": "org/gt/org@gts",
   "valid_from": null,

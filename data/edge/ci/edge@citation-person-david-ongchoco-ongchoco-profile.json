@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/da/person@david-ongchoco",
+  "id": "citation-person-david-ongchoco-ongchoco-profile",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^ongchoco-profile] in person/da/person@david-ongchoco",
+  "relation": "cites",
+  "sources": [
+    "source/on/source@ongchoco-profile"
+  ],
+  "to": "source/on/source@ongchoco-profile",
+  "valid_from": null,
+  "valid_to": null
+}

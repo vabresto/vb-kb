@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/bo/org@board-game-prototyping-project",
+  "id": "citation-org-board-game-prototyping-project-boardgame-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^boardgame-source] in org/bo/org@board-game-prototyping-project",
+  "relation": "cites",
+  "sources": [
+    "source/bo/source@boardgame-source"
+  ],
+  "to": "source/bo/source@boardgame-source",
+  "valid_from": null,
+  "valid_to": null
+}

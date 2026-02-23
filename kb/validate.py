@@ -12,9 +12,10 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from kb.schemas import ChangelogRow, EdgeRecord, EmploymentHistoryRow, LookingForRow, NoteRecord
+from kb.schemas import ChangelogRow, EdgeRecord, EmploymentHistoryRow, LookingForRow, SourceRecord
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
+FOOTNOTE_REF_RE = re.compile(r"\[\^([^\]]+)\](?!:)")
 
 
 @dataclass(frozen=True)
@@ -33,8 +34,8 @@ class EdgeFile:
 
 
 @dataclass(frozen=True)
-class NoteFile:
-    note_id: str
+class SourceFile:
+    source_id: str
     rel_dir: str
     directory: Path
     index_path: Path
@@ -101,7 +102,7 @@ def infer_data_root(project_root: Path, requested: str | None) -> Path:
 def gather_entities(data_root: Path) -> dict[str, EntityRecord]:
     entities: dict[str, EntityRecord] = {}
 
-    for kind in ("person", "org"):
+    for kind in ("person", "org", "source"):
         base = data_root / kind
         if not base.exists():
             continue
@@ -138,24 +139,24 @@ def gather_edge_files(data_root: Path) -> list[EdgeFile]:
     return files
 
 
-def gather_note_files(data_root: Path) -> dict[str, NoteFile]:
-    notes: dict[str, NoteFile] = {}
-    note_root = data_root / "note"
-    if not note_root.exists():
-        return notes
+def gather_source_files(data_root: Path) -> dict[str, SourceFile]:
+    sources: dict[str, SourceFile] = {}
+    source_root = data_root / "source"
+    if not source_root.exists():
+        return sources
 
-    for index_path in sorted(note_root.rglob("index.md")):
-        note_dir = index_path.parent
-        if not note_dir.name.startswith("note@"):
+    for index_path in sorted(source_root.rglob("index.md")):
+        source_dir = index_path.parent
+        if not source_dir.name.startswith("source@"):
             continue
-        rel_dir = note_dir.relative_to(data_root).as_posix()
-        notes[rel_dir] = NoteFile(
-            note_id=note_dir.name,
+        rel_dir = source_dir.relative_to(data_root).as_posix()
+        sources[rel_dir] = SourceFile(
+            source_id=source_dir.name,
             rel_dir=rel_dir,
-            directory=note_dir,
+            directory=source_dir,
             index_path=index_path,
         )
-    return notes
+    return sources
 
 
 def collect_changed_paths(project_root: Path, data_root: Path) -> set[Path]:
@@ -259,18 +260,18 @@ def is_edge_in_scope(edge: EdgeFile, scope_paths: set[Path] | None) -> bool:
     return False
 
 
-def is_note_in_scope(note: NoteFile, scope_paths: set[Path] | None) -> bool:
+def is_source_in_scope(source: SourceFile, scope_paths: set[Path] | None) -> bool:
     if scope_paths is None:
         return True
     if len(scope_paths) == 0:
         return False
 
     for scoped in scope_paths:
-        if scoped == note.directory or scoped == note.index_path:
+        if scoped == source.directory or scoped == source.index_path:
             return True
-        if is_within(scoped, note.directory):
+        if is_within(scoped, source.directory):
             return True
-        if is_within(note.directory, scoped):
+        if is_within(source.directory, scoped):
             return True
     return False
 
@@ -396,9 +397,10 @@ def validate_jsonl(
     return rows
 
 
-def read_note_frontmatter(
+def read_index_frontmatter(
     *,
     path: Path,
+    entity_label: str,
     issues: list[ValidationIssue],
     project_root: Path,
 ) -> dict[str, Any] | None:
@@ -419,7 +421,7 @@ def read_note_frontmatter(
             issues,
             code="missing_frontmatter",
             path=path,
-            message="note index.md must include YAML frontmatter",
+            message=f"{entity_label} index.md must include YAML frontmatter",
             project_root=project_root,
         )
         return None
@@ -449,6 +451,38 @@ def read_note_frontmatter(
     return payload
 
 
+def extract_citation_keys(text: str) -> set[str]:
+    return {match.group(1).strip() for match in FOOTNOTE_REF_RE.finditer(text) if match.group(1).strip()}
+
+
+def read_citations_from_markdown(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+    return extract_citation_keys(path.read_text(encoding="utf-8"))
+
+
+def read_citations_from_jsonl(path: Path) -> set[str]:
+    citations: set[str] = set()
+    if not path.exists():
+        return citations
+
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            text = line.strip()
+            if not text:
+                continue
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(payload, dict):
+                continue
+            for value in payload.values():
+                if isinstance(value, str):
+                    citations.update(extract_citation_keys(value))
+    return citations
+
+
 def validate_entities(
     *,
     project_root: Path,
@@ -456,8 +490,9 @@ def validate_entities(
     entities: dict[str, EntityRecord],
     scope_paths: set[Path] | None,
     issues: list[ValidationIssue],
-) -> dict[str, dict[str, list[dict[str, Any]]]]:
+) -> tuple[dict[str, dict[str, list[dict[str, Any]]]], dict[str, set[str]]]:
     loaded_rows: dict[str, dict[str, list[dict[str, Any]]]] = {}
+    citation_keys_by_entity: dict[str, set[str]] = {}
 
     for rel_dir in sorted(entities):
         entity = entities[rel_dir]
@@ -484,14 +519,17 @@ def validate_entities(
             )
 
         rows_for_entity: dict[str, list[dict[str, Any]]] = {}
+        citations_for_entity = read_citations_from_markdown(entity.index_path)
 
-        changelog_path = entity.directory / "changelog.jsonl"
-        rows_for_entity["changelog"] = validate_jsonl(
-            path=changelog_path,
-            model_cls=ChangelogRow,
-            issues=issues,
-            project_root=project_root,
-        )
+        if entity.kind in {"person", "org"}:
+            changelog_path = entity.directory / "changelog.jsonl"
+            rows_for_entity["changelog"] = validate_jsonl(
+                path=changelog_path,
+                model_cls=ChangelogRow,
+                issues=issues,
+                project_root=project_root,
+            )
+            citations_for_entity.update(read_citations_from_jsonl(changelog_path))
 
         if entity.kind == "person":
             employment_path = entity.directory / "employment-history.jsonl"
@@ -501,6 +539,7 @@ def validate_entities(
                 issues=issues,
                 project_root=project_root,
             )
+            citations_for_entity.update(read_citations_from_jsonl(employment_path))
             looking_path = entity.directory / "looking-for.jsonl"
             rows_for_entity["looking_for"] = validate_jsonl(
                 path=looking_path,
@@ -508,8 +547,10 @@ def validate_entities(
                 issues=issues,
                 project_root=project_root,
             )
+            citations_for_entity.update(read_citations_from_jsonl(looking_path))
 
         loaded_rows[rel_dir] = rows_for_entity
+        citation_keys_by_entity[rel_dir] = citations_for_entity
 
     entity_rel_paths = set(entities.keys())
     for rel_dir, row_groups in loaded_rows.items():
@@ -526,35 +567,37 @@ def validate_entities(
                     project_root=project_root,
                 )
 
-    return loaded_rows
+    return loaded_rows, citation_keys_by_entity
 
 
-def validate_notes(
+def validate_sources(
     *,
     project_root: Path,
-    notes: dict[str, NoteFile],
+    sources: dict[str, SourceFile],
     scope_paths: set[Path] | None,
     issues: list[ValidationIssue],
-) -> dict[str, NoteRecord]:
-    validated: dict[str, NoteRecord] = {}
+) -> tuple[dict[str, SourceRecord], dict[str, str]]:
+    validated: dict[str, SourceRecord] = {}
+    source_by_citation_key: dict[str, str] = {}
 
-    for rel_dir in sorted(notes):
-        note = notes[rel_dir]
-        if not is_note_in_scope(note, scope_paths):
+    for rel_dir in sorted(sources):
+        source_file = sources[rel_dir]
+        if not is_source_in_scope(source_file, scope_paths):
             continue
 
-        if not note.index_path.exists():
+        if not source_file.index_path.exists():
             append_issue(
                 issues,
                 code="missing_file",
-                path=note.index_path,
+                path=source_file.index_path,
                 message="missing index.md",
                 project_root=project_root,
             )
             continue
 
-        frontmatter = read_note_frontmatter(
-            path=note.index_path,
+        frontmatter = read_index_frontmatter(
+            path=source_file.index_path,
+            entity_label="source",
             issues=issues,
             project_root=project_root,
         )
@@ -562,23 +605,36 @@ def validate_notes(
             continue
 
         try:
-            record = NoteRecord.model_validate(frontmatter)
+            record = SourceRecord.model_validate(frontmatter)
         except ValidationError as exc:
             append_issue(
                 issues,
                 code="schema_error",
-                path=note.index_path,
+                path=source_file.index_path,
                 message=exc.errors()[0]["msg"],
                 project_root=project_root,
             )
             continue
 
-        if record.id != note.note_id:
+        if record.id != source_file.source_id:
             append_issue(
                 issues,
-                code="note_id_mismatch",
-                path=note.index_path,
-                message=f"frontmatter id {record.id} does not match directory {note.note_id}",
+                code="source_id_mismatch",
+                path=source_file.index_path,
+                message=f"frontmatter id {record.id} does not match directory {source_file.source_id}",
+                project_root=project_root,
+            )
+
+        try:
+            canonical_source_path = source_file.index_path.relative_to(project_root).as_posix()
+        except ValueError:
+            canonical_source_path = source_file.index_path.as_posix()
+        if record.source_path != canonical_source_path:
+            append_issue(
+                issues,
+                code="source_path_mismatch",
+                path=source_file.index_path,
+                message=f"source-path must be {canonical_source_path}",
                 project_root=project_root,
             )
 
@@ -587,14 +643,50 @@ def validate_notes(
             append_issue(
                 issues,
                 code="invalid_reference",
-                path=note.index_path,
+                path=source_file.index_path,
                 message=f"source-path not found: {record.source_path}",
                 project_root=project_root,
             )
 
+        if record.html_capture_path:
+            html_capture = source_file.directory / record.html_capture_path
+            if not html_capture.exists():
+                append_issue(
+                    issues,
+                    code="invalid_reference",
+                    path=source_file.index_path,
+                    message=f"html-capture-path not found: {record.html_capture_path}",
+                    project_root=project_root,
+                )
+        if record.screenshot_path:
+            screenshot_capture = source_file.directory / record.screenshot_path
+            if not screenshot_capture.exists():
+                append_issue(
+                    issues,
+                    code="invalid_reference",
+                    path=source_file.index_path,
+                    message=f"screenshot-path not found: {record.screenshot_path}",
+                    project_root=project_root,
+                )
+
+        existing_rel_dir = source_by_citation_key.get(record.citation_key)
+        if existing_rel_dir and existing_rel_dir != rel_dir:
+            append_issue(
+                issues,
+                code="duplicate_citation_key",
+                path=source_file.index_path,
+                message=(
+                    f"citation-key {record.citation_key} already used by "
+                    f"{(project_root / 'data' / existing_rel_dir / 'index.md').relative_to(project_root).as_posix()}"
+                ),
+                project_root=project_root,
+            )
+        else:
+            source_by_citation_key[record.citation_key] = rel_dir
+
         validated[rel_dir] = record
 
-    return validated
+    return validated, source_by_citation_key
 
 
 def validate_edge_files(
@@ -665,6 +757,26 @@ def validate_edge_files(
                 message=f"to entity not found: {record.to_entity}",
                 project_root=project_root,
             )
+        for source_ref in record.sources:
+            source_rel_dir = source_ref.split("#", 1)[0]
+            source_entity = entities.get(source_rel_dir)
+            if source_entity is None:
+                append_issue(
+                    issues,
+                    code="invalid_reference",
+                    path=edge_file.path,
+                    message=f"source reference not found: {source_ref}",
+                    project_root=project_root,
+                )
+                continue
+            if source_entity.kind != "source":
+                append_issue(
+                    issues,
+                    code="invalid_reference",
+                    path=edge_file.path,
+                    message=f"edge source must target a source entity: {source_ref}",
+                    project_root=project_root,
+                )
 
         if record.id in edge_by_id:
             existing_file = edge_by_id[record.id][1]
@@ -789,6 +901,33 @@ def validate_edge_files(
     return edge_by_id, symlinks_by_edge_file
 
 
+def validate_entity_citations(
+    *,
+    project_root: Path,
+    entities: dict[str, EntityRecord],
+    citation_keys_by_entity: dict[str, set[str]],
+    source_by_citation_key: dict[str, str],
+    scope_paths: set[Path] | None,
+    issues: list[ValidationIssue],
+) -> None:
+    for rel_dir, citation_keys in sorted(citation_keys_by_entity.items()):
+        entity = entities.get(rel_dir)
+        if entity is None:
+            continue
+        if not is_entity_in_scope(entity, scope_paths):
+            continue
+        for citation_key in sorted(citation_keys):
+            if citation_key in source_by_citation_key:
+                continue
+            append_issue(
+                issues,
+                code="unresolved_citation",
+                path=entity.index_path,
+                message=f"footnote citation has no matching source key: {citation_key}",
+                project_root=project_root,
+            )
+
+
 def run_validation(
     *,
     project_root: Path,
@@ -812,16 +951,16 @@ def run_validation(
             scope_label=scope_label,
             issues=issues,
             checked_entities=0,
-            checked_notes=0,
+            checked_sources=0,
             checked_edges=0,
             checked_jsonl_files=0,
         )
 
     entities = gather_entities(data_root)
-    notes = gather_note_files(data_root)
+    sources = gather_source_files(data_root)
     edge_files = gather_edge_files(data_root)
 
-    loaded_rows = validate_entities(
+    loaded_rows, citation_keys_by_entity = validate_entities(
         project_root=project_root,
         data_root=data_root,
         entities=entities,
@@ -829,9 +968,17 @@ def run_validation(
         issues=issues,
     )
 
-    validate_notes(
+    _, source_by_citation_key = validate_sources(
         project_root=project_root,
-        notes=notes,
+        sources=sources,
+        scope_paths=scope_paths,
+        issues=issues,
+    )
+    validate_entity_citations(
+        project_root=project_root,
+        entities=entities,
+        citation_keys_by_entity=citation_keys_by_entity,
+        source_by_citation_key=source_by_citation_key,
         scope_paths=scope_paths,
         issues=issues,
     )
@@ -846,12 +993,13 @@ def run_validation(
     )
 
     checked_entities = len([entity for entity in entities.values() if is_entity_in_scope(entity, scope_paths)])
-    checked_notes = len([note for note in notes.values() if is_note_in_scope(note, scope_paths)])
+    checked_sources = len([source for source in sources.values() if is_source_in_scope(source, scope_paths)])
     checked_edges = len([edge for edge in edge_files if is_edge_in_scope(edge, scope_paths)])
     checked_jsonl_files = 0
     for entity_rel_dir in loaded_rows:
         entity = entities[entity_rel_dir]
-        checked_jsonl_files += 1
+        if entity.kind in {"person", "org"}:
+            checked_jsonl_files += 1
         if entity.kind == "person":
             checked_jsonl_files += 2
 
@@ -861,7 +1009,7 @@ def run_validation(
         scope_label=scope_label,
         issues=issues,
         checked_entities=checked_entities,
-        checked_notes=checked_notes,
+        checked_sources=checked_sources,
         checked_edges=checked_edges,
         checked_jsonl_files=checked_jsonl_files,
     )
@@ -874,7 +1022,7 @@ def format_result(
     scope_label: str,
     issues: list[ValidationIssue],
     checked_entities: int,
-    checked_notes: int,
+    checked_sources: int,
     checked_edges: int,
     checked_jsonl_files: int,
 ) -> dict[str, Any]:
@@ -899,7 +1047,7 @@ def format_result(
         "data_root": data_root_rel,
         "checked": {
             "entities": checked_entities,
-            "notes": checked_notes,
+            "sources": checked_sources,
             "edge_files": checked_edges,
             "jsonl_files": checked_jsonl_files,
         },

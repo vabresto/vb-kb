@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/ma/person@matt-gorin",
+  "id": "citation-person-matt-gorin-frontmatter",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^frontmatter] in person/ma/person@matt-gorin",
+  "relation": "cites",
+  "sources": [
+    "source/fr/source@frontmatter"
+  ],
+  "to": "source/fr/source@frontmatter",
+  "valid_from": null,
+  "valid_to": null
+}

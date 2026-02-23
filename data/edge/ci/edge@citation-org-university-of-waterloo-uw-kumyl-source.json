@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/un/org@university-of-waterloo",
+  "id": "citation-org-university-of-waterloo-uw-kumyl-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^uw-kumyl-source] in org/un/org@university-of-waterloo",
+  "relation": "cites",
+  "sources": [
+    "source/uw/source@uw-kumyl-source"
+  ],
+  "to": "source/uw/source@uw-kumyl-source",
+  "valid_from": null,
+  "valid_to": null
+}

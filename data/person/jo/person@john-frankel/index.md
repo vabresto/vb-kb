@@ -30,9 +30,9 @@ focus-areas:
 
 ## Bio
 
-![Headshot of John Frankel](./images/john-frankel.jpg)[^john-source]
+![Headshot of John Frankel](./images/john-frankel.jpg)[^john-source-0816d1b2]
 
-John Frankel's ffVC profile describes him as a technology investor who founded [ff Venture Capital](../../../org/ff/org@ff-venture-capital/index.md) in 2008, and says the firm has funded more than 150 seed and early-stage companies.[^john-source]
+John Frankel's ffVC profile describes him as a technology investor who founded [ff Venture Capital](../../../org/ff/org@ff-venture-capital/index.md) in 2008, and says the firm has funded more than 150 seed and early-stage companies.[^john-source-0816d1b2]
 
 ## Conversation Notes
 

@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/we/org@webflow",
+  "id": "citation-org-webflow-webflow-grimur-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^webflow-grimur-source] in org/we/org@webflow",
+  "relation": "cites",
+  "sources": [
+    "source/we/source@webflow-grimur-source"
+  ],
+  "to": "source/we/source@webflow-grimur-source",
+  "valid_from": null,
+  "valid_to": null
+}

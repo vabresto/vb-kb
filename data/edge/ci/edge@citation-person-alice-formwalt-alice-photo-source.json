@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/al/person@alice-formwalt",
+  "id": "citation-person-alice-formwalt-alice-photo-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^alice-photo-source] in person/al/person@alice-formwalt",
+  "relation": "cites",
+  "sources": [
+    "source/al/source@alice-photo-source"
+  ],
+  "to": "source/al/source@alice-photo-source",
+  "valid_from": null,
+  "valid_to": null
+}

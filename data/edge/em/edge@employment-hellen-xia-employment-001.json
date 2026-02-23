@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/he/person@hellen-xia",
   "id": "employment-hellen-xia-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Consultant | Period: Reported (unverified) | Details: Included from user-provided background; public corroboration not confirmed in this pass.",
   "relation": "works_at",
   "sources": [
-    "person/he/person@hellen-xia/employment-history.jsonl#employment-001",
-    "data/person/hellen-xia.md",
-    "Internal note (2026-02-20 user input)"
+    "source/in/source@internal-note-2026-02-20-user-input"
   ],
   "to": "org/bo/org@boston-consulting-group",
   "valid_from": null,

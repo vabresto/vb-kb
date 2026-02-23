@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/an/person@andrei-serban",
+  "id": "citation-person-andrei-serban-andrei-techcrunch",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^andrei-techcrunch] in person/an/person@andrei-serban",
+  "relation": "cites",
+  "sources": [
+    "source/an/source@andrei-techcrunch"
+  ],
+  "to": "source/an/source@andrei-techcrunch",
+  "valid_from": null,
+  "valid_to": null
+}

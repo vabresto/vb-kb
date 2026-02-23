@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/un/org@university-of-waterloo-student-venture-fund",
+  "id": "citation-org-university-of-waterloo-student-venture-fund-uw-svf-fall-2019",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^uw-svf-fall-2019] in org/un/org@university-of-waterloo-student-venture-fund",
+  "relation": "cites",
+  "sources": [
+    "source/uw/source@uw-svf-fall-2019"
+  ],
+  "to": "source/uw/source@uw-svf-fall-2019",
+  "valid_from": null,
+  "valid_to": null
+}

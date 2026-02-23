@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/pr/org@privy",
+  "id": "citation-org-privy-privy-home",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^privy-home] in org/pr/org@privy",
+  "relation": "cites",
+  "sources": [
+    "source/pr/source@privy-home"
+  ],
+  "to": "source/pr/source@privy-home",
+  "valid_from": null,
+  "valid_to": null
+}

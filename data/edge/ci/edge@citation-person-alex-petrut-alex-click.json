@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/al/person@alex-petrut",
+  "id": "citation-person-alex-petrut-alex-click",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^alex-click] in person/al/person@alex-petrut",
+  "relation": "cites",
+  "sources": [
+    "source/al/source@alex-click"
+  ],
+  "to": "source/al/source@alex-click",
+  "valid_from": null,
+  "valid_to": null
+}

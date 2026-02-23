@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/ma/person@matthew-brannon",
   "id": "employment-matthew-brannon-employment-007",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Educator and Clinician | Period: 2006 - 2016 | Details: Tutoring and music-clinician work across individual and group settings.",
   "relation": "works_at",
   "sources": [
-    "person/ma/person@matthew-brannon/employment-history.jsonl#employment-007",
-    "data/person/matthew-brannon.md",
-    "[^matthew-linkedin]"
+    "source/ma/source@matthew-linkedin"
   ],
   "to": "org/fr/org@freelance",
   "valid_from": null,

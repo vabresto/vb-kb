@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/he/person@henri-stern",
+  "id": "citation-person-henri-stern-henri-careers",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^henri-careers] in person/he/person@henri-stern",
+  "relation": "cites",
+  "sources": [
+    "source/he/source@henri-careers"
+  ],
+  "to": "source/he/source@henri-careers",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/yc/org@y-combinator",
+  "id": "citation-org-y-combinator-yc-about",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^yc-about] in org/yc/org@y-combinator",
+  "relation": "cites",
+  "sources": [
+    "source/yc/source@yc-about"
+  ],
+  "to": "source/yc/source@yc-about",
+  "valid_from": null,
+  "valid_to": null
+}

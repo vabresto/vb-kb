@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/st/org@street-smarts-vr",
+  "id": "citation-org-street-smarts-vr-ssvr-sec-2019",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^ssvr-sec-2019] in org/st/org@street-smarts-vr",
+  "relation": "cites",
+  "sources": [
+    "source/ss/source@ssvr-sec-2019"
+  ],
+  "to": "source/ss/source@ssvr-sec-2019",
+  "valid_from": null,
+  "valid_to": null
+}

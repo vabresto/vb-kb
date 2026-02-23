@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 import yaml
 
 from kb.edges import sync_edge_backlinks
-from kb.schemas import EdgeRecord, NoteRecord, shard_for_slug
+from kb.schemas import EdgeRecord, SourceRecord, SourceType, shard_for_slug
 from kb.validate import infer_data_root, run_validation
 
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -41,6 +41,17 @@ class NoteUpsertInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    frontmatter: dict[str, Any] = Field(default_factory=dict)
+    body: str = ""
+    commit_message: str | None = None
+
+
+class SourceUpsertInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    source_type: SourceType = SourceType.document
+    note_type: str | None = None
     frontmatter: dict[str, Any] = Field(default_factory=dict)
     body: str = ""
     commit_message: str | None = None
@@ -308,31 +319,62 @@ def upsert_entity_file(
     return index_path, {"kind": payload.kind, "slug": slug, "index_path": relpath(index_path, project_root)}
 
 
+def upsert_source_file(
+    *,
+    project_root: Path,
+    data_root: Path,
+    payload: SourceUpsertInput,
+) -> tuple[Path, dict[str, Any]]:
+    slug = ensure_slug(payload.slug)
+    source_dir = data_root / "source" / shard_for_slug(slug) / f"source@{slug}"
+    source_dir.mkdir(parents=True, exist_ok=True)
+
+    metadata = dict(payload.frontmatter)
+    metadata["id"] = f"source@{slug}"
+    metadata["title"] = str(metadata.get("title") or title_from_slug(slug)).strip()
+    metadata["source-type"] = str(metadata.get("source-type") or payload.source_type.value).strip()
+    if metadata["source-type"] == SourceType.note.value:
+        metadata["note-type"] = str(metadata.get("note-type") or payload.note_type or "note").strip()
+    elif payload.note_type:
+        metadata["note-type"] = payload.note_type.strip()
+    metadata["citation-key"] = str(metadata.get("citation-key") or slug).strip()
+    metadata["source-path"] = str(
+        metadata.get("source-path") or f"data/source/{shard_for_slug(slug)}/source@{slug}/index.md"
+    ).strip()
+    metadata["source-category"] = str(metadata.get("source-category") or "mcp").strip()
+
+    # Validate canonical frontmatter before writing.
+    SourceRecord.model_validate(metadata)
+
+    index_path = source_dir / "index.md"
+    index_path.write_text(render_markdown(metadata, payload.body), encoding="utf-8")
+    edges_dir = source_dir / "edges"
+    edges_dir.mkdir(parents=True, exist_ok=True)
+    gitkeep = edges_dir / ".gitkeep"
+    if not gitkeep.exists():
+        gitkeep.write_text("", encoding="utf-8")
+    return index_path, {"slug": slug, "index_path": relpath(index_path, project_root)}
+
+
 def upsert_note_file(
     *,
     project_root: Path,
     data_root: Path,
     payload: NoteUpsertInput,
 ) -> tuple[Path, dict[str, Any]]:
-    slug = ensure_slug(payload.slug)
-    note_dir = data_root / "note" / shard_for_slug(slug) / f"note@{slug}"
-    note_dir.mkdir(parents=True, exist_ok=True)
-
-    metadata = dict(payload.frontmatter)
-    metadata["id"] = f"note@{slug}"
-    metadata["title"] = str(metadata.get("title") or title_from_slug(slug)).strip()
-    metadata["note-type"] = str(metadata.get("note-type") or "note").strip()
-    metadata["source-path"] = str(
-        metadata.get("source-path") or f"data/note/{shard_for_slug(slug)}/note@{slug}/index.md"
-    ).strip()
-    metadata["source-category"] = str(metadata.get("source-category") or "mcp").strip()
-
-    # Validate canonical frontmatter before writing.
-    NoteRecord.model_validate(metadata)
-
-    index_path = note_dir / "index.md"
-    index_path.write_text(render_markdown(metadata, payload.body), encoding="utf-8")
-    return index_path, {"slug": slug, "index_path": relpath(index_path, project_root)}
+    source_payload = SourceUpsertInput(
+        slug=payload.slug,
+        source_type=SourceType.note,
+        note_type="note",
+        frontmatter=payload.frontmatter,
+        body=payload.body,
+        commit_message=payload.commit_message,
+    )
+    return upsert_source_file(
+        project_root=project_root,
+        data_root=data_root,
+        payload=source_payload,
+    )
 
 
 def upsert_edge_file(
@@ -425,6 +467,64 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
         return result
 
     @server.tool
+    def upsert_source(
+        slug: str,
+        source_type: str = SourceType.document.value,
+        note_type: str | None = None,
+        frontmatter: dict[str, Any] | None = None,
+        body: str = "",
+        commit_message: str | None = None,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = SourceUpsertInput(
+                slug=slug,
+                source_type=SourceType(str(source_type).strip()),
+                note_type=note_type,
+                frontmatter=frontmatter or {},
+                body=body,
+                commit_message=commit_message,
+            )
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        message = payload.commit_message or default_commit_message(
+            "upsert-source",
+            relpath(
+                data_root / "source" / shard_for_slug(payload.slug) / f"source@{payload.slug}" / "index.md",
+                project_root,
+            ),
+        )
+
+        def apply() -> dict[str, Any]:
+            _, apply_meta = upsert_source_file(
+                project_root=project_root,
+                data_root=data_root,
+                payload=payload,
+            )
+            return apply_meta
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
     def upsert_note(
         slug: str,
         frontmatter: dict[str, Any] | None = None,
@@ -448,7 +548,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
         message = payload.commit_message or default_commit_message(
             "upsert-note",
             relpath(
-                data_root / "note" / shard_for_slug(payload.slug) / f"note@{payload.slug}" / "index.md",
+                data_root / "source" / shard_for_slug(payload.slug) / f"source@{payload.slug}" / "index.md",
                 project_root,
             ),
         )

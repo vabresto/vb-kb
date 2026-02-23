@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/da/person@david-tisch",
+  "id": "citation-person-david-tisch-tisch-team",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^tisch-team] in person/da/person@david-tisch",
+  "relation": "cites",
+  "sources": [
+    "source/ti/source@tisch-team"
+  ],
+  "to": "source/ti/source@tisch-team",
+  "valid_from": null,
+  "valid_to": null
+}

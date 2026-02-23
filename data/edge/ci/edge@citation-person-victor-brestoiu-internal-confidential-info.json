@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/vi/person@victor-brestoiu",
+  "id": "citation-person-victor-brestoiu-internal-confidential-info",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^internal-confidential-info] in person/vi/person@victor-brestoiu",
+  "relation": "cites",
+  "sources": [
+    "source/in/source@internal-confidential-info"
+  ],
+  "to": "source/in/source@internal-confidential-info",
+  "valid_from": null,
+  "valid_to": null
+}

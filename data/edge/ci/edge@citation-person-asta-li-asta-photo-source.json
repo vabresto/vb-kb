@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/as/person@asta-li",
+  "id": "citation-person-asta-li-asta-photo-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^asta-photo-source] in person/as/person@asta-li",
+  "relation": "cites",
+  "sources": [
+    "source/as/source@asta-photo-source"
+  ],
+  "to": "source/as/source@asta-photo-source",
+  "valid_from": null,
+  "valid_to": null
+}

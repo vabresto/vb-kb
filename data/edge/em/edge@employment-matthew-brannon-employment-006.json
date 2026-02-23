@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/ma/person@matthew-brannon",
   "id": "employment-matthew-brannon-employment-006",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Founder | Period: Jan 2014 - Nov 2017 | Details: Agency work across design/development for SMB and enterprise clients.",
   "relation": "works_at",
   "sources": [
-    "person/ma/person@matthew-brannon/employment-history.jsonl#employment-006",
-    "data/person/matthew-brannon.md",
-    "[^matthew-linkedin]"
+    "source/ma/source@matthew-linkedin"
   ],
   "to": "org/ve/org@very-bright-design",
   "valid_from": null,

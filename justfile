@@ -40,6 +40,10 @@ check:
 derive-edges:
   uv run kb derive-employment-edges --data-root data
 
+# Derive canonical citation edges from footnote references.
+derive-citation-edges:
+  uv run kb derive-citation-edges --data-root data
+
 # Regenerate edge backlink symlinks.
 sync-edges:
   uv run kb sync-edges --data-root data

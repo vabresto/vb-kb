@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/un/org@unity",
+  "id": "citation-org-unity-unity-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^unity-source] in org/un/org@unity",
+  "relation": "cites",
+  "sources": [
+    "source/un/source@unity-source"
+  ],
+  "to": "source/un/source@unity-source",
+  "valid_from": null,
+  "valid_to": null
+}

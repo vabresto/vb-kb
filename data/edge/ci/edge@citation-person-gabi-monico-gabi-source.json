@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/ga/person@gabi-monico",
+  "id": "citation-person-gabi-monico-gabi-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^gabi-source] in person/ga/person@gabi-monico",
+  "relation": "cites",
+  "sources": [
+    "source/ga/source@gabi-source"
+  ],
+  "to": "source/ga/source@gabi-source",
+  "valid_from": null,
+  "valid_to": null
+}

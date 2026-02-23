@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/pr/org@primary-venture-partners",
+  "id": "citation-org-primary-venture-partners-primary-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^primary-source] in org/pr/org@primary-venture-partners",
+  "relation": "cites",
+  "sources": [
+    "source/pr/source@primary-source"
+  ],
+  "to": "source/pr/source@primary-source",
+  "valid_from": null,
+  "valid_to": null
+}

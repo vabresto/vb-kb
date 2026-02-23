@@ -72,11 +72,12 @@ class Page:
 
 
 @dataclass(frozen=True)
-class NotePage:
+class SourcePage:
     title: str
     source_path: Path
     output_path: Path
     relative_path: Path
+    citation_key: str
     metadata: dict[str, Any]
     body: str
 
@@ -94,15 +95,15 @@ def infer_entity_data_root(project_root: Path) -> Path:
     return project_root / "data"
 
 
-def infer_notes_root(project_root: Path, entity_data_root: Path) -> Path:
+def infer_sources_root(project_root: Path, entity_data_root: Path) -> Path:
     for candidate in (
+        entity_data_root / "source",
         entity_data_root / "note",
-        entity_data_root / "notes",
-        project_root / "data" / "notes",
+        project_root / "data" / "source",
     ):
         if candidate.exists():
             return candidate
-    return project_root / "data" / "notes"
+    return project_root / "data" / "source"
 
 
 def load_jsonl_rows(path: Path, model_cls: type) -> list[Any]:
@@ -173,27 +174,33 @@ def title_from_slug(slug: str) -> str:
     return " ".join(parts).title()
 
 
-def load_note_page(path: Path, notes_root: Path, output_path: Path) -> NotePage:
+def load_source_page(path: Path, sources_root: Path, output_path: Path) -> SourcePage:
     markdown = path.read_text(encoding="utf-8")
     metadata, body = split_frontmatter(markdown)
     title = str(metadata.get("title") or title_from_slug(path.stem))
-    return NotePage(
+    citation_key = str(metadata.get("citation-key") or path.stem).strip()
+    return SourcePage(
         title=title,
         source_path=path,
         output_path=output_path,
-        relative_path=path.relative_to(notes_root),
+        relative_path=path.relative_to(sources_root),
+        citation_key=citation_key,
         metadata=metadata,
         body=body,
     )
 
 
-def load_note_page_v2(index_path: Path, notes_root: Path, output_root: Path) -> NotePage:
+def load_source_page_v2(index_path: Path, output_root: Path) -> SourcePage:
     markdown = index_path.read_text(encoding="utf-8")
     metadata, body = split_frontmatter(markdown)
 
     raw_id = str(metadata.get("id") or "").strip()
     fallback = index_path.parent.name
-    if raw_id.startswith("note@"):
+    if raw_id.startswith("source@"):
+        slug = raw_id[len("source@") :]
+    elif fallback.startswith("source@"):
+        slug = fallback[len("source@") :]
+    elif raw_id.startswith("note@"):
         slug = raw_id[len("note@") :]
     elif fallback.startswith("note@"):
         slug = fallback[len("note@") :]
@@ -207,11 +214,13 @@ def load_note_page_v2(index_path: Path, notes_root: Path, output_root: Path) -> 
         relative_path = Path(f"{slug}.md")
 
     title = str(metadata.get("title") or title_from_slug(slug))
-    return NotePage(
+    citation_key = str(metadata.get("citation-key") or slug).strip()
+    return SourcePage(
         title=title,
         source_path=index_path,
         output_path=output_root / relative_path,
         relative_path=relative_path,
+        citation_key=citation_key,
         metadata=metadata,
         body=body,
     )
@@ -499,15 +508,47 @@ def normalize_image_paths(body: str) -> str:
     return body
 
 
-def remove_unreferenced_footnote_definitions(body: str) -> str:
-    referenced = {match.group(1) for match in FOOTNOTE_REF_RE.finditer(body)}
+def remove_footnote_definitions(body: str) -> str:
     filtered_lines: list[str] = []
     for line in body.splitlines():
-        match = FOOTNOTE_DEF_RE.match(line)
-        if match and match.group(1) not in referenced:
+        if FOOTNOTE_DEF_RE.match(line):
             continue
         filtered_lines.append(line)
     return "\n".join(filtered_lines)
+
+
+def append_source_footnote_definitions(
+    markdown: str,
+    *,
+    output_path: Path,
+    sources_by_citation_key: dict[str, "SourcePage"],
+) -> str:
+    ordered_keys: list[str] = []
+    seen: set[str] = set()
+    for match in FOOTNOTE_REF_RE.finditer(markdown):
+        key = match.group(1).strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        ordered_keys.append(key)
+
+    if not ordered_keys:
+        return markdown.rstrip() + "\n"
+
+    definitions: list[str] = []
+    for key in ordered_keys:
+        source_page = sources_by_citation_key.get(key)
+        if source_page is None:
+            definitions.append(f"[^{key}]: Missing source for citation key `{key}`.")
+            continue
+
+        rel = os.path.relpath(source_page.output_path, start=output_path.parent).replace(os.sep, "/")
+        definitions.append(f"[^{key}]: [{source_page.title}]({rel})")
+
+    body = markdown.rstrip()
+    if definitions:
+        body = f"{body}\n\n" + "\n".join(definitions)
+    return body.rstrip() + "\n"
 
 
 def is_external_destination(destination: str) -> bool:
@@ -745,7 +786,10 @@ def load_entity_edges(page: Page) -> list[EdgeRecord]:
     return [by_id[key] for key in sorted(by_id)]
 
 
-def render_relations_section(page: Page, pages_by_entity_rel_path: dict[str, Page]) -> list[str]:
+def render_relations_section(
+    page: Page,
+    relation_targets: dict[str, tuple[str, Path]],
+) -> list[str]:
     records = load_entity_edges(page)
     if not records:
         return []
@@ -761,10 +805,11 @@ def render_relations_section(page: Page, pages_by_entity_rel_path: dict[str, Pag
         else:
             continue
 
-        other_page = pages_by_entity_rel_path.get(other)
-        if other_page is not None:
-            rel = os.path.relpath(other_page.output_path, start=page.output_path.parent).replace(os.sep, "/")
-            other_label = f"[{other_page.title}]({rel})"
+        other_target = relation_targets.get(other)
+        if other_target is not None:
+            other_title, other_output_path = other_target
+            rel = os.path.relpath(other_output_path, start=page.output_path.parent).replace(os.sep, "/")
+            other_label = f"[{other_title}]({rel})"
         else:
             other_label = f"`{other}`"
 
@@ -785,6 +830,8 @@ def render_page(
     *,
     source_to_output: dict[Path, Path],
     pages_by_entity_rel_path: dict[str, Page],
+    relation_targets: dict[str, tuple[str, Path]],
+    sources_by_citation_key: dict[str, "SourcePage"],
 ) -> str:
     rewritten_metadata = rewrite_links_in_value(
         page.metadata,
@@ -813,7 +860,7 @@ def render_page(
         body = move_looking_for_after_snapshot(body)
     else:
         body = insert_affiliated_people_above_bio(body, rewritten_metadata)
-    body = remove_unreferenced_footnote_definitions(body)
+    body = remove_footnote_definitions(body)
     if body:
         sections.append(body.rstrip())
         sections.append("")
@@ -827,27 +874,42 @@ def render_page(
     )
     sections.extend(render_looking_for_section(page, source_to_output=source_to_output))
     sections.extend(render_changelog_section(page, source_to_output=source_to_output))
-    sections.extend(render_relations_section(page, pages_by_entity_rel_path=pages_by_entity_rel_path))
+    sections.extend(render_relations_section(page, relation_targets=relation_targets))
     sections.extend(render_reference_section(page, metadata=rewritten_metadata))
 
-    return "\n".join(sections).strip() + "\n"
+    rendered = "\n".join(sections).strip() + "\n"
+    return append_source_footnote_definitions(
+        rendered,
+        output_path=page.output_path,
+        sources_by_citation_key=sources_by_citation_key,
+    )
 
 
-def render_note_page(note: NotePage, source_to_output: dict[Path, Path]) -> str:
-    sections: list[str] = [f"# {note.title}", ""]
-    body = strip_leading_h1(note.body)
+def render_source_page(
+    source_page: SourcePage,
+    source_to_output: dict[Path, Path],
+    *,
+    sources_by_citation_key: dict[str, "SourcePage"],
+) -> str:
+    sections: list[str] = [f"# {source_page.title}", ""]
+    body = strip_leading_h1(source_page.body)
     body = rewrite_entity_links_in_text(
         body,
-        source_path=note.source_path,
-        output_path=note.output_path,
+        source_path=source_page.source_path,
+        output_path=source_page.output_path,
         source_to_output=source_to_output,
     )
     body = normalize_image_paths(body)
-    body = remove_unreferenced_footnote_definitions(body)
+    body = remove_footnote_definitions(body)
     if body:
         sections.append(body.rstrip())
         sections.append("")
-    return "\n".join(sections).strip() + "\n"
+    rendered = "\n".join(sections).strip() + "\n"
+    return append_source_footnote_definitions(
+        rendered,
+        output_path=source_page.output_path,
+        sources_by_citation_key=sources_by_citation_key,
+    )
 
 
 def collect_entity_pages(data_root: Path, docs_dir: Path, entity_type: str) -> list[Page]:
@@ -880,33 +942,33 @@ def collect_entity_pages(data_root: Path, docs_dir: Path, entity_type: str) -> l
     return pages
 
 
-def collect_note_pages(notes_root: Path, docs_dir: Path) -> list[NotePage]:
-    output_dir = docs_dir / "notes"
-    if not notes_root.exists():
+def collect_source_pages(sources_root: Path, docs_dir: Path) -> list[SourcePage]:
+    output_dir = docs_dir / "sources"
+    if not sources_root.exists():
         return []
 
-    if notes_root.name == "note":
-        pages: list[NotePage] = []
-        for index_path in sorted(notes_root.rglob("index.md")):
-            if not index_path.parent.name.startswith("note@"):
+    if sources_root.name in {"source", "note"}:
+        pages: list[SourcePage] = []
+        for index_path in sorted(sources_root.rglob("index.md")):
+            parent_name = index_path.parent.name
+            if not (parent_name.startswith("source@") or parent_name.startswith("note@")):
                 continue
-            page = load_note_page_v2(
+            page = load_source_page_v2(
                 index_path=index_path,
-                notes_root=notes_root,
                 output_root=output_dir,
             )
             page.output_path.parent.mkdir(parents=True, exist_ok=True)
             pages.append(page)
         return pages
 
-    pages: list[NotePage] = []
-    for source_path in sorted(notes_root.rglob("*.md")):
-        relative_path = source_path.relative_to(notes_root)
+    pages: list[SourcePage] = []
+    for source_path in sorted(sources_root.rglob("*.md")):
+        relative_path = source_path.relative_to(sources_root)
         if any(part.startswith("_") for part in relative_path.parts):
             continue
-        page = load_note_page(
+        page = load_source_page(
             path=source_path,
-            notes_root=notes_root,
+            sources_root=sources_root,
             output_path=output_dir / relative_path,
         )
         page.output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -935,15 +997,18 @@ def copy_entity_images(pages: list[Page], docs_dir: Path) -> None:
             shutil.copy2(source_path, destination)
 
 
-def copy_note_assets(notes_root: Path, docs_dir: Path) -> None:
-    if not notes_root.exists():
+def copy_source_assets(sources_root: Path, docs_dir: Path) -> None:
+    if not sources_root.exists():
         return
 
-    destination_root = docs_dir / "notes"
-    for path in sorted(notes_root.rglob("*")):
+    destination_root = docs_dir / "sources"
+    for path in sorted(sources_root.rglob("*")):
         if not path.is_file() or path.suffix.lower() == ".md" or path.name.startswith("."):
             continue
-        destination = destination_root / path.relative_to(notes_root)
+        rel_parts = path.relative_to(sources_root).parts
+        if "edges" in rel_parts:
+            continue
+        destination = destination_root / path.relative_to(sources_root)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)
 
@@ -1013,19 +1078,19 @@ def format_note_category(parts: tuple[str, ...]) -> str:
     return " / ".join(title_from_slug(part) for part in parts)
 
 
-def render_notes_index(notes: list[NotePage], source_label: str) -> str:
+def render_sources_index(sources: list[SourcePage], source_label: str) -> str:
     lines = [
-        "# Notes",
+        "# Sources",
         "",
-        f"Generated from `{len(notes)}` source files in `{source_label}`.",
+        f"Generated from `{len(sources)}` source files in `{source_label}`.",
         "",
     ]
-    if not notes:
-        lines.extend(["No notes found.", ""])
+    if not sources:
+        lines.extend(["No sources found.", ""])
         return "\n".join(lines)
 
-    grouped: dict[tuple[str, ...], list[NotePage]] = defaultdict(list)
-    for page in notes:
+    grouped: dict[tuple[str, ...], list[SourcePage]] = defaultdict(list)
+    for page in sources:
         category = tuple(page.relative_path.parts[:-1])
         grouped[category].append(page)
 
@@ -1034,7 +1099,7 @@ def render_notes_index(notes: list[NotePage], source_label: str) -> str:
         lines.extend([f"## {format_note_category(category)}", ""])
         for page in pages:
             relative_path = page.relative_path.as_posix()
-            lines.append(f"- [{page.title}](notes/{relative_path}) (`{source_label}/{relative_path}`)")
+            lines.append(f"- [{page.title}](sources/{relative_path}) (`{source_label}/{relative_path}`)")
         lines.append("")
 
     return "\n".join(lines)
@@ -1043,28 +1108,28 @@ def render_notes_index(notes: list[NotePage], source_label: str) -> str:
 def render_home(
     people: list[Page],
     orgs: list[Page],
-    notes: list[NotePage],
+    sources: list[SourcePage],
     *,
     entity_source_label: str,
-    notes_source_label: str,
+    sources_source_label: str,
 ) -> str:
     return "\n".join(
         [
             "# Victor's Knowledge Base",
             "",
-            f"This site is generated from `{entity_source_label}/person/`, `{entity_source_label}/org/`, and `{notes_source_label}`.",
+            f"This site is generated from `{entity_source_label}/person/`, `{entity_source_label}/org/`, and `{sources_source_label}`.",
             "",
             f"- People profiles: **{len(people)}**",
             f"- Organization profiles: **{len(orgs)}**",
-            f"- Notes: **{len(notes)}**",
+            f"- Sources: **{len(sources)}**",
             "",
             "## Collections",
             "",
             "- [People](people.md)",
             "- [Organizations](orgs.md)",
-            "- [Notes](notes.md)",
+            "- [Sources](sources.md)",
             "",
-            "## Notes",
+            "## Rendering Notes",
             "",
             "- Pages are generated as view-only output from source files.",
             "- Structured sections are rendered from JSONL for entity pages.",
@@ -1078,7 +1143,7 @@ def render_home(
 def build_source_to_output_map(
     project_root: Path,
     pages: list[Page],
-    notes: list[NotePage],
+    sources: list[SourcePage],
 ) -> dict[Path, Path]:
     mapping: dict[Path, Path] = {}
     for page in pages:
@@ -1088,19 +1153,19 @@ def build_source_to_output_map(
         if legacy_flat.exists():
             mapping[legacy_flat.resolve()] = page.output_path
 
-    for note in notes:
-        mapping[note.source_path.resolve()] = note.output_path
-        raw_source_path = str(note.metadata.get("source-path") or "").strip()
+    for source_page in sources:
+        mapping[source_page.source_path.resolve()] = source_page.output_path
+        raw_source_path = str(source_page.metadata.get("source-path") or "").strip()
         if raw_source_path:
             legacy_note = (project_root / raw_source_path).resolve()
-            mapping[legacy_note] = note.output_path
+            mapping[legacy_note] = source_page.output_path
 
     return mapping
 
 
 def build_site_content(project_root: Path) -> None:
     entity_data_root = infer_entity_data_root(project_root)
-    notes_root = infer_notes_root(project_root, entity_data_root)
+    sources_root = infer_sources_root(project_root, entity_data_root)
 
     docs_dir = project_root / ".build" / "docs"
     if docs_dir.exists():
@@ -1109,14 +1174,21 @@ def build_site_content(project_root: Path) -> None:
 
     people = collect_entity_pages(data_root=entity_data_root, docs_dir=docs_dir, entity_type="person")
     orgs = collect_entity_pages(data_root=entity_data_root, docs_dir=docs_dir, entity_type="org")
-    notes = collect_note_pages(notes_root=notes_root, docs_dir=docs_dir)
+    sources = collect_source_pages(sources_root=sources_root, docs_dir=docs_dir)
 
     pages = [*people, *orgs]
     pages_by_entity_rel_path = {page.entity_rel_path: page for page in pages}
+    sources_by_citation_key = {source_page.citation_key: source_page for source_page in sources}
+    relation_targets: dict[str, tuple[str, Path]] = {
+        page.entity_rel_path: (page.title, page.output_path) for page in pages
+    }
+    for source_page in sources:
+        source_rel_path = source_page.source_path.parent.relative_to(entity_data_root).as_posix()
+        relation_targets[source_rel_path] = (source_page.title, source_page.output_path)
     source_to_output = build_source_to_output_map(
         project_root=project_root,
         pages=pages,
-        notes=notes,
+        sources=sources,
     )
 
     for page in pages:
@@ -1125,26 +1197,35 @@ def build_site_content(project_root: Path) -> None:
                 page,
                 source_to_output=source_to_output,
                 pages_by_entity_rel_path=pages_by_entity_rel_path,
+                relation_targets=relation_targets,
+                sources_by_citation_key=sources_by_citation_key,
             ),
             encoding="utf-8",
         )
-    for note in notes:
-        note.output_path.write_text(render_note_page(note, source_to_output=source_to_output), encoding="utf-8")
+    for source_page in sources:
+        source_page.output_path.write_text(
+            render_source_page(
+                source_page,
+                source_to_output=source_to_output,
+                sources_by_citation_key=sources_by_citation_key,
+            ),
+            encoding="utf-8",
+        )
 
     copy_entity_images(pages=pages, docs_dir=docs_dir)
-    copy_note_assets(notes_root=notes_root, docs_dir=docs_dir)
+    copy_source_assets(sources_root=sources_root, docs_dir=docs_dir)
     copy_site_assets(project_root=project_root, docs_dir=docs_dir)
 
     entity_source_label = entity_data_root.relative_to(project_root).as_posix()
-    notes_source_label = notes_root.relative_to(project_root).as_posix()
+    sources_source_label = sources_root.relative_to(project_root).as_posix()
 
     (docs_dir / "index.md").write_text(
         render_home(
             people=people,
             orgs=orgs,
-            notes=notes,
+            sources=sources,
             entity_source_label=entity_source_label,
-            notes_source_label=notes_source_label,
+            sources_source_label=sources_source_label,
         ),
         encoding="utf-8",
     )
@@ -1154,8 +1235,8 @@ def build_site_content(project_root: Path) -> None:
     (docs_dir / "orgs.md").write_text(
         render_orgs_index(orgs=orgs, source_label=entity_source_label), encoding="utf-8"
     )
-    (docs_dir / "notes.md").write_text(
-        render_notes_index(notes=notes, source_label=notes_source_label), encoding="utf-8"
+    (docs_dir / "sources.md").write_text(
+        render_sources_index(sources=sources, source_label=sources_source_label), encoding="utf-8"
     )
 
 

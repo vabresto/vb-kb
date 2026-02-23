@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/ma/person@matthew-brannon",
+  "id": "citation-person-matthew-brannon-matthew-youtube",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^matthew-youtube] in person/ma/person@matthew-brannon",
+  "relation": "cites",
+  "sources": [
+    "source/ma/source@matthew-youtube"
+  ],
+  "to": "source/ma/source@matthew-youtube",
+  "valid_from": null,
+  "valid_to": null
+}

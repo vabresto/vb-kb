@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/bo/org@boston-consulting-group",
+  "id": "citation-org-boston-consulting-group-bcg-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^bcg-source] in org/bo/org@boston-consulting-group",
+  "relation": "cites",
+  "sources": [
+    "source/bc/source@bcg-source"
+  ],
+  "to": "source/bc/source@bcg-source",
+  "valid_from": null,
+  "valid_to": null
+}

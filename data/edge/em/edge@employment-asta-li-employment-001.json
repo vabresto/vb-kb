@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/as/person@asta-li",
   "id": "employment-asta-li-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Co-founder and CTO | Period: Current | Details: Listed on Privy's careers page as a founder and technical leader.",
   "relation": "works_at",
   "sources": [
-    "person/as/person@asta-li/employment-history.jsonl#employment-001",
-    "data/person/asta-li.md",
-    "[^asta-careers]"
+    "source/as/source@asta-careers"
   ],
   "to": "org/pr/org@privy",
   "valid_from": null,

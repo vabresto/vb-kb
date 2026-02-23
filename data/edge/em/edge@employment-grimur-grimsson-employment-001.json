@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/gr/person@grimur-grimsson",
   "id": "employment-grimur-grimsson-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Video Producer | Period: 2021 (documented) | Details: Speaker profile describes him as a video producer on Webflow's Education team.",
   "relation": "works_at",
   "sources": [
-    "person/gr/person@grimur-grimsson/employment-history.jsonl#employment-001",
-    "data/person/grimur-grimsson.md",
-    "[^grimur-speaker]"
+    "source/gr/source@grimur-speaker"
   ],
   "to": "org/we/org@webflow",
   "valid_from": null,

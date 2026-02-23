@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/fr/org@fractal-software",
+  "id": "citation-org-fractal-software-fractal-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^fractal-source] in org/fr/org@fractal-software",
+  "relation": "cites",
+  "sources": [
+    "source/fr/source@fractal-source"
+  ],
+  "to": "source/fr/source@fractal-source",
+  "valid_from": null,
+  "valid_to": null
+}

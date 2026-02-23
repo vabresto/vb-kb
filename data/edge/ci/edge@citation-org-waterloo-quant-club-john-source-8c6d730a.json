@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/wa/org@waterloo-quant-club",
+  "id": "citation-org-waterloo-quant-club-john-source-8c6d730a",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^john-source-8c6d730a] in org/wa/org@waterloo-quant-club",
+  "relation": "cites",
+  "sources": [
+    "source/jo/source@john-source-8c6d730a"
+  ],
+  "to": "source/jo/source@john-source-8c6d730a",
+  "valid_from": null,
+  "valid_to": null
+}

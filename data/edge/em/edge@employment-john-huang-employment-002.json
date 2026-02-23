@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/jo/person@john-huang",
   "id": "employment-john-huang-employment-002",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Quantitative Research Intern | Period: Jun 2025 - Sep 2025 | Details: Internship in New York City.",
   "relation": "works_at",
   "sources": [
-    "person/jo/person@john-huang/employment-history.jsonl#employment-002",
-    "data/person/john-huang.md",
-    "[^john-linkedin]"
+    "source/jo/source@john-linkedin"
   ],
   "to": "org/cu/org@cubist-systematic-strategies",
   "valid_from": null,

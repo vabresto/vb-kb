@@ -1,15 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/ku/person@kumyl-najeeb",
   "id": "employment-kumyl-najeeb-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Associate Software Engineer | Period: 2021 - Present (documented) | Details: Listed as current role in public profile aggregators; Riot tech post credits Kumyl in the 2020 intern write-up.",
   "relation": "works_at",
   "sources": [
-    "person/ku/person@kumyl-najeeb/employment-history.jsonl#employment-001",
-    "data/person/kumyl-najeeb.md",
-    "[^kumyl-zoominfo] [^kumyl-rocketreach] [^kumyl-riot-tech]"
+    "source/ku/source@kumyl-zoominfo",
+    "source/ku/source@kumyl-rocketreach",
+    "source/ku/source@kumyl-riot-tech"
   ],
   "to": "org/ri/org@riot-games",
   "valid_from": null,

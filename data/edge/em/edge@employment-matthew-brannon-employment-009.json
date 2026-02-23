@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/ma/person@matthew-brannon",
   "id": "employment-matthew-brannon-employment-009",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Senior Sales Associate and Geek Squad Agent | Period: Aug 2006 - Jan 2009 | Details: Customer-facing retail and technical support work in Gainesville, FL.",
   "relation": "works_at",
   "sources": [
-    "person/ma/person@matthew-brannon/employment-history.jsonl#employment-009",
-    "data/person/matthew-brannon.md",
-    "[^matthew-linkedin]"
+    "source/ma/source@matthew-linkedin"
   ],
   "to": "org/be/org@best-buy",
   "valid_from": null,

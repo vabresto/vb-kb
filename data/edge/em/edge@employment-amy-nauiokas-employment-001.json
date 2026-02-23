@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/am/person@amy-nauiokas",
   "id": "employment-amy-nauiokas-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Founder, Group CEO, and General Partner | Period: Current | Details: Extracted from frontmatter firm/role.",
   "relation": "works_at",
   "sources": [
-    "person/am/person@amy-nauiokas/employment-history.jsonl#employment-001",
-    "data/person/amy-nauiokas.md",
-    "frontmatter"
+    "source/fr/source@frontmatter"
   ],
   "to": "org/an/org@anthemis-group",
   "valid_from": null,

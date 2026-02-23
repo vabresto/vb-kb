@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/sa/org@san-francisco-oven",
+  "id": "citation-org-san-francisco-oven-sfo-linkedin",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^sfo-linkedin] in org/sa/org@san-francisco-oven",
+  "relation": "cites",
+  "sources": [
+    "source/sf/source@sfo-linkedin"
+  ],
+  "to": "source/sf/source@sfo-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

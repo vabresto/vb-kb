@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/mc/org@mckinsey-and-company",
+  "id": "citation-org-mckinsey-and-company-mckinsey-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^mckinsey-source] in org/mc/org@mckinsey-and-company",
+  "relation": "cites",
+  "sources": [
+    "source/mc/source@mckinsey-source"
+  ],
+  "to": "source/mc/source@mckinsey-source",
+  "valid_from": null,
+  "valid_to": null
+}

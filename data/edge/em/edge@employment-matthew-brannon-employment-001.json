@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/ma/person@matthew-brannon",
   "id": "employment-matthew-brannon-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Founder | Period: Sep 2023 - Present | Details: Full-time, New York, NY. Creating AI courses for people in tech.",
   "relation": "works_at",
   "sources": [
-    "person/ma/person@matthew-brannon/employment-history.jsonl#employment-001",
-    "data/person/matthew-brannon.md",
-    "[^matthew-linkedin]"
+    "source/ma/source@matthew-linkedin"
   ],
   "to": "org/th/org@the-table",
   "valid_from": null,

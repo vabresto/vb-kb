@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/wi/person@william-yuxuan-liu",
+  "id": "citation-person-william-yuxuan-liu-william-headshot",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^william-headshot] in person/wi/person@william-yuxuan-liu",
+  "relation": "cites",
+  "sources": [
+    "source/wi/source@william-headshot"
+  ],
+  "to": "source/wi/source@william-headshot",
+  "valid_from": null,
+  "valid_to": null
+}

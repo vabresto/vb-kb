@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/vi/person@victor-brestoiu",
+  "id": "citation-person-victor-brestoiu-victor-avatar",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^victor-avatar] in person/vi/person@victor-brestoiu",
+  "relation": "cites",
+  "sources": [
+    "source/vi/source@victor-avatar"
+  ],
+  "to": "source/vi/source@victor-avatar",
+  "valid_from": null,
+  "valid_to": null
+}

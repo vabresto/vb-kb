@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/co/org@comma-capital",
+  "id": "citation-org-comma-capital-comma-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^comma-source] in org/co/org@comma-capital",
+  "relation": "cites",
+  "sources": [
+    "source/co/source@comma-source"
+  ],
+  "to": "source/co/source@comma-source",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/mi/org@microsoft",
+  "id": "citation-org-microsoft-microsoft-source",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^microsoft-source] in org/mi/org@microsoft",
+  "relation": "cites",
+  "sources": [
+    "source/mi/source@microsoft-source"
+  ],
+  "to": "source/mi/source@microsoft-source",
+  "valid_from": null,
+  "valid_to": null
+}

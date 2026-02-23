@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/co/org@console",
+  "id": "citation-org-console-console-home",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^console-home] in org/co/org@console",
+  "relation": "cites",
+  "sources": [
+    "source/co/source@console-home"
+  ],
+  "to": "source/co/source@console-home",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -1,15 +1,13 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-22",
+  "first_noted_at": "2026-02-23",
   "from": "person/vl/person@vlad-magdalin",
   "id": "employment-vlad-magdalin-employment-001",
-  "last_verified_at": "2026-02-22",
+  "last_verified_at": "2026-02-23",
   "notes": "Role: Co-founder and Chief Innovation Officer | Period: 2024 (documented) | Details: Role and bio shown on Webflow Conf 2024 speaker page.",
   "relation": "works_at",
   "sources": [
-    "person/vl/person@vlad-magdalin/employment-history.jsonl#employment-001",
-    "data/person/vlad-magdalin.md",
-    "[^vlad-wfc24]"
+    "source/vl/source@vlad-wfc24"
   ],
   "to": "org/we/org@webflow",
   "valid_from": null,

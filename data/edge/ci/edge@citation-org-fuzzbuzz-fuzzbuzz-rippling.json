@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/fu/org@fuzzbuzz",
+  "id": "citation-org-fuzzbuzz-fuzzbuzz-rippling",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^fuzzbuzz-rippling] in org/fu/org@fuzzbuzz",
+  "relation": "cites",
+  "sources": [
+    "source/fu/source@fuzzbuzz-rippling"
+  ],
+  "to": "source/fu/source@fuzzbuzz-rippling",
+  "valid_from": null,
+  "valid_to": null
+}

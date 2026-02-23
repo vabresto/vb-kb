@@ -3,23 +3,26 @@ from __future__ import annotations
 import datetime as _dt
 import re
 from enum import Enum
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 PARTIAL_DATE_RE = re.compile(r"^\d{4}(?:-\d{2})?(?:-\d{2})?$")
 ENTITY_REL_PATH_RE = re.compile(
-    r"^(?P<kind>person|org)/(?P<shard>[a-z0-9]{2})/(?P<prefix>person|org)@(?P<slug>[a-z0-9][a-z0-9-]*)$"
+    r"^(?P<kind>person|org|source)/(?P<shard>[a-z0-9]{2})/(?P<prefix>person|org|source)@(?P<slug>[a-z0-9][a-z0-9-]*)$"
 )
-SOURCE_PATH_RE = re.compile(
-    r"^data/(person|org|note|notes)/.+\.md$"
+CANONICAL_INDEX_PATH_RE = re.compile(
+    r"^data/(person|org|source)/[a-z0-9]{2}/(?:person|org|source)@[a-z0-9][a-z0-9-]*/index\.md$"
 )
 SNAKE_TOKEN_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 EDGE_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 EMPLOYMENT_ROW_ID_RE = re.compile(r"^employment-\d{3}$")
 LOOKING_FOR_ROW_ID_RE = re.compile(r"^ask-\d{3}$")
 CHANGELOG_ROW_ID_RE = re.compile(r"^change-\d{3}$")
-NOTE_ID_RE = re.compile(r"^note@[a-z0-9]+(?:-[a-z0-9]+)*$")
+SOURCE_ID_RE = re.compile(r"^source@[a-z0-9]+(?:-[a-z0-9]+)*$")
+CITATION_KEY_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 NOTE_TYPE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+SOURCE_REF_RE = re.compile(r"^source/[a-z0-9]{2}/source@[a-z0-9][a-z0-9-]*(?:#[a-z0-9_\-]+)?$")
 
 
 class KBBaseModel(BaseModel):
@@ -32,6 +35,14 @@ class LookingForStatus(str, Enum):
     closed = "closed"
 
 
+class SourceType(str, Enum):
+    website = "website"
+    note = "note"
+    internal = "internal"
+    document = "document"
+    image = "image"
+
+
 class EdgeRelation(str, Enum):
     works_at = "works_at"
     founds = "founds"
@@ -42,6 +53,7 @@ class EdgeRelation(str, Enum):
     knows = "knows"
     partners_with = "partners_with"
     acquires = "acquires"
+    cites = "cites"
 
 
 EDGE_RELATIONS_V1 = tuple(item.value for item in EdgeRelation)
@@ -104,7 +116,10 @@ def validate_entity_rel_path(value: str) -> str:
     text = value.strip()
     match = ENTITY_REL_PATH_RE.match(text)
     if not match:
-        raise ValueError("must match person/<shard>/person@<slug> or org/<shard>/org@<slug>")
+        raise ValueError(
+            "must match person/<shard>/person@<slug>, org/<shard>/org@<slug>, "
+            "or source/<shard>/source@<slug>"
+        )
 
     kind = match.group("kind")
     prefix = match.group("prefix")
@@ -118,6 +133,49 @@ def validate_entity_rel_path(value: str) -> str:
     if shard != expected_shard:
         raise ValueError(f"invalid shard for slug {slug}; expected {expected_shard}")
 
+    return text
+
+
+def validate_canonical_index_path(value: str, *, field_name: str) -> str:
+    text = value.strip()
+    if not CANONICAL_INDEX_PATH_RE.match(text):
+        raise ValueError(f"{field_name} must point to a canonical index.md file under data/")
+    return text
+
+
+def validate_source_ref(value: str) -> str:
+    text = value.strip()
+    if not SOURCE_REF_RE.match(text):
+        raise ValueError(
+            "source reference must match source/<shard>/source@<slug> (optional #fragment)"
+        )
+
+    path_part, _, _ = text.partition("#")
+    validate_entity_rel_path(path_part)
+    return text
+
+
+def normalize_path_token(value: str | None) -> str | None:
+    if value is None:
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    if text.startswith("/"):
+        raise ValueError("path must be relative")
+    if ".." in text.split("/"):
+        raise ValueError("path cannot contain '..'")
+    return text
+
+
+def validate_source_category(value: str | None) -> str | None:
+    if value is None:
+        return None
+    text = value.strip().strip("/")
+    if not text:
+        return None
+    if ".." in text.split("/"):
+        raise ValueError("source-category cannot contain '..'")
     return text
 
 
@@ -152,10 +210,7 @@ class EmploymentHistoryRow(KBBaseModel):
     @field_validator("source_path")
     @classmethod
     def validate_source_path(cls, value: str) -> str:
-        text = value.strip()
-        if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must point to a markdown file under data/")
-        return text
+        return validate_canonical_index_path(value, field_name="source_path")
 
     @field_validator("source_section")
     @classmethod
@@ -216,10 +271,7 @@ class LookingForRow(KBBaseModel):
     @field_validator("source_path")
     @classmethod
     def validate_source_path(cls, value: str) -> str:
-        text = value.strip()
-        if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must point to a markdown file under data/")
-        return text
+        return validate_canonical_index_path(value, field_name="source_path")
 
     @field_validator("source_section")
     @classmethod
@@ -275,10 +327,7 @@ class ChangelogRow(KBBaseModel):
     @field_validator("source_path")
     @classmethod
     def validate_source_path(cls, value: str) -> str:
-        text = value.strip()
-        if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must point to a markdown file under data/")
-        return text
+        return validate_canonical_index_path(value, field_name="source_path")
 
     @field_validator("changed_at")
     @classmethod
@@ -295,21 +344,29 @@ class ChangelogRow(KBBaseModel):
         return value
 
 
-class NoteRecord(KBBaseModel):
+class SourceRecord(KBBaseModel):
     id: str
     title: str
-    note_type: str = Field(alias="note-type")
-    date: str | None = None
+    source_type: SourceType = Field(alias="source-type")
+    citation_key: str = Field(alias="citation-key")
     source_path: str = Field(alias="source-path")
     source_category: str | None = Field(alias="source-category", default=None)
+    note_type: str | None = Field(alias="note-type", default=None)
+    date: str | None = None
     updated_at: str | None = Field(alias="updated-at", default=None)
+    url: str | None = None
+    retrieved_at: str | None = Field(alias="retrieved-at", default=None)
+    published_at: str | None = Field(alias="published-at", default=None)
+    html_capture_path: str | None = Field(alias="html-capture-path", default=None)
+    screenshot_path: str | None = Field(alias="screenshot-path", default=None)
+    citation_text: str | None = Field(alias="citation-text", default=None)
 
     @field_validator("id")
     @classmethod
     def validate_id(cls, value: str) -> str:
         text = value.strip()
-        if not NOTE_ID_RE.match(text):
-            raise ValueError("id must match note@<kebab-case>")
+        if not SOURCE_ID_RE.match(text):
+            raise ValueError("id must match source@<kebab-case>")
         return text
 
     @field_validator("title")
@@ -320,15 +377,32 @@ class NoteRecord(KBBaseModel):
             raise ValueError("title must be non-empty")
         return text
 
+    @field_validator("citation_key")
+    @classmethod
+    def validate_citation_key(cls, value: str) -> str:
+        text = value.strip()
+        if not CITATION_KEY_RE.match(text):
+            raise ValueError("citation-key must be lowercase kebab-case")
+        return text
+
+    @field_validator("source_path")
+    @classmethod
+    def validate_source_path(cls, value: str) -> str:
+        return validate_canonical_index_path(value, field_name="source-path")
+
     @field_validator("note_type")
     @classmethod
-    def validate_note_type(cls, value: str) -> str:
+    def validate_note_type(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         text = value.strip()
+        if not text:
+            return None
         if not NOTE_TYPE_RE.match(text):
             raise ValueError("note-type must be snake_case")
         return text
 
-    @field_validator("date", "updated_at")
+    @field_validator("date", "updated_at", "retrieved_at", "published_at")
     @classmethod
     def validate_dates(cls, value: str | None) -> str | None:
         if value is None:
@@ -338,25 +412,44 @@ class NoteRecord(KBBaseModel):
             return None
         return parse_partial_date(text)
 
-    @field_validator("source_path")
-    @classmethod
-    def validate_source_path(cls, value: str) -> str:
-        text = value.strip()
-        if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source-path must point to a markdown file under data/")
-        return text
-
     @field_validator("source_category")
     @classmethod
-    def validate_source_category(cls, value: str | None) -> str | None:
+    def validate_source_category_value(cls, value: str | None) -> str | None:
+        return validate_source_category(value)
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
         if value is None:
             return None
-        text = value.strip().strip("/")
+        text = value.strip()
         if not text:
             return None
-        if ".." in text:
-            raise ValueError("source-category cannot contain '..'")
+        parsed = urlparse(text)
+        if parsed.scheme not in {"http", "https"}:
+            raise ValueError("url must use http or https")
+        if not parsed.netloc:
+            raise ValueError("url must include a hostname")
         return text
+
+    @field_validator("html_capture_path", "screenshot_path")
+    @classmethod
+    def validate_capture_paths(cls, value: str | None) -> str | None:
+        return normalize_path_token(value)
+
+    @model_validator(mode="after")
+    def validate_source_consistency(self) -> "SourceRecord":
+        if self.source_type == SourceType.note and self.note_type is None:
+            raise ValueError("note-type is required when source-type is 'note'")
+        return self
+
+
+class NoteRecord(SourceRecord):
+    @model_validator(mode="after")
+    def validate_note_record(self) -> "NoteRecord":
+        if self.source_type != SourceType.note:
+            raise ValueError("source-type must be 'note' for NoteRecord")
+        return self
 
 
 class EdgeRecord(KBBaseModel):
@@ -405,14 +498,12 @@ class EdgeRecord(KBBaseModel):
     def validate_sources(cls, value: list[str]) -> list[str]:
         normalized: list[str] = []
         for item in value:
-            text = str(item).strip()
-            if not text:
-                continue
+            text = validate_source_ref(str(item))
             if text in normalized:
                 continue
             normalized.append(text)
         if not normalized:
-            raise ValueError("sources must contain at least one non-empty item")
+            raise ValueError("sources must contain at least one valid source reference")
         return normalized
 
     @model_validator(mode="after")

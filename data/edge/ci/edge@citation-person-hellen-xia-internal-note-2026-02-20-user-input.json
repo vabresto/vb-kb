@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/he/person@hellen-xia",
+  "id": "citation-person-hellen-xia-internal-note-2026-02-20-user-input",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^internal-note-2026-02-20-user-input] in person/he/person@hellen-xia",
+  "relation": "cites",
+  "sources": [
+    "source/in/source@internal-note-2026-02-20-user-input"
+  ],
+  "to": "source/in/source@internal-note-2026-02-20-user-input",
+  "valid_from": null,
+  "valid_to": null
+}
