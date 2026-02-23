@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/wa/org@waterloo-quant-club",
+  "id": "citation-org-waterloo-quant-club-john-linkedin",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^john-linkedin] in org/wa/org@waterloo-quant-club",
+  "relation": "cites",
+  "sources": [
+    "source/jo/source@john-linkedin"
+  ],
+  "to": "source/jo/source@john-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

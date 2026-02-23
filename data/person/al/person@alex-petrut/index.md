@@ -26,15 +26,15 @@ focus-areas:
 
 ## Snapshot
 
-- Why they matter: Sports-business profile linked to [Stoked Management](../../../org/st/org@stoked-management/index.md) in available 2021 industry coverage metadata.[^alex-sbj]
-- Current focus: Last directly documented context in this pass is sports agency hiring/news context from 2021.[^alex-sbj]
+- Why they matter: Sports-business profile linked to [Stoked Management](../../../org/st/org@stoked-management/index.md) in available 2021 industry coverage metadata.[^stoked-sbj]
+- Current focus: Last directly documented context in this pass is sports agency hiring/news context from 2021.[^stoked-sbj]
 - Best way to engage: Bring concrete athlete-representation and sports-business partnership opportunities.
 
 ## Bio
 
-![Headshot of Alex Petrut](./images/alex-petrut.svg)[^alex-photo-source]
+![Headshot of Alex Petrut](./images/alex-petrut.svg)[^aaron-photo-source]
 
-The March 29, 2021 Sports Business Journal item "Labor and Agents" includes metadata stating Alex Petrut was a recent hire at [Stoked Management](../../../org/st/org@stoked-management/index.md).[^alex-sbj]
+The March 29, 2021 Sports Business Journal item "Labor and Agents" includes metadata stating Alex Petrut was a recent hire at [Stoked Management](../../../org/st/org@stoked-management/index.md).[^stoked-sbj]
 
 A Romanian profile piece about actor Tudor Petruț quotes him describing his son Alexandru as a "manager de sportivi" (sports manager), which aligns with the sports-management context noted above, but this source is non-industry and should be treated as supporting context only.[^alex-click]
 

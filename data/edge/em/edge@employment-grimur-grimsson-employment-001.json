@@ -7,7 +7,7 @@
   "notes": "Role: Video Producer | Period: 2021 (documented) | Details: Speaker profile describes him as a video producer on Webflow's Education team.",
   "relation": "works_at",
   "sources": [
-    "source/gr/source@grimur-speaker"
+    "source/we/source@webflow-grimur-source"
   ],
   "to": "org/we/org@webflow",
   "valid_from": null,

@@ -7,9 +7,9 @@
   "notes": "Role: CEO and Director | Period: 2019-2023 (documented) | Details: SEC Form D filings list him as Executive Officer and Director, with relationship clarification of \"CEO and Director.\"",
   "relation": "works_at",
   "sources": [
-    "source/ol/source@oliver-sec-2019",
-    "source/ol/source@oliver-sec-2022",
-    "source/ol/source@oliver-sec-2023"
+    "source/ss/source@ssvr-sec-2019",
+    "source/ss/source@ssvr-sec-2022",
+    "source/ss/source@ssvr-sec-2023"
   ],
   "to": "org/st/org@street-smarts-vr",
   "valid_from": null,

@@ -43,7 +43,7 @@ last-updated-from-source: 2026-02-18
 
 ## Bio
 
-LinkedIn experience entries for [Kelvin Yu](../../../person/ke/person@kelvin-yu/index.md) and [Jonathan Chow](../../../person/jo/person@jonathan-chow/index.md) list [Citadel Securities](index.md) as their current employer for quantitative research roles in New York.[^kelvin-source][^jonathan-source]
+LinkedIn experience entries for [Kelvin Yu](../../../person/ke/person@kelvin-yu/index.md) and [Jonathan Chow](../../../person/jo/person@jonathan-chow/index.md) list [Citadel Securities](index.md) as their current employer for quantitative research roles in New York.[^kelvin-source][^jonathan-linkedin]
 
 ## Notes
 

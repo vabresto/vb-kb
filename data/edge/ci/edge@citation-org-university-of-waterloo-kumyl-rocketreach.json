@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/un/org@university-of-waterloo",
+  "id": "citation-org-university-of-waterloo-kumyl-rocketreach",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^kumyl-rocketreach] in org/un/org@university-of-waterloo",
+  "relation": "cites",
+  "sources": [
+    "source/ku/source@kumyl-rocketreach"
+  ],
+  "to": "source/ku/source@kumyl-rocketreach",
+  "valid_from": null,
+  "valid_to": null
+}

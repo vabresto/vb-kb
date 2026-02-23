@@ -7,8 +7,8 @@
   "notes": "Role: Co-founder | Period: 2019 - 2023 (documented) | Details: [Y Combinator](../../../org/yc/org@y-combinator/index.md) lists him as founder; Rippling acquisition post names him as co-founder.",
   "relation": "works_at",
   "sources": [
-    "source/an/source@andrei-yc-fuzzbuzz",
-    "source/an/source@andrei-rippling"
+    "source/yc/source@yc-fuzzbuzz",
+    "source/ri/source@rippling-fuzzbuzz"
   ],
   "to": "org/fu/org@fuzzbuzz",
   "valid_from": null,

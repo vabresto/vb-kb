@@ -56,5 +56,5 @@ The University of Waterloo describes itself as Canada's top innovation universit
 ## Notes
 
 - [2026-02-16] Organization page created to support linked education references.
-- [2026-02-20] Added [Kumyl Najeeb](../../../person/ku/person@kumyl-najeeb/index.md) as alumni based on public profile aggregators.[^uw-kumyl-source][^uw-kumyl-source-rr]
-- [2026-02-20] Added [Hellen Xia](../../../person/he/person@hellen-xia/index.md) based on SAF [Student Venture Fund](../org@university-of-waterloo-student-venture-fund/index.md) Fall 2019 team listing.[^uw-hellen-source]
+- [2026-02-20] Added [Kumyl Najeeb](../../../person/ku/person@kumyl-najeeb/index.md) as alumni based on public profile aggregators.[^kumyl-zoominfo][^kumyl-rocketreach]
+- [2026-02-20] Added [Hellen Xia](../../../person/he/person@hellen-xia/index.md) based on SAF [Student Venture Fund](../org@university-of-waterloo-student-venture-fund/index.md) Fall 2019 team listing.[^uw-svf-fall-2019]

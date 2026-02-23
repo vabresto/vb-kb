@@ -37,7 +37,7 @@ last-updated-from-source: 2026-02-18
 
 ## Bio
 
-LinkedIn experience data for [Victoria Lo](../../../person/vi/person@victoria-lo/index.md) lists a Senior Software Engineer role at [Ava Labs](index.md) from August 2022 to December 2023.[^victoria-source]
+LinkedIn experience data for [Victoria Lo](../../../person/vi/person@victoria-lo/index.md) lists a Senior Software Engineer role at [Ava Labs](index.md) from August 2022 to December 2023.[^victoria-linkedin]
 
 ## Notes
 

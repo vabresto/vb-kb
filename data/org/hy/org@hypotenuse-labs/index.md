@@ -34,7 +34,7 @@ last-updated-from-source: 2026-02-20
 
 ## Snapshot
 
-- Why this org matters: Prior organization context for [Kumyl Najeeb](../../../person/ku/person@kumyl-najeeb/index.md).[^hyp-kumyl-profile]
+- Why this org matters: Prior organization context for [Kumyl Najeeb](../../../person/ku/person@kumyl-najeeb/index.md).[^kumyl-zoominfo]
 - What they do: Hypotenuse Labs describes itself as building web, AI, and blockchain products and positioning consulting as efficient and transparent.[^hyp-about]
 - Best way to approach: Bring concrete product scope, speed, and engineering reliability requirements.
 
@@ -42,7 +42,7 @@ last-updated-from-source: 2026-02-20
 
 Hypotenuse Labs' About page says the team has been collaborating with startups since 2018 to design, build, and deliver software products.[^hyp-about]
 
-Public profile aggregators list Kumyl Najeeb as a Contract Software Engineer at Hypotenuse Labs from 2020 to 2021.[^hyp-kumyl-profile][^hyp-kumyl-rocketreach]
+Public profile aggregators list Kumyl Najeeb as a Contract Software Engineer at Hypotenuse Labs from 2020 to 2021.[^kumyl-zoominfo][^kumyl-rocketreach]
 
 ## Notes
 

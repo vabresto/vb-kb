@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/gr/person@grimur-grimsson",
+  "id": "citation-person-grimur-grimsson-webflow-ncc-speakers",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^webflow-ncc-speakers] in person/gr/person@grimur-grimsson",
+  "relation": "cites",
+  "sources": [
+    "source/we/source@webflow-ncc-speakers"
+  ],
+  "to": "source/we/source@webflow-ncc-speakers",
+  "valid_from": null,
+  "valid_to": null
+}

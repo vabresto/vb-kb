@@ -37,7 +37,7 @@ last-updated-from-source: 2026-02-18
 
 ## Bio
 
-LinkedIn experience data for [Victoria Lo](../../../person/vi/person@victoria-lo/index.md) lists a Senior Software Engineer role at [Coinbase](index.md) from January 2022 to August 2022.[^victoria-source]
+LinkedIn experience data for [Victoria Lo](../../../person/vi/person@victoria-lo/index.md) lists a Senior Software Engineer role at [Coinbase](index.md) from January 2022 to August 2022.[^victoria-linkedin]
 
 ## Notes
 

@@ -36,7 +36,7 @@ last-updated-from-source: 2026-02-18
 
 ## Bio
 
-LinkedIn experience data for [John Huang](../../../person/jo/person@john-huang/index.md) lists Waterloo Quant Club as his current role context as Vice President (Research) starting September 2025.[^john-source-8c6d730a]
+LinkedIn experience data for [John Huang](../../../person/jo/person@john-huang/index.md) lists Waterloo Quant Club as his current role context as Vice President (Research) starting September 2025.[^john-linkedin]
 
 ## Notes
 

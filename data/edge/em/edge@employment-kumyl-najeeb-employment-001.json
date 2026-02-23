@@ -9,7 +9,7 @@
   "sources": [
     "source/ku/source@kumyl-zoominfo",
     "source/ku/source@kumyl-rocketreach",
-    "source/ku/source@kumyl-riot-tech"
+    "source/ri/source@riot-tech-interns"
   ],
   "to": "org/ri/org@riot-games",
   "valid_from": null,

@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/ol/person@oliver-noteware",
+  "id": "citation-person-oliver-noteware-ssvr-sec-2023",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^ssvr-sec-2023] in person/ol/person@oliver-noteware",
+  "relation": "cites",
+  "sources": [
+    "source/ss/source@ssvr-sec-2023"
+  ],
+  "to": "source/ss/source@ssvr-sec-2023",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -24,7 +24,7 @@ last-updated-from-source: 2026-02-20
 
 ## Snapshot
 
-- Why this org matters: Strategic acquirer context for [Privy](../../pr/org@privy/index.md), which announced a Stripe acquisition in June 2025.[^stripe-privy-acq]
+- Why this org matters: Strategic acquirer context for [Privy](../../pr/org@privy/index.md), which announced a Stripe acquisition in June 2025.[^privy-acq]
 - What they do: Stripe's homepage positions the company as financial infrastructure to help businesses grow revenue.[^stripe-home]
 - Best way to approach: Bring concrete payment-flow, compliance, and developer-platform requirements tied to business outcomes.
 
@@ -32,8 +32,8 @@ last-updated-from-source: 2026-02-20
 
 Stripe presents itself as financial infrastructure for businesses on its main site.[^stripe-home]
 
-In Privy's June 2025 announcement, Privy says Stripe is acquiring Privy and that Privy would continue operating as an independent product and team.[^stripe-privy-acq]
+In Privy's June 2025 announcement, Privy says Stripe is acquiring Privy and that Privy would continue operating as an independent product and team.[^privy-acq]
 
 ## Notes
 
-- [2025-06-11] Privy announced Stripe is acquiring Privy.[^stripe-privy-acq]
+- [2025-06-11] Privy announced Stripe is acquiring Privy.[^privy-acq]

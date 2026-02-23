@@ -31,9 +31,9 @@ focus-areas:
 
 ## Bio
 
-![Headshot of Matt Gorin](./images/matt-gorin.jpg)[^matt-source]
+![Headshot of Matt Gorin](./images/matt-gorin.jpg)[^bob-source]
 
-Matt Gorin's team profile says he is a co-founder of [Contour Venture Partners](../../../org/co/org@contour-venture-partners/index.md) with 26 years of experience as an operator, entrepreneur, and seed-stage venture capitalist, focused on Financial Services, Enterprise SaaS, and B2B Vertical SaaS.[^matt-source]
+Matt Gorin's team profile says he is a co-founder of [Contour Venture Partners](../../../org/co/org@contour-venture-partners/index.md) with 26 years of experience as an operator, entrepreneur, and seed-stage venture capitalist, focused on Financial Services, Enterprise SaaS, and B2B Vertical SaaS.[^bob-source]
 
 ## Conversation Notes
 

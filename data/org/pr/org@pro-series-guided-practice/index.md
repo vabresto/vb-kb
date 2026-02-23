@@ -35,7 +35,7 @@ last-updated-from-source: 2026-02-16
 
 ## Bio
 
-McGuire Brannon's LinkedIn experience describes Pro Series Guided Practice as a project where he wrote and directed music lessons and published instructional books.[^proseries-linkedin]
+McGuire Brannon's LinkedIn experience describes Pro Series Guided Practice as a project where he wrote and directed music lessons and published instructional books.[^freelance-linkedin]
 
 ## Notes
 

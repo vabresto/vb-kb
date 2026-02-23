@@ -7,7 +7,7 @@
   "notes": "Role: Team hire (role not publicly detailed in open article body) | Period: 2021 (documented) | Details: SBJ metadata states Alex Petrut was recently hired as Stoked expanded.",
   "relation": "works_at",
   "sources": [
-    "source/al/source@alex-sbj"
+    "source/st/source@stoked-sbj"
   ],
   "to": "org/st/org@stoked-management",
   "valid_from": null,

@@ -33,7 +33,7 @@ last-updated-from-source: 2026-02-20
 
 ## Snapshot
 
-- Why this org matters: Current organization context for [Kumyl Najeeb](../../../person/ku/person@kumyl-najeeb/index.md).[^riot-kumyl-profile][^riot-tech-interns]
+- Why this org matters: Current organization context for [Kumyl Najeeb](../../../person/ku/person@kumyl-najeeb/index.md).[^kumyl-zoominfo][^riot-tech-interns]
 - What they do: Riot says it was founded to develop, publish, and support player-focused games, and now operates across multiple titles and global offices.[^riot-who-we-are]
 - Best way to approach: Lead with player outcomes, reliability, and live-product delivery.
 

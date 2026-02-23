@@ -30,9 +30,9 @@ focus-areas:
 
 ## Bio
 
-![Headshot of Jack McClelland](./images/jack-mcclelland.png)[^jack-source]
+![Headshot of Jack McClelland](./images/jack-mcclelland.png)[^afore-source]
 
-Jack McClelland is listed on [Afore Capital](../../../org/af/org@afore-capital/index.md)'s team as an Investor. Afore describes itself as a pre-seed firm investing $500k to $2M+ in pre-traction companies.[^jack-source]
+Jack McClelland is listed on [Afore Capital](../../../org/af/org@afore-capital/index.md)'s team as an Investor. Afore describes itself as a pre-seed firm investing $500k to $2M+ in pre-traction companies.[^afore-source]
 
 ## Conversation Notes
 

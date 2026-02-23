@@ -36,7 +36,7 @@ last-updated-from-source: 2026-02-16
 
 ## Bio
 
-BoxGroup's about page positions the firm as an earliest-stage investor, says it invests from pre-seed through Series A, and notes check sizes up to $1M.[^boxgroup-source]
+BoxGroup's about page positions the firm as an earliest-stage investor, says it invests from pre-seed through Series A, and notes check sizes up to $1M.[^boxgroup-about]
 
 ## Notes
 

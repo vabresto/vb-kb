@@ -32,15 +32,15 @@ last-updated-from-source: 2026-02-20
 ## Snapshot
 
 - Why this org matters: Primary operating context for [Aaron Paul](../../../person/aa/person@aaron-paul/index.md).
-- What they do: The [Y Combinator](../../yc/org@y-combinator/index.md) profile describes TyltGO as powering retailers with same-day delivery under their own brand.[^tyltgo-yc]
+- What they do: The [Y Combinator](../../yc/org@y-combinator/index.md) profile describes TyltGO as powering retailers with same-day delivery under their own brand.[^yc-tyltgo]
 - Best way to approach: Focus on retailer activation, SLA reliability, and operational quality in same-day delivery flows.
 
 ## Bio
 
-[Y Combinator](../../yc/org@y-combinator/index.md) lists TyltGO in Summer 2020 with the one-liner "TyltGO powers retailers with same-day delivery."[^tyltgo-yc]
+[Y Combinator](../../yc/org@y-combinator/index.md) lists TyltGO in Summer 2020 with the one-liner "TyltGO powers retailers with same-day delivery."[^yc-tyltgo]
 
-The same profile lists [Aaron Paul](../../../person/aa/person@aaron-paul/index.md) as founder and shows location context in Kitchener, Ontario.[^tyltgo-yc]
+The same profile lists [Aaron Paul](../../../person/aa/person@aaron-paul/index.md) as founder and shows location context in Kitchener, Ontario.[^yc-tyltgo]
 
 ## Notes
 
-- [2026-02-20] Public tyltgo.com URLs in this pass returned 404 from this environment; retaining YC profile URL as canonical website reference for now.[^tyltgo-yc]
+- [2026-02-20] Public tyltgo.com URLs in this pass returned 404 from this environment; retaining YC profile URL as canonical website reference for now.[^yc-tyltgo]

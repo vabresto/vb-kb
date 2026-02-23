@@ -38,7 +38,7 @@ LinkedIn lists McGuire Brannon as founder of [The Table](../../../org/th/org@the
 
 Instagram describes McGuire Brannon as a founder, educator, and builder, plus a former [Webflow](../../../org/we/org@webflow/index.md) exec and creator of Webflow University. He also maintains the @mcguirebrannon YouTube channel.[^matthew-instagram][^matthew-youtube]
 
-In the February 14, 2026 trailer "I've Been Building Something: The Table," he says the project has been in development for over two years, with a dedicated studio build-out and hundreds of interviews/conversations oriented around teaching the full power of AI in an entertaining format.[^matthew-trailer]
+In the February 14, 2026 trailer "I've Been Building Something: The Table," he says the project has been in development for over two years, with a dedicated studio build-out and hundreds of interviews/conversations oriented around teaching the full power of AI in an entertaining format.[^thetable-trailer]
 
 ## Conversation Notes
 

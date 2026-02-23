@@ -7,7 +7,7 @@
   "notes": "Role: CEO and Co-founder | Period: 2021 (documented) | Details: Listed on No-Code Conf 2021 speakers page.",
   "relation": "works_at",
   "sources": [
-    "source/vl/source@vlad-ncc21-speakers"
+    "source/we/source@webflow-ncc-speakers"
   ],
   "to": "org/we/org@webflow",
   "valid_from": null,

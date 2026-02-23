@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/av/org@ava-labs",
+  "id": "citation-org-ava-labs-victoria-linkedin",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^victoria-linkedin] in org/av/org@ava-labs",
+  "relation": "cites",
+  "sources": [
+    "source/vi/source@victoria-linkedin"
+  ],
+  "to": "source/vi/source@victoria-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

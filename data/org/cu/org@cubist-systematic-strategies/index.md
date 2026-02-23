@@ -37,7 +37,7 @@ last-updated-from-source: 2026-02-18
 
 ## Bio
 
-LinkedIn experience data for [John Huang](../../../person/jo/person@john-huang/index.md) lists an internship at [Cubist Systematic Strategies](index.md) from June 2025 to September 2025 in New York City.[^john-source-8c6d730a]
+LinkedIn experience data for [John Huang](../../../person/jo/person@john-huang/index.md) lists an internship at [Cubist Systematic Strategies](index.md) from June 2025 to September 2025 in New York City.[^john-linkedin]
 
 ## Notes
 

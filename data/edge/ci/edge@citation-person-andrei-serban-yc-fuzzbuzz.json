@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/an/person@andrei-serban",
+  "id": "citation-person-andrei-serban-yc-fuzzbuzz",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^yc-fuzzbuzz] in person/an/person@andrei-serban",
+  "relation": "cites",
+  "sources": [
+    "source/yc/source@yc-fuzzbuzz"
+  ],
+  "to": "source/yc/source@yc-fuzzbuzz",
+  "valid_from": null,
+  "valid_to": null
+}

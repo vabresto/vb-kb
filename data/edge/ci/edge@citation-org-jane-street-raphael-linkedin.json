@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/ja/org@jane-street",
+  "id": "citation-org-jane-street-raphael-linkedin",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^raphael-linkedin] in org/ja/org@jane-street",
+  "relation": "cites",
+  "sources": [
+    "source/ra/source@raphael-linkedin"
+  ],
+  "to": "source/ra/source@raphael-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -7,7 +7,7 @@
   "notes": "Role: Founder | Period: 2019 - Present (documented on YC profile) | Details: YC profile lists Aaron Paul as founder and describes TyltGO's same-day delivery thesis.",
   "relation": "works_at",
   "sources": [
-    "source/aa/source@aaron-yc-tyltgo"
+    "source/yc/source@yc-tyltgo"
   ],
   "to": "org/ty/org@tyltgo",
   "valid_from": null,

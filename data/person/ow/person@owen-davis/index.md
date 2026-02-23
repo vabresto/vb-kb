@@ -30,9 +30,9 @@ focus-areas:
 
 ## Bio
 
-![Headshot of Owen Davis](./images/owen-davis.jpg)[^owen-source]
+![Headshot of Owen Davis](./images/owen-davis.jpg)[^bob-source]
 
-Owen Davis's team profile says he is General Partner at [Contour Venture Partners](../../../org/co/org@contour-venture-partners/index.md), previously served as Managing Director of [NYC Seed](../../../org/ny/org@nyc-seed/index.md), and founded its Seedstart accelerator.[^owen-source]
+Owen Davis's team profile says he is General Partner at [Contour Venture Partners](../../../org/co/org@contour-venture-partners/index.md), previously served as Managing Director of [NYC Seed](../../../org/ny/org@nyc-seed/index.md), and founded its Seedstart accelerator.[^bob-source]
 
 ## Conversation Notes
 

@@ -7,8 +7,8 @@
   "notes": "Role: Co-founder and CPO (2018 source); President and Director (2019 filing) | Period: 2017-2019 (documented) | Details: Worked on immersive VR simulations for law enforcement/public safety training.",
   "relation": "works_at",
   "sources": [
-    "source/al/source@alice-vrara",
-    "source/al/source@alice-sec-2019"
+    "source/ss/source@ssvr-vrara",
+    "source/ss/source@ssvr-sec-2019"
   ],
   "to": "org/st/org@street-smarts-vr",
   "valid_from": null,

@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/he/person@henri-stern",
+  "id": "citation-person-henri-stern-privy-acq",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^privy-acq] in person/he/person@henri-stern",
+  "relation": "cites",
+  "sources": [
+    "source/pr/source@privy-acq"
+  ],
+  "to": "source/pr/source@privy-acq",
+  "valid_from": null,
+  "valid_to": null
+}

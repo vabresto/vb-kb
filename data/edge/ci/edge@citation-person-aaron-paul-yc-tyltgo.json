@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/aa/person@aaron-paul",
+  "id": "citation-person-aaron-paul-yc-tyltgo",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^yc-tyltgo] in person/aa/person@aaron-paul",
+  "relation": "cites",
+  "sources": [
+    "source/yc/source@yc-tyltgo"
+  ],
+  "to": "source/yc/source@yc-tyltgo",
+  "valid_from": null,
+  "valid_to": null
+}

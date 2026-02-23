@@ -26,19 +26,19 @@ focus-areas:
 
 ## Snapshot
 
-- Why they matter: Founder and CEO of [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md), an immersive training company serving defense and public-safety contexts.[^oliver-about][^oliver-vrara]
-- Current focus: Scaling software-based readiness training and measurement across distributed units, based on the founder story and training thesis on the Street Smarts site.[^oliver-about]
-- Best way to engage: Bring concrete readiness metrics, deployment constraints, and procurement context tied to mission-specific training outcomes.[^oliver-about]
+- Why they matter: Founder and CEO of [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md), an immersive training company serving defense and public-safety contexts.[^ssvr-about][^ssvr-vrara]
+- Current focus: Scaling software-based readiness training and measurement across distributed units, based on the founder story and training thesis on the Street Smarts site.[^ssvr-about]
+- Best way to engage: Bring concrete readiness metrics, deployment constraints, and procurement context tied to mission-specific training outcomes.[^ssvr-about]
 
 ## Bio
 
-![Headshot of Oliver Noteware](./images/oliver-noteware.jpeg)[^oliver-photo-source]
+![Headshot of Oliver Noteware](./images/oliver-noteware.jpeg)[^ssvr-about]
 
-Oliver Noteware is listed as Founder and CEO of [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md), where the company frames its origin around solving training-access bottlenecks for small units.[^oliver-about]
+Oliver Noteware is listed as Founder and CEO of [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md), where the company frames its origin around solving training-access bottlenecks for small units.[^ssvr-about]
 
-The founder section on Street Smarts describes him as a former Marine infantry officer and ties that operational background to the company's readiness-focused product direction.[^oliver-about]
+The founder section on Street Smarts describes him as a former Marine infantry officer and ties that operational background to the company's readiness-focused product direction.[^ssvr-about]
 
-A VRARA podcast listing from 2018 introduces Oliver as Co-founder and CEO, alongside [Alice Formwalt](../../al/person@alice-formwalt/index.md), describing Street Smarts VR as focused on immersive training for law enforcement and public safety.[^oliver-vrara]
+A VRARA podcast listing from 2018 introduces Oliver as Co-founder and CEO, alongside [Alice Formwalt](../../al/person@alice-formwalt/index.md), describing Street Smarts VR as focused on immersive training for law enforcement and public safety.[^ssvr-vrara]
 
 ## Conversation Notes
 

@@ -7,7 +7,7 @@
   "notes": "Role: Founder | Period: 2024 - Present (documented) | Details: TechCrunch reports Serban left Rippling and founded Console in 2024.",
   "relation": "works_at",
   "sources": [
-    "source/an/source@andrei-techcrunch"
+    "source/co/source@console-techcrunch"
   ],
   "to": "org/co/org@console",
   "valid_from": null,

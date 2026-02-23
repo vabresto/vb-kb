@@ -7,7 +7,7 @@
   "notes": "Role: Founder and CEO | Period: Current | Details: Company About page attributes the founder story and leadership role to Noteware.",
   "relation": "works_at",
   "sources": [
-    "source/ol/source@oliver-about"
+    "source/ss/source@ssvr-about"
   ],
   "to": "org/st/org@street-smarts-vr",
   "valid_from": null,

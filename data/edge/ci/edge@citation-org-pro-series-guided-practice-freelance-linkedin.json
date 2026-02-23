@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "org/pr/org@pro-series-guided-practice",
+  "id": "citation-org-pro-series-guided-practice-freelance-linkedin",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^freelance-linkedin] in org/pr/org@pro-series-guided-practice",
+  "relation": "cites",
+  "sources": [
+    "source/fr/source@freelance-linkedin"
+  ],
+  "to": "source/fr/source@freelance-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

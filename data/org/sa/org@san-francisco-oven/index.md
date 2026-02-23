@@ -34,7 +34,7 @@ last-updated-from-source: 2026-02-16
 
 ## Bio
 
-In the user-provided LinkedIn experience excerpt, San Francisco Oven is listed as a prior employer where Matthew Brannon worked in restaurant operations.[^sfo-linkedin]
+In the user-provided LinkedIn experience excerpt, San Francisco Oven is listed as a prior employer where Matthew Brannon worked in restaurant operations.[^freelance-linkedin]
 
 ## Notes
 

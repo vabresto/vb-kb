@@ -44,4 +44,4 @@ Rippling's acquisition announcement states it acquired [Fuzzbuzz](../../fu/org@f
 
 ## Notes
 
-- [2026-02-20] Added [Andrei Serban](../../../person/an/person@andrei-serban/index.md) as former known person from acquisition + later-role reporting context.[^rippling-fuzzbuzz][^rippling-console-link]
+- [2026-02-20] Added [Andrei Serban](../../../person/an/person@andrei-serban/index.md) as former known person from acquisition + later-role reporting context.[^rippling-fuzzbuzz][^console-techcrunch]

@@ -32,15 +32,15 @@ last-updated-from-source: 2026-02-20
 ## Snapshot
 
 - Why this org matters: Prior founder context for [Andrei Serban](../../../person/an/person@andrei-serban/index.md) before [Rippling](../../ri/org@rippling/index.md) and [Console](../../co/org@console/index.md).
-- What they do: The [Y Combinator](../../yc/org@y-combinator/index.md) company profile describes Fuzzbuzz as "Fuzzing as a Service."[^fuzzbuzz-yc]
+- What they do: The [Y Combinator](../../yc/org@y-combinator/index.md) company profile describes Fuzzbuzz as "Fuzzing as a Service."[^yc-fuzzbuzz]
 - Best way to approach: Treat as historical founder context tied to application-security product work and acquisition outcomes.
 
 ## Bio
 
-[Y Combinator](../../yc/org@y-combinator/index.md) lists Fuzzbuzz in the Winter 2019 batch with security/cybersecurity tagging and status marked as acquired.[^fuzzbuzz-yc]
+[Y Combinator](../../yc/org@y-combinator/index.md) lists Fuzzbuzz in the Winter 2019 batch with security/cybersecurity tagging and status marked as acquired.[^yc-fuzzbuzz]
 
-Rippling's acquisition post says the company acquired Fuzzbuzz and names co-founder [Andrei Serban](../../../person/an/person@andrei-serban/index.md).[^fuzzbuzz-rippling]
+Rippling's acquisition post says the company acquired Fuzzbuzz and names co-founder [Andrei Serban](../../../person/an/person@andrei-serban/index.md).[^rippling-fuzzbuzz]
 
 ## Notes
 
-- [2026-02-20] Website field on YC appears effectively blank/defunct in current public profile metadata; this page uses directory and acquisition sources for canonical context.[^fuzzbuzz-yc][^fuzzbuzz-rippling]
+- [2026-02-20] Website field on YC appears effectively blank/defunct in current public profile metadata; this page uses directory and acquisition sources for canonical context.[^yc-fuzzbuzz][^rippling-fuzzbuzz]

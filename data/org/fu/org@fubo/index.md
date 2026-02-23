@@ -37,7 +37,7 @@ last-updated-from-source: 2026-02-18
 
 ## Bio
 
-LinkedIn experience data for [Michael Cesario](../../../person/mi/person@michael-cesario/index.md) lists [Fubo](index.md) as his current employer in New York for a Senior Software Engineer, Backend role.[^michael-source]
+LinkedIn experience data for [Michael Cesario](../../../person/mi/person@michael-cesario/index.md) lists [Fubo](index.md) as his current employer in New York for a Senior Software Engineer, Backend role.[^michael-linkedin]
 
 ## Notes
 

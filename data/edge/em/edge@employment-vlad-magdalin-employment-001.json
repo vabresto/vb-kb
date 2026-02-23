@@ -7,7 +7,7 @@
   "notes": "Role: Co-founder and Chief Innovation Officer | Period: 2024 (documented) | Details: Role and bio shown on Webflow Conf 2024 speaker page.",
   "relation": "works_at",
   "sources": [
-    "source/vl/source@vlad-wfc24"
+    "source/we/source@webflow-vlad-source"
   ],
   "to": "org/we/org@webflow",
   "valid_from": null,

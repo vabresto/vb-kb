@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-23",
+  "from": "person/ma/person@matthew-brannon",
+  "id": "citation-person-matthew-brannon-thetable-trailer",
+  "last_verified_at": "2026-02-23",
+  "notes": "Derived citation edge from footnote [^thetable-trailer] in person/ma/person@matthew-brannon",
+  "relation": "cites",
+  "sources": [
+    "source/th/source@thetable-trailer"
+  ],
+  "to": "source/th/source@thetable-trailer",
+  "valid_from": null,
+  "valid_to": null
+}

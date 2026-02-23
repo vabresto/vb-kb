@@ -25,7 +25,7 @@ focus-areas:
 
 ## Snapshot
 
-- Why they matter: Co-founder and CTO of [Privy](../../../org/pr/org@privy/index.md), where she is part of the founding team building wallet infrastructure and developer tooling.[^asta-careers]
+- Why they matter: Co-founder and CTO of [Privy](../../../org/pr/org@privy/index.md), where she is part of the founding team building wallet infrastructure and developer tooling.[^privy-careers]
 - Current focus: Security and architecture topics in crypto product development, including secure app setup and wallet threat models.[^asta-secure][^asta-threat]
 - Best way to engage: Bring concrete security, UX, and threat-model tradeoffs for products that abstract crypto complexity for end users.
 
@@ -33,11 +33,11 @@ focus-areas:
 
 ![Headshot of Asta Li](./images/asta-li.jpeg)[^asta-photo-source]
 
-Privy's careers page lists Asta Li as Co-founder and CTO, and states she co-founded the company with [Henri Stern](../../he/person@henri-stern/index.md).[^asta-careers]
+Privy's careers page lists Asta Li as Co-founder and CTO, and states she co-founded the company with [Henri Stern](../../he/person@henri-stern/index.md).[^privy-careers]
 
 Her authored Privy posts focus on product security and architecture, including secure foundations for app setup and wallet threat-model design.[^asta-secure][^asta-threat]
 
-Privy's June 11, 2025 announcement post, signed by Henri and Asta, states that [Stripe](../../../org/st/org@stripe/index.md) is acquiring Privy.[^asta-acq]
+Privy's June 11, 2025 announcement post, signed by Henri and Asta, states that [Stripe](../../../org/st/org@stripe/index.md) is acquiring Privy.[^privy-acq]
 
 ## Conversation Notes
 

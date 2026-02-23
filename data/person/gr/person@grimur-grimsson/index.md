@@ -25,17 +25,17 @@ focus-areas:
 
 ## Snapshot
 
-- Why they matter: [Webflow](../../../org/we/org@webflow/index.md) education-content creator profile connected to [Matthew Brannon](../../ma/person@matthew-brannon/index.md) through No-Code Conf 2021 speaker records.[^grimur-ncc21-speakers]
-- Current focus: Last publicly verified role in these sources is video production for Webflow's education team (2021 documentation).[^grimur-speaker]
+- Why they matter: [Webflow](../../../org/we/org@webflow/index.md) education-content creator profile connected to [Matthew Brannon](../../ma/person@matthew-brannon/index.md) through No-Code Conf 2021 speaker records.[^webflow-ncc-speakers]
+- Current focus: Last publicly verified role in these sources is video production for Webflow's education team (2021 documentation).[^webflow-grimur-source]
 - Best way to engage: Bring concrete ideas for educational content quality, humor, and instructional clarity in technical topics.
 
 ## Bio
 
-![Headshot of Grimur Grimsson](./images/grimur-grimsson.jpg)[^grimur-photo-source]
+![Headshot of Grimur Grimsson](./images/grimur-grimsson.jpg)[^webflow-grimur-source]
 
-No-Code Conf 2021 speaker materials describe Grimur Grimsson as a video producer on the Education team at [Webflow](../../../org/we/org@webflow/index.md).[^grimur-speaker]
+No-Code Conf 2021 speaker materials describe Grimur Grimsson as a video producer on the Education team at [Webflow](../../../org/we/org@webflow/index.md).[^webflow-grimur-source]
 
-The same No-Code Conf 2021 speakers page also lists [Matthew Brannon](../../ma/person@matthew-brannon/index.md) (McGuire Brannon) as VP of education at Webflow, establishing shared event/org context between them.[^grimur-ncc21-speakers]
+The same No-Code Conf 2021 speakers page also lists [Matthew Brannon](../../ma/person@matthew-brannon/index.md) (McGuire Brannon) as VP of education at Webflow, establishing shared event/org context between them.[^webflow-ncc-speakers]
 
 ## Conversation Notes
 

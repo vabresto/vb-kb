@@ -7,7 +7,7 @@
   "notes": "Role: Co-founder and CEO | Period: Current | Details: Listed on Privy's careers page as a founder and CEO.",
   "relation": "works_at",
   "sources": [
-    "source/he/source@henri-careers"
+    "source/pr/source@privy-careers"
   ],
   "to": "org/pr/org@privy",
   "valid_from": null,

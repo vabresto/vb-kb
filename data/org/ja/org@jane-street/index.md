@@ -36,7 +36,7 @@ last-updated-from-source: 2026-02-18
 
 ## Bio
 
-LinkedIn experience data for [Raphael Koh](../../../person/ra/person@raphael-koh/index.md) lists [Jane Street](index.md) as his current employer in New York for a Software Engineer role.[^raphael-source]
+LinkedIn experience data for [Raphael Koh](../../../person/ra/person@raphael-koh/index.md) lists [Jane Street](index.md) as his current employer in New York for a Software Engineer role.[^raphael-linkedin]
 
 ## Notes
 

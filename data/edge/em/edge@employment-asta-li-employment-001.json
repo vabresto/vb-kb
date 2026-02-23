@@ -7,7 +7,7 @@
   "notes": "Role: Co-founder and CTO | Period: Current | Details: Listed on Privy's careers page as a founder and technical leader.",
   "relation": "works_at",
   "sources": [
-    "source/as/source@asta-careers"
+    "source/pr/source@privy-careers"
   ],
   "to": "org/pr/org@privy",
   "valid_from": null,

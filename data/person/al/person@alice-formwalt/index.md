@@ -32,15 +32,15 @@ focus-areas:
 
 ## Snapshot
 
-- Why they matter: Interdisciplinary operator exploring PM paths across games/multimedia while incubating a board game tooling concept, with prior operating history at [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md).[^alice-vrara][^alice-sec-2019]
+- Why they matter: Interdisciplinary operator exploring PM paths across games/multimedia while incubating a board game tooling concept, with prior operating history at [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md).[^ssvr-vrara][^ssvr-sec-2019]
 - Current focus: Building exposure to product manager-type work and exploring [Undisclosed Board Game Prototyping Project](../../../org/bo/org@board-game-prototyping-project/index.md), with ongoing interests in philosophy writing and creative practice.[^alice-followup]
 - Best way to engage: Warm intros to PM and producer conversations, including [Matthew Brannon](../../ma/person@matthew-brannon/index.md) where relevant.
 
 ## Bio
 
-![Headshot of Alice Formwalt](./images/alice-formwalt.jpg)[^alice-photo-source]
+![Headshot of Alice Formwalt](./images/alice-formwalt.jpg)[^alice-fb-founders]
 
-Public source records identify Alice Formwalt as a co-founder and product leader at [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md): VRARA describes her as Co-founder and CPO, and a 2019 SEC Form D filing lists her as President and Director.[^alice-vrara][^alice-sec-2019]
+Public source records identify Alice Formwalt as a co-founder and product leader at [Street Smarts VR](../../../org/st/org@street-smarts-vr/index.md): VRARA describes her as Co-founder and CPO, and a 2019 SEC Form D filing lists her as President and Director.[^ssvr-vrara][^ssvr-sec-2019]
 
 A founders post from Street Smarts VR also names Alice as COO alongside [Oliver Noteware](../../ol/person@oliver-noteware/index.md) as CEO, indicating title usage shifted across time and context.[^alice-fb-founders]
 
