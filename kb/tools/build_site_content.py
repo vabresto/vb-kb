@@ -794,6 +794,7 @@ def load_entity_edges(page: Page) -> list[EdgeRecord]:
 def render_relations_section(
     page: Page,
     relation_targets: dict[str, tuple[str, Path]],
+    edge_targets: dict[str, Path],
 ) -> list[str]:
     records = load_entity_edges(page)
     if not records:
@@ -811,16 +812,25 @@ def render_relations_section(
             continue
 
         other_target = relation_targets.get(other)
-        if other_target is not None:
-            other_title, other_output_path = other_target
-            rel = os.path.relpath(other_output_path, start=page.output_path.parent).replace(os.sep, "/")
-            other_label = f"[{other_title}]({rel})"
-        else:
-            other_label = f"`{other}`"
+        if other_target is None:
+            raise ValueError(
+                f"Missing relation target page for `{other}` while rendering `{page.entity_rel_path}` (edge `{record.id}`)"
+            )
+        other_title, other_output_path = other_target
+        rel = os.path.relpath(other_output_path, start=page.output_path.parent).replace(os.sep, "/")
+        other_label = f"[{other_title}]({rel})"
+
+        edge_output_path = edge_targets.get(record.id)
+        if edge_output_path is None:
+            raise ValueError(
+                f"Missing edge page for edge `{record.id}` while rendering `{page.entity_rel_path}`"
+            )
+        edge_rel = os.path.relpath(edge_output_path, start=page.output_path.parent).replace(os.sep, "/")
+        edge_label = f"[{record.id}]({edge_rel})"
 
         lines.append(
             f"- {relation_display(record.relation.value)} {arrow} {other_label} "
-            f"(first noted: {record.first_noted_at}, last verified: {record.last_verified_at}, edge: `{record.id}`)"
+            f"(last verified: {record.last_verified_at}, edge: {edge_label})"
         )
 
     if len(lines) == 2:
@@ -836,6 +846,7 @@ def render_page(
     source_to_output: dict[Path, Path],
     pages_by_entity_rel_path: dict[str, Page],
     relation_targets: dict[str, tuple[str, Path]],
+    edge_targets: dict[str, Path],
     sources_by_citation_key: dict[str, "SourcePage"],
 ) -> str:
     rewritten_metadata = rewrite_links_in_value(
@@ -879,7 +890,13 @@ def render_page(
     )
     sections.extend(render_looking_for_section(page, source_to_output=source_to_output))
     sections.extend(render_changelog_section(page, source_to_output=source_to_output))
-    sections.extend(render_relations_section(page, relation_targets=relation_targets))
+    sections.extend(
+        render_relations_section(
+            page,
+            relation_targets=relation_targets,
+            edge_targets=edge_targets,
+        )
+    )
     sections.extend(render_reference_section(page, metadata=rewritten_metadata))
 
     rendered = "\n".join(sections).strip() + "\n"
@@ -1016,6 +1033,37 @@ def copy_source_assets(sources_root: Path, docs_dir: Path) -> None:
         destination = destination_root / path.relative_to(sources_root)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)
+
+
+def copy_edge_pages(data_root: Path, docs_dir: Path) -> dict[str, Path]:
+    edge_root = data_root / "edge"
+    if not edge_root.exists() or not edge_root.is_dir():
+        return {}
+
+    destination_root = docs_dir / "edges"
+    targets: dict[str, Path] = {}
+
+    for path in sorted(edge_root.rglob("edge@*.json"), key=lambda file_path: file_path.as_posix()):
+        if not path.is_file():
+            continue
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError(f"Edge file payload must be an object: {path.as_posix()}")
+        record = EdgeRecord.model_validate(payload)
+
+        destination = destination_root / path.relative_to(edge_root)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, destination)
+
+        existing = targets.get(record.id)
+        if existing is not None and existing != destination:
+            raise ValueError(
+                f"Duplicate edge id mapped to multiple files: `{record.id}` -> "
+                f"`{existing.as_posix()}` and `{destination.as_posix()}`"
+            )
+        targets[record.id] = destination
+
+    return targets
 
 
 def copy_site_assets(project_root: Path, docs_dir: Path) -> None:
@@ -1195,6 +1243,7 @@ def build_site_content(project_root: Path) -> None:
         pages=pages,
         sources=sources,
     )
+    edge_targets = copy_edge_pages(data_root=entity_data_root, docs_dir=docs_dir)
 
     for page in pages:
         page.output_path.write_text(
@@ -1203,6 +1252,7 @@ def build_site_content(project_root: Path) -> None:
                 source_to_output=source_to_output,
                 pages_by_entity_rel_path=pages_by_entity_rel_path,
                 relation_targets=relation_targets,
+                edge_targets=edge_targets,
                 sources_by_citation_key=sources_by_citation_key,
             ),
             encoding="utf-8",
