@@ -107,7 +107,7 @@ Exit criteria:
 
 Scope:
 
-- Update `tools/build_site_content.py` to read new entity folder layout.
+- Update `kb/tools/build_site_content.py` to read new entity folder layout.
 - Render narrative from `index.md`.
 - Render structured sections (`Employment History`, `Looking For`, `Changelog`) from JSONL tables.
 - Optionally render a relations section from canonical edges/backlinks.

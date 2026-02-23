@@ -9,12 +9,12 @@ repos:
         always_run: true
       - id: kb-entity-first-mention-links
         name: KB Entity First-Mention Links
-        entry: uv run python tools/check_entity_links.py
+        entry: uv run python kb/tools/check_entity_links.py
         language: system
         files: ^(data/(person|org)/[^/]+/(person|org)@[^/]+/index\.md|data/note/[^/]+/note@reflections-long-form-[^/]+/index\.md)$
       - id: kb-newly-added-urls-reachable
         name: KB Newly Added URLs Reachable
-        entry: uv run python tools/check_new_urls.py
+        entry: uv run python kb/tools/check_new_urls.py
         language: system
         pass_filenames: false
         always_run: true

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 import yaml
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 LINK_RE = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 FOOTNOTE_DEF_RE = re.compile(r"^\[\^[^\]]+\]:")

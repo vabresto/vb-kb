@@ -949,7 +949,7 @@ def copy_note_assets(notes_root: Path, docs_dir: Path) -> None:
 
 
 def copy_site_assets(project_root: Path, docs_dir: Path) -> None:
-    assets_dir = project_root / "tools" / "site_assets"
+    assets_dir = project_root / "kb" / "tools" / "site_assets"
     if not assets_dir.exists():
         return
     for path in sorted(assets_dir.rglob("*")):
@@ -1069,7 +1069,7 @@ def render_home(
             "- Pages are generated as view-only output from source files.",
             "- Structured sections are rendered from JSONL for entity pages.",
             "- Frontmatter is rendered in a compact, collapsible reference section per page.",
-            "- Edit `tools/build_site_content.py` to change how source data is rendered.",
+            "- Edit `kb/tools/build_site_content.py` to change how source data is rendered.",
             "",
         ]
     )
@@ -1163,7 +1163,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--project-root",
-        default=Path(__file__).resolve().parents[1],
+        default=Path(__file__).resolve().parents[2],
         type=Path,
         help="Repository root containing data roots and mkdocs.yml.",
     )

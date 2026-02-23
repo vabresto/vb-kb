@@ -32,8 +32,8 @@ hooks:
 
 watch:
   - data
-  - tools/site_assets
-  - tools/build_site_content.py
+  - kb/tools/site_assets
+  - kb/tools/build_site_content.py
   - mkdocs_hooks.py
 
 nav:

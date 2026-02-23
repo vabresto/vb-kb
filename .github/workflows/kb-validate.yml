@@ -31,7 +31,7 @@ jobs:
         run: uv run kb validate --pretty
 
       - name: Build generated docs
-        run: uv run python tools/build_site_content.py
+        run: uv run python kb/tools/build_site_content.py
 
       - name: Build MkDocs site
         run: uv run mkdocs build

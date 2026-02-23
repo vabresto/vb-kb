@@ -15,7 +15,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 URL_RE = re.compile(r"https?://[^\s<>()\"'`]+")
 USER_AGENT = "vb-kb-url-check/1.0"
 SKIPPED_HOSTS = {
