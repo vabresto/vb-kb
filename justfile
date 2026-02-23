@@ -20,16 +20,18 @@ validate-changed:
 test:
   uv run --extra dev pytest -q
 
-# Build transformed site_docs content.
+# Build transformed docs content under .build/docs.
 build-site-content:
   uv run python tools/build_site_content.py
 
 # Build static site output.
 build-site:
+  mkdir -p .build/docs
   uv run mkdocs build
 
 # Serve MkDocs locally.
 serve-site:
+  mkdir -p .build/docs
   uv run mkdocs serve
 
 # Run full local verification pass.

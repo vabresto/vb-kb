@@ -1,7 +1,7 @@
 site_name: VB Knowledge Base
 site_description: View-only site generated from markdown profiles.
-docs_dir: site_docs
-site_dir: site
+docs_dir: .build/docs
+site_dir: .build/site
 
 theme:
   name: material
@@ -32,7 +32,7 @@ hooks:
 
 watch:
   - data
-  - site_assets
+  - tools/site_assets
   - tools/build_site_content.py
   - mkdocs_hooks.py
 

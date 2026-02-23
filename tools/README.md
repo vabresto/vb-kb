@@ -44,10 +44,10 @@ uv run kb mcp-server --transport stdio
 
 ## Local website preview
 
-MkDocs is wired to generate view-only site content from `data/` (including `data/note/`) into `site_docs/` on every build.
+MkDocs is wired to generate view-only site content from `data/` (including `data/note/`) into `.build/docs/` on every build.
 
 ```bash
-uv run mkdocs serve
+just serve-site
 ```
 
 Open the local URL printed by MkDocs (usually `http://127.0.0.1:8000`).
@@ -55,9 +55,9 @@ Open the local URL printed by MkDocs (usually `http://127.0.0.1:8000`).
 For a production build:
 
 ```bash
-uv run mkdocs build
+just build-site
 ```
 
-Generated output is written to `site/`.
+Generated output is written to `.build/site/`.
 
-Presentation overrides for the generated site live in `site_assets/`.
+Presentation overrides for the generated site live in `tools/site_assets/`.

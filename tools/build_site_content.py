@@ -949,7 +949,7 @@ def copy_note_assets(notes_root: Path, docs_dir: Path) -> None:
 
 
 def copy_site_assets(project_root: Path, docs_dir: Path) -> None:
-    assets_dir = project_root / "site_assets"
+    assets_dir = project_root / "tools" / "site_assets"
     if not assets_dir.exists():
         return
     for path in sorted(assets_dir.rglob("*")):
@@ -1102,7 +1102,7 @@ def build_site_content(project_root: Path) -> None:
     entity_data_root = infer_entity_data_root(project_root)
     notes_root = infer_notes_root(project_root, entity_data_root)
 
-    docs_dir = project_root / "site_docs"
+    docs_dir = project_root / ".build" / "docs"
     if docs_dir.exists():
         shutil.rmtree(docs_dir)
     docs_dir.mkdir(parents=True, exist_ok=True)
@@ -1157,7 +1157,6 @@ def build_site_content(project_root: Path) -> None:
     (docs_dir / "notes.md").write_text(
         render_notes_index(notes=notes, source_label=notes_source_label), encoding="utf-8"
     )
-    (docs_dir / ".gitkeep").write_text("", encoding="utf-8")
 
 
 def parse_args() -> argparse.Namespace:
