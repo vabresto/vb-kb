@@ -48,6 +48,14 @@ uv run kb migrate-notes-v2 --output-dir data-new
 
 This creates canonical note records under `data-new/note/<shard>/note@<id>/index.md`.
 
+## Rebuild human-friendly `data/` from `data-new/`
+
+```bash
+uv run kb build-legacy-data --source-root data-new --output-root data
+```
+
+This generates consolidated markdown pages (including employment/changelog/edge tables) from canonical `data-new/` records.
+
 ## Run FastMCP write server
 
 ```bash

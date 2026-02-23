@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from kb.edges import derive_employment_edges, sync_edge_backlinks
+from kb.generate_legacy_data import generate_legacy_data
 from kb.mcp_server import run_server as run_fastmcp_server
 from kb.migrate_notes_v2 import run_notes_migration
 from kb.migrate_v2 import run_migration
@@ -131,6 +132,32 @@ def build_parser() -> argparse.ArgumentParser:
     mcp_parser.add_argument("--port", type=int, default=8001, help="HTTP port for HTTP transports.")
     mcp_parser.add_argument("--path", default=None, help="Optional HTTP route path.")
 
+    legacy_data_parser = subparsers.add_parser(
+        "build-legacy-data",
+        help="Generate consolidated markdown files under data/ from data-new/ canonical records.",
+    )
+    legacy_data_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Repository root path.",
+    )
+    legacy_data_parser.add_argument(
+        "--source-root",
+        default="data-new",
+        help="Source root with canonical records (default: data-new).",
+    )
+    legacy_data_parser.add_argument(
+        "--output-root",
+        default="data",
+        help="Output root for generated markdown (default: data).",
+    )
+    legacy_data_parser.add_argument(
+        "--no-clean",
+        action="store_true",
+        help="Do not delete output root before writing.",
+    )
+
     return parser
 
 
@@ -220,6 +247,25 @@ def run_mcp_server(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_build_legacy_data(args: argparse.Namespace) -> int:
+    project_root = args.project_root.resolve()
+    source_root = Path(args.source_root)
+    if not source_root.is_absolute():
+        source_root = (project_root / source_root).resolve()
+    output_root = Path(args.output_root)
+    if not output_root.is_absolute():
+        output_root = (project_root / output_root).resolve()
+
+    result = generate_legacy_data(
+        project_root=project_root,
+        source_root=source_root,
+        output_root=output_root,
+        clean=not args.no_clean,
+    )
+    print(json.dumps(result, sort_keys=True))
+    return 0
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -236,6 +282,8 @@ def main() -> int:
         return run_derive_employment_edges(args)
     if args.command == "mcp-server":
         return run_mcp_server(args)
+    if args.command == "build-legacy-data":
+        return run_build_legacy_data(args)
 
     parser.error(f"Unknown command: {args.command}")
     return 2
