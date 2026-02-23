@@ -6,23 +6,7 @@ This repository is Python-first for MCP.
 
 - Canonical MCP server: `kb/mcp_server.py`
 - Canonical CLI entrypoint: `uv run kb mcp-server ...`
-- TypeScript Cloudflare Pages Functions in `functions/` are deprecated and are not the supported runtime path.
-
-## Deprecated path (do not use)
-
-The following legacy Function routes are deprecated in this repository context:
-
-- `GET /api/fetch`
-- `GET /api/search`
-- `POST /mcp` (TypeScript implementation)
-- `GET /authorize`
-- `GET /callback`
-- `POST /token`
-- `POST /register`
-- `GET /.well-known/oauth-protected-resource`
-- `GET /.well-known/oauth-authorization-server`
-
-These were part of the deprecated TypeScript deployment model and are not authoritative for current docs.
+- Legacy TypeScript/Cloudflare function code has been removed from this repository.
 
 ## Supported Python MCP runtime
 
@@ -62,4 +46,3 @@ For ChatGPT MCP deployments, use OAuth2 PKCE for the Python MCP server path.
 ## Notes for this repository
 
 - Existing migration, validation, and write transaction guarantees are implemented in Python.
-- `openapi/custom-gpt-action.yaml` is retained only as a deprecated artifact and should not be used as the primary integration contract.

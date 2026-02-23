@@ -3,7 +3,7 @@
 ## Runtime status
 
 - Canonical runtime is Python (`kb/` package, including `kb/mcp_server.py`).
-- TypeScript/Cloudflare Pages Functions under `functions/` are deprecated and are not the supported path.
+- Legacy TypeScript/Cloudflare function code has been removed from this repo.
 - Canonical v2 source data lives under `data-new/` (with `data/` only as legacy input during migration).
 
 ## Local setup
@@ -96,4 +96,4 @@ Site styles are in `site_assets/stylesheets/kb.css`.
 
 ## Deployment notes
 
-Python MCP deployment and auth notes (including deprecated TypeScript path details) are in `CLOUDFLARE_ACCESS.md`.
+Python MCP deployment and auth notes are in `CLOUDFLARE_ACCESS.md`.

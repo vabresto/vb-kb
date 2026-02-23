@@ -146,7 +146,7 @@ Scope:
   - release lock
 - Return retryable conflict/busy errors when lock is held.
 - Implement OAuth2 Authorization Code + PKCE (S256) for interactive user auth.
-- Keep deprecated TypeScript Functions out of the supported MCP write path.
+- Keep the MCP write path Python-only.
 
 Exit criteria:
 
