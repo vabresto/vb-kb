@@ -12,10 +12,10 @@ from typing import Any, Callable, Literal
 
 from fastmcp import FastMCP
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+import yaml
 
 from kb.edges import sync_edge_backlinks
-from kb.migrate_v2 import render_frontmatter, shard_for_slug
-from kb.schemas import EdgeRecord, NoteRecord
+from kb.schemas import EdgeRecord, NoteRecord, shard_for_slug
 from kb.validate import infer_data_root, run_validation
 
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -129,6 +129,11 @@ def render_markdown(frontmatter: dict[str, Any], body: str) -> str:
     if body.strip():
         chunks.extend(["", body.strip()])
     return "\n".join(chunks).rstrip() + "\n"
+
+
+def render_frontmatter(metadata: dict[str, Any]) -> str:
+    dumped = yaml.safe_dump(metadata, sort_keys=False, allow_unicode=False).rstrip()
+    return f"---\n{dumped}\n---\n"
 
 
 def default_commit_message(operation: str, path: str) -> str:

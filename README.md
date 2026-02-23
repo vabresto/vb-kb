@@ -48,14 +48,6 @@ just build-site
 
 Build output is written to `.build/site/`.
 
-## Migrate legacy notes to v2
-
-```bash
-uv run kb migrate-notes-v2 --output-dir data
-```
-
-This creates canonical note records under `data/note/<shard>/note@<id>/index.md`.
-
 ## Run FastMCP write server
 
 ```bash

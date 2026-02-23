@@ -40,14 +40,6 @@ check:
   just test
   just build-site
 
-# Migrate legacy person/org data into v2 layout.
-migrate-v2:
-  uv run kb migrate-v2 --output-dir data
-
-# Migrate legacy notes into v2 note records.
-migrate-notes:
-  uv run kb migrate-notes-v2 --output-dir data
-
 # Derive canonical employment edges from person JSONL rows.
 derive-edges:
   uv run kb derive-employment-edges --data-root data
@@ -55,10 +47,6 @@ derive-edges:
 # Regenerate edge backlink symlinks.
 sync-edges:
   uv run kb sync-edges --data-root data
-
-# Build human-friendly consolidated markdown from canonical records.
-build-legacy-data:
-  uv run kb build-legacy-data --source-root data --output-root data-legacy
 
 # Run MCP server over stdio.
 run-mcp-stdio:

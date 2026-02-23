@@ -35,8 +35,6 @@ uvx prek run kb-entity-first-mention-links --files data/note/re/note@reflections
 uvx prek run kb-newly-added-urls-reachable --all-files
 uv run kb validate --pretty
 uv run kb validate --changed --pretty
-uv run kb migrate-v2 --output-dir data
-uv run kb migrate-notes-v2 --output-dir data
 uv run kb derive-employment-edges
 uv run kb sync-edges
 uv run kb mcp-server --transport stdio
