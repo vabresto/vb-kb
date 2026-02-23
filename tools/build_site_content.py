@@ -356,10 +356,26 @@ def list_from_metadata(value: Any) -> list[str]:
 
 
 def format_website_link(url: str) -> str:
-    parsed = urlparse(url)
+    normalized = normalize_external_url(url)
+    parsed = urlparse(normalized)
     label = parsed.netloc if parsed.netloc else parsed.path
-    label = label.removeprefix("www.") if label else url
-    return f"[{label}]({url})"
+    label = label.removeprefix("www.") if label else normalized
+    return f"[{label}]({normalized})"
+
+
+def normalize_external_url(value: str) -> str:
+    text = value.strip()
+    if not text:
+        return text
+    parsed = urlparse(text)
+    if parsed.scheme:
+        return text
+    if text.startswith("//"):
+        return f"https:{text}"
+    host_candidate = text.split("/", 1)[0]
+    if "." in host_candidate:
+        return f"https://{text}"
+    return text
 
 
 def render_person_quick_links(metadata: dict[str, Any]) -> list[str]:
@@ -368,11 +384,11 @@ def render_person_quick_links(metadata: dict[str, Any]) -> list[str]:
     for email in list_from_metadata(metadata.get("email")):
         links.append(f"[{email}](mailto:{email})")
 
-    linkedin = as_inline_text(metadata.get("linkedin"))
+    linkedin = normalize_external_url(as_inline_text(metadata.get("linkedin")))
     if linkedin and linkedin != "-":
         links.append(f"[LinkedIn]({linkedin})")
 
-    website = as_inline_text(metadata.get("website"))
+    website = normalize_external_url(as_inline_text(metadata.get("website")))
     if website and website != "-":
         links.append(f"[Website]({website})")
 
@@ -382,7 +398,7 @@ def render_person_quick_links(metadata: dict[str, Any]) -> list[str]:
 
 
 def render_org_website_link(metadata: dict[str, Any]) -> list[str]:
-    website = as_inline_text(metadata.get("website"))
+    website = normalize_external_url(as_inline_text(metadata.get("website")))
     if not website or website == "-":
         return []
     return [f"**Website:** {format_website_link(website)}", ""]
