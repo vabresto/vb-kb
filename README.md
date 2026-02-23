@@ -35,7 +35,7 @@ uv run kb validate --changed --pretty
 ## Run a local view-only site
 
 ```bash
-just serve-site
+just site
 ```
 
 MkDocs rebuilds from `data/` and serves at `http://127.0.0.1:8000`.
@@ -43,7 +43,7 @@ MkDocs rebuilds from `data/` and serves at `http://127.0.0.1:8000`.
 ## Build static output
 
 ```bash
-just build-site
+just site-build
 ```
 
 Build output is written to `.build/site/`.

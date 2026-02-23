@@ -20,17 +20,13 @@ validate-changed:
 test:
   uv run --extra dev pytest -q
 
-# Build transformed docs content under .build/docs.
-build-site-content:
-  uv run python tools/build_site_content.py
-
-# Build static site output.
-build-site:
+# Build static site output into .build/site.
+site-build:
   mkdir -p .build/docs
   uv run mkdocs build
 
-# Serve MkDocs locally.
-serve-site:
+# Build and serve the site locally.
+site:
   mkdir -p .build/docs
   uv run mkdocs serve
 
@@ -38,7 +34,7 @@ serve-site:
 check:
   just validate-changed
   just test
-  just build-site
+  just site-build
 
 # Derive canonical employment edges from person JSONL rows.
 derive-edges:

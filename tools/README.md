@@ -45,7 +45,7 @@ uv run kb mcp-server --transport stdio
 MkDocs is wired to generate view-only site content from `data/` (including `data/note/`) into `.build/docs/` on every build.
 
 ```bash
-just serve-site
+just site
 ```
 
 Open the local URL printed by MkDocs (usually `http://127.0.0.1:8000`).
@@ -53,7 +53,7 @@ Open the local URL printed by MkDocs (usually `http://127.0.0.1:8000`).
 For a production build:
 
 ```bash
-just build-site
+just site-build
 ```
 
 Generated output is written to `.build/site/`.
