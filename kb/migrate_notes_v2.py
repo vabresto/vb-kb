@@ -230,7 +230,7 @@ def write_mapping_file(
 def run_notes_migration(
     *,
     project_root: Path,
-    output_dir: str = "data-new",
+    output_dir: str = "data",
 ) -> Path:
     output_root = project_root / output_dir
     data_notes_root = project_root / "data" / "notes"

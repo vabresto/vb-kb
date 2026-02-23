@@ -57,8 +57,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-dir",
-        default="data-new",
-        help="Output directory to write v2 data into (default: data-new).",
+        default="data",
+        help="Output directory to write v2 data into (default: data).",
     )
     return parser.parse_args()
 

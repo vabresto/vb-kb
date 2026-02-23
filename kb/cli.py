@@ -26,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser.add_argument(
         "--data-root",
         default=None,
-        help="Data root directory (default: data-new if present, otherwise data).",
+        help="Data root directory (default: data).",
     )
     validate_parser.add_argument(
         "--changed",
@@ -45,8 +45,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     migrate_parser.add_argument(
         "--output-dir",
-        default="data-new",
-        help="Output directory (default: data-new).",
+        default="data",
+        help="Output directory (default: data).",
     )
 
     migrate_notes_parser = subparsers.add_parser(
@@ -61,8 +61,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     migrate_notes_parser.add_argument(
         "--output-dir",
-        default="data-new",
-        help="Output directory (default: data-new).",
+        default="data",
+        help="Output directory (default: data).",
     )
 
     sync_edges_parser = subparsers.add_parser(
@@ -78,7 +78,7 @@ def build_parser() -> argparse.ArgumentParser:
     sync_edges_parser.add_argument(
         "--data-root",
         default=None,
-        help="Data root directory (default: data-new if present, otherwise data).",
+        help="Data root directory (default: data).",
     )
 
     derive_edges_parser = subparsers.add_parser(
@@ -94,7 +94,7 @@ def build_parser() -> argparse.ArgumentParser:
     derive_edges_parser.add_argument(
         "--data-root",
         default=None,
-        help="Data root directory (default: data-new if present, otherwise data).",
+        help="Data root directory (default: data).",
     )
     derive_edges_parser.add_argument(
         "--as-of",
@@ -120,7 +120,7 @@ def build_parser() -> argparse.ArgumentParser:
     mcp_parser.add_argument(
         "--data-root",
         default=None,
-        help="Data root directory (default: data-new if present, otherwise data).",
+        help="Data root directory (default: data).",
     )
     mcp_parser.add_argument(
         "--transport",
@@ -134,7 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     legacy_data_parser = subparsers.add_parser(
         "build-legacy-data",
-        help="Generate consolidated markdown files under data/ from data-new/ canonical records.",
+        help="Generate consolidated markdown files under data/ from canonical records.",
     )
     legacy_data_parser.add_argument(
         "--project-root",
@@ -144,8 +144,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     legacy_data_parser.add_argument(
         "--source-root",
-        default="data-new",
-        help="Source root with canonical records (default: data-new).",
+        default="data",
+        help="Source root with canonical records (default: data).",
     )
     legacy_data_parser.add_argument(
         "--output-root",

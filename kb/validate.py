@@ -69,7 +69,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--data-root",
         default=None,
-        help="Data root directory (default: data-new if present, otherwise data).",
+        help="Data root directory (default: data).",
     )
     parser.add_argument(
         "--changed",
@@ -95,9 +95,6 @@ def infer_data_root(project_root: Path, requested: str | None) -> Path:
         if not root.is_absolute():
             root = (project_root / root).resolve()
         return root
-    candidate = project_root / "data-new"
-    if candidate.exists():
-        return candidate
     return project_root / "data"
 
 

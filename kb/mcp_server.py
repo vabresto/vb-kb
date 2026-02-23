@@ -318,7 +318,7 @@ def upsert_note_file(
     metadata["title"] = str(metadata.get("title") or title_from_slug(slug)).strip()
     metadata["note-type"] = str(metadata.get("note-type") or "note").strip()
     metadata["source-path"] = str(
-        metadata.get("source-path") or f"data-new/note/{shard_for_slug(slug)}/note@{slug}/index.md"
+        metadata.get("source-path") or f"data/note/{shard_for_slug(slug)}/note@{slug}/index.md"
     ).strip()
     metadata["source-category"] = str(metadata.get("source-category") or "mcp").strip()
 
@@ -548,7 +548,7 @@ def main() -> int:
     parser.add_argument(
         "--data-root",
         default=None,
-        help="Data root directory (default: data-new if present, otherwise data).",
+        help="Data root directory (default: data).",
     )
     parser.add_argument(
         "--transport",

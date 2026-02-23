@@ -91,9 +91,6 @@ def split_frontmatter(markdown: str) -> tuple[dict[str, Any], str]:
 
 
 def infer_entity_data_root(project_root: Path) -> Path:
-    candidate = project_root / "data-new"
-    if (candidate / "person").exists() and (candidate / "org").exists():
-        return candidate
     return project_root / "data"
 
 

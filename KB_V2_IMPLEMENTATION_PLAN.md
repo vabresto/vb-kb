@@ -40,7 +40,6 @@ Scope:
 
 Notes:
 
-- Keep old files temporarily as compatibility aliases or redirects only during migration. For now, use a `data-new/` top level folder for the new data.
 - Prefer scripted migration to avoid manual mistakes.
 
 Exit criteria:
@@ -87,7 +86,7 @@ Rules:
 Exit criteria:
 
 - Current structured person/org data represented in JSONL.
-- Legacy notes represented as canonical `data-new/note/**/note@*/index.md` records.
+- Legacy notes represented as canonical `data/note/**/note@*/index.md` records.
 - Spot checks on representative entities pass schema and content parity checks.
 
 ## Phase 4: Edge Canonicalization and Backlink Symlinks
@@ -112,7 +111,7 @@ Scope:
 - Render narrative from `index.md`.
 - Render structured sections (`Employment History`, `Looking For`, `Changelog`) from JSONL tables.
 - Optionally render a relations section from canonical edges/backlinks.
-- Render note pages from canonical note records in `data-new/note/` (fallback: legacy `data/notes/`).
+- Render note pages from canonical note records in `data/note/`.
 
 Exit criteria:
 

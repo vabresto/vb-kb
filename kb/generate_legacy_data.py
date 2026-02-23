@@ -498,7 +498,7 @@ def prepare_path_map(
             image_pairs.append((image_path, target))
             path_map[image_path.resolve()] = target
 
-    # Map direct source paths like data-new/.../index.md to generated markdown output.
+    # Map direct source paths like data/.../index.md to generated markdown output.
     for source_path, rendered_path in list(path_map.items()):
         try:
             relative = source_path.relative_to(source_root)
@@ -593,7 +593,7 @@ def generate_legacy_data(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate consolidated legacy-style markdown files in data/ from data-new/."
+        description="Generate consolidated legacy-style markdown files in data/ from canonical records."
     )
     parser.add_argument(
         "--project-root",
@@ -603,8 +603,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--source-root",
-        default="data-new",
-        help="Source root containing canonical v2 records (default: data-new).",
+        default="data",
+        help="Source root containing canonical records (default: data).",
     )
     parser.add_argument(
         "--output-root",

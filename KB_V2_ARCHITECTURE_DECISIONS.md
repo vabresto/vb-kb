@@ -82,7 +82,7 @@ data/
 Canonical:
 
 - `index.md` for each entity narrative and identity metadata.
-- `index.md` for each note record under `data-new/note/**/note@*/`.
+- `index.md` for each note record under `data/note/**/note@*/`.
 - JSONL tables under entity folders (`employment-history.jsonl`, `looking-for.jsonl`, `changelog.jsonl`).
 - Canonical edge JSON files under `data/edge/`.
 

@@ -13,7 +13,7 @@ This installs `.git/hooks/pre-commit` and runs hooks from `.pre-commit-config.ya
 ## Hooks
 
 1. `tools/check_entity_links.py`
-- Scope: staged markdown files matching canonical v2 files in `data-new/person/.../index.md`, `data-new/org/.../index.md`, and long-form note records `data-new/note/.../note@reflections-long-form-.../index.md`, plus legacy fallback files in `data/person/*.md`, `data/org/*.md`, and `data/notes/reflections/long-form/*.md`.
+- Scope: staged markdown files matching canonical v2 files in `data/person/.../person@.../index.md`, `data/org/.../org@.../index.md`, and long-form note records `data/note/.../note@reflections-long-form-.../index.md`.
 - Rule: first mention of a known KB person/org in page body must be a local markdown link to that entity file.
 - Ignores frontmatter, headings, fenced code blocks, and footnote/link-definition lines.
 
@@ -26,17 +26,17 @@ This installs `.git/hooks/pre-commit` and runs hooks from `.pre-commit-config.ya
 ## Manual runs
 
 ```bash
-uv run python tools/check_entity_links.py data/person/victor-brestoiu.md
-uv run python tools/check_entity_links.py data/notes/reflections/long-form/2026-02-19-post-mortem-inbot.md
+uv run python tools/check_entity_links.py data/person/vi/person@victor-brestoiu/index.md
+uv run python tools/check_entity_links.py data/note/re/note@reflections-long-form-2026-02-19-post-mortem-inbot/index.md
 uv run python tools/check_new_urls.py
 uv run kb validate --changed --pretty
-uvx prek run kb-entity-first-mention-links --files data/person/victor-brestoiu.md
-uvx prek run kb-entity-first-mention-links --files data/notes/reflections/long-form/2026-02-19-post-mortem-inbot.md
+uvx prek run kb-entity-first-mention-links --files data/person/vi/person@victor-brestoiu/index.md
+uvx prek run kb-entity-first-mention-links --files data/note/re/note@reflections-long-form-2026-02-19-post-mortem-inbot/index.md
 uvx prek run kb-newly-added-urls-reachable --all-files
 uv run kb validate --pretty
 uv run kb validate --changed --pretty
-uv run kb migrate-v2 --output-dir data-new
-uv run kb migrate-notes-v2 --output-dir data-new
+uv run kb migrate-v2 --output-dir data
+uv run kb migrate-notes-v2 --output-dir data
 uv run kb derive-employment-edges
 uv run kb sync-edges
 uv run kb mcp-server --transport stdio
@@ -44,7 +44,7 @@ uv run kb mcp-server --transport stdio
 
 ## Local website preview
 
-MkDocs is wired to generate view-only site content from `data-new/` (including `data-new/note/`) with fallback reads from `data/` into `site_docs/` on every build.
+MkDocs is wired to generate view-only site content from `data/` (including `data/note/`) into `site_docs/` on every build.
 
 ```bash
 uv run mkdocs serve

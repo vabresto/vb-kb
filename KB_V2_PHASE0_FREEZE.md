@@ -14,17 +14,17 @@ Entity directories:
 - `note@<id>`
 - `edge@<id>.json`
 
-Root for migration rollout:
+Canonical root:
 
-- `data-new/` is the canonical v2 migration target while legacy `data/` remains untouched for compatibility.
+- `data/` is the canonical v2 data root.
 
 Sharding rule (v1):
 
 - Use first two alphanumeric characters of slug (`alice-formwalt` -> `al`).
 - Canonical entity paths:
-  - `data-new/person/<shard>/person@<slug>/`
-  - `data-new/org/<shard>/org@<slug>/`
-  - `data-new/note/<shard>/note@<slug>/`
+  - `data/person/<shard>/person@<slug>/`
+  - `data/org/<shard>/org@<slug>/`
+  - `data/note/<shard>/note@<slug>/`
 
 Required files per entity (v1):
 
@@ -123,15 +123,15 @@ Date fields use partial-date validation (`YYYY`, `YYYY-MM`, or `YYYY-MM-DD`).
 
 Person markdown:
 
-- `data/person/<slug>.md` -> `data-new/person/<shard>/person@<slug>/index.md`
+- `data-old/person/<slug>.md` -> `data/person/<shard>/person@<slug>/index.md`
 
 Org markdown:
 
-- `data/org/<slug>.md` -> `data-new/org/<shard>/org@<slug>/index.md`
+- `data-old/org/<slug>.md` -> `data/org/<shard>/org@<slug>/index.md`
 
 Notes markdown:
 
-- `data/notes/<...>/<slug>.md` -> `data-new/note/<shard>/note@<normalized-path-slug>/index.md`
+- `data-old/notes/<...>/<slug>.md` -> `data/note/<shard>/note@<normalized-path-slug>/index.md`
 
 Entity links in markdown/frontmatter:
 
@@ -149,4 +149,4 @@ Narrative preservation:
 
 Generated full path map:
 
-- `data-new/migration-path-map.csv`
+- `data/migration-path-map.csv`

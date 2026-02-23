@@ -38,25 +38,12 @@ class Token:
     line_number: int
 
 
-def using_v2_layout() -> bool:
-    data_new = REPO_ROOT / "data-new"
-    return (data_new / "person").exists() and (data_new / "org").exists()
-
-
-def target_matches(relative_path: str, *, use_v2: bool) -> bool:
-    if use_v2:
-        if re.match(r"^data-new/(person|org)/[^/]+/(person|org)@[^/]+/index\.md$", relative_path):
-            return True
-        if re.match(r"^data-new/note/[^/]+/note@reflections-long-form-[^/]+/index\.md$", relative_path):
-            return True
-        return False
-
-    return bool(
-        re.match(
-            r"^(data/(person|org)/[^/]+\.md|data/notes/reflections/long-form/[^/]+\.md)$",
-            relative_path,
-        )
-    )
+def target_matches(relative_path: str) -> bool:
+    if re.match(r"^data/(person|org)/[^/]+/(person|org)@[^/]+/index\.md$", relative_path):
+        return True
+    if re.match(r"^data/note/[^/]+/note@reflections-long-form-[^/]+/index\.md$", relative_path):
+        return True
+    return False
 
 
 def parse_args() -> argparse.Namespace:
@@ -119,15 +106,11 @@ def build_mention_pattern(text: str) -> MentionPattern:
 
 def load_entities() -> list[Entity]:
     entities: list[Entity] = []
-    use_v2 = using_v2_layout()
-    data_root = REPO_ROOT / ("data-new" if use_v2 else "data")
+    data_root = REPO_ROOT / "data"
 
     for kind in ("person", "org"):
-        if use_v2:
-            pattern = f"{kind}/**/{kind}@*/index.md"
-            paths = sorted(data_root.glob(pattern))
-        else:
-            paths = sorted((data_root / kind).glob("*.md"))
+        pattern = f"{kind}/**/{kind}@*/index.md"
+        paths = sorted(data_root.glob(pattern))
 
         for path in paths:
             if path.name.startswith("_"):
@@ -148,23 +131,14 @@ def load_entities() -> list[Entity]:
 
 
 def select_files(raw_files: list[str]) -> list[pathlib.Path]:
-    use_v2 = using_v2_layout()
-
     if raw_files:
         candidates = [pathlib.Path(value) for value in raw_files]
     else:
-        if use_v2:
-            candidates = (
-                sorted((REPO_ROOT / "data-new" / "person").rglob("index.md"))
-                + sorted((REPO_ROOT / "data-new" / "org").rglob("index.md"))
-                + sorted((REPO_ROOT / "data-new" / "note").rglob("note@reflections-long-form-*/index.md"))
-            )
-        else:
-            candidates = (
-                sorted((REPO_ROOT / "data" / "person").glob("*.md"))
-                + sorted((REPO_ROOT / "data" / "org").glob("*.md"))
-                + sorted((REPO_ROOT / "data" / "notes" / "reflections" / "long-form").glob("*.md"))
-            )
+        candidates = (
+            sorted((REPO_ROOT / "data" / "person").rglob("index.md"))
+            + sorted((REPO_ROOT / "data" / "org").rglob("index.md"))
+            + sorted((REPO_ROOT / "data" / "note").rglob("note@reflections-long-form-*/index.md"))
+        )
 
     selected: list[pathlib.Path] = []
     for candidate in candidates:
@@ -182,7 +156,7 @@ def select_files(raw_files: list[str]) -> list[pathlib.Path]:
             continue
         if candidate.name.startswith("_"):
             continue
-        if target_matches(relative, use_v2=use_v2):
+        if target_matches(relative):
             selected.append(candidate)
 
     return selected

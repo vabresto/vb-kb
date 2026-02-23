@@ -20,7 +20,7 @@ def _run_git(project_root: Path, *args: str) -> subprocess.CompletedProcess[str]
 
 def _init_repo(tmp_path: Path) -> tuple[Path, Path]:
     project_root = tmp_path / "repo"
-    data_root = project_root / "data-new"
+    data_root = project_root / "data"
     data_root.mkdir(parents=True)
 
     _run_git(project_root, "init")
@@ -50,7 +50,7 @@ def test_run_transaction_rolls_back_new_file_on_validation_failure(
     def apply_changes() -> dict[str, object]:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text("---\nid: note@test-note\n---\n\ncontent\n", encoding="utf-8")
-        return {"index_path": "data-new/note/te/note@test-note/index.md"}
+        return {"index_path": "data/note/te/note@test-note/index.md"}
 
     monkeypatch.setattr(
         mcp_server,
@@ -117,7 +117,7 @@ def test_run_transaction_rolls_back_modified_file_on_commit_failure(
 
     def apply_changes() -> dict[str, object]:
         target.write_text("after\n", encoding="utf-8")
-        return {"index_path": "data-new/note/te/note@test-note/index.md"}
+        return {"index_path": "data/note/te/note@test-note/index.md"}
 
     result = mcp_server.run_transaction(
         project_root=project_root,

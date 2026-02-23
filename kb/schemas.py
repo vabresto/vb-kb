@@ -11,7 +11,7 @@ ENTITY_REL_PATH_RE = re.compile(
     r"^(?P<kind>person|org)/(?P<shard>[a-z0-9]{2})/(?P<prefix>person|org)@(?P<slug>[a-z0-9][a-z0-9-]*)$"
 )
 SOURCE_PATH_RE = re.compile(
-    r"^(data/(person|org|notes)/.+\.md|data-new/(person|org|note)/.+\.md)$"
+    r"^data/(person|org|note|notes)/.+\.md$"
 )
 SNAKE_TOKEN_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 EDGE_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -154,7 +154,7 @@ class EmploymentHistoryRow(KBBaseModel):
     def validate_source_path(cls, value: str) -> str:
         text = value.strip()
         if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must point to a markdown file under data/ or data-new/")
+            raise ValueError("source_path must point to a markdown file under data/")
         return text
 
     @field_validator("source_section")
@@ -218,7 +218,7 @@ class LookingForRow(KBBaseModel):
     def validate_source_path(cls, value: str) -> str:
         text = value.strip()
         if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must point to a markdown file under data/ or data-new/")
+            raise ValueError("source_path must point to a markdown file under data/")
         return text
 
     @field_validator("source_section")
@@ -277,7 +277,7 @@ class ChangelogRow(KBBaseModel):
     def validate_source_path(cls, value: str) -> str:
         text = value.strip()
         if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source_path must point to a markdown file under data/ or data-new/")
+            raise ValueError("source_path must point to a markdown file under data/")
         return text
 
     @field_validator("changed_at")
@@ -343,7 +343,7 @@ class NoteRecord(KBBaseModel):
     def validate_source_path(cls, value: str) -> str:
         text = value.strip()
         if not SOURCE_PATH_RE.match(text):
-            raise ValueError("source-path must point to a markdown file under data/ or data-new/")
+            raise ValueError("source-path must point to a markdown file under data/")
         return text
 
     @field_validator("source_category")
