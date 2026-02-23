@@ -826,11 +826,10 @@ def render_relations_section(
                 f"Missing edge page for edge `{record.id}` while rendering `{page.entity_rel_path}`"
             )
         edge_rel = os.path.relpath(edge_output_path, start=page.output_path.parent).replace(os.sep, "/")
-        edge_label = f"[{record.id}]({edge_rel})"
+        edge_label = f"[{relation_display(record.relation.value)}]({edge_rel})"
 
         lines.append(
-            f"- {relation_display(record.relation.value)} {arrow} {other_label} "
-            f"(last verified: {record.last_verified_at}, edge: {edge_label})"
+            f"- {edge_label} {arrow} {other_label} ({record.last_verified_at})"
         )
 
     if len(lines) == 2:
