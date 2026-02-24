@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-24",
+  "from": "person/sa/person@satwik-munshi",
+  "id": "employment-satwik-munshi-employment-001",
+  "last_verified_at": "2026-02-24",
+  "notes": "Role: Senior Software Engineer | Period: Jun 2025 - Present | Details: Full-time, New York, United States.",
+  "relation": "works_at",
+  "sources": [
+    "source/sa/source@satwik-linkedin"
+  ],
+  "to": "org/an/org@antimetal",
+  "valid_from": null,
+  "valid_to": null
+}

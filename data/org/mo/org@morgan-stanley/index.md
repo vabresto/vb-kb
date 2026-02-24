@@ -12,7 +12,7 @@ focus-sectors:
 - capital markets
 portfolio-examples: []
 created-at: 2026-02-16
-updated-at: 2026-02-16
+updated-at: 2026-02-24
 relationship-status: research
 known-people:
 - person: '[Victor Brestoiu](../../../person/vi/person@victor-brestoiu/index.md)'
@@ -22,8 +22,15 @@ known-people:
   relationship-end-date: 2018-12
   first-noted-at: 2026-02-16
   last-verified-at: 2026-02-16
+- person: '[Benjamin Siu](../../../person/be/person@benjamin-siu/index.md)'
+  relationship: former
+  relationship-details: Business Analyst / Data Source Developer role.
+  relationship-start-date: 2017-06
+  relationship-end-date: 2025-04
+  first-noted-at: 2026-02-24
+  last-verified-at: 2026-02-24
 intro-paths: []
-last-updated-from-source: 2026-02-16
+last-updated-from-source: 2026-02-24
 ---
 
 # Morgan Stanley
@@ -38,6 +45,9 @@ last-updated-from-source: 2026-02-16
 
 Morgan Stanley says it helps people, institutions, and governments raise, manage, and distribute the capital they need to achieve their goals.[^morgan-source]
 
+A public LinkedIn profile for [Benjamin Siu](../../../person/be/person@benjamin-siu/index.md) lists a Business Analyst/Data source developer role at Morgan Stanley in New York.[^benjamin-linkedin]
+
 ## Notes
 
 - [2026-02-16] Organization page created to support linked employment history references.
+- [2026-02-24] Added linked former employee reference for [Benjamin Siu](../../../person/be/person@benjamin-siu/index.md).

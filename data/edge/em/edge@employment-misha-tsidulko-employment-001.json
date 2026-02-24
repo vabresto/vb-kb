@@ -1,0 +1,15 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-24",
+  "from": "person/mi/person@misha-tsidulko",
+  "id": "employment-misha-tsidulko-employment-001",
+  "last_verified_at": "2026-02-24",
+  "notes": "Role: CEO | Period: Current | Details: Listed as CEO on Hearth's official team page.",
+  "relation": "works_at",
+  "sources": [
+    "source/he/source@hearth-team"
+  ],
+  "to": "org/he/org@hearth",
+  "valid_from": null,
+  "valid_to": null
+}
