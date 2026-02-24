@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import fcntl
+import fnmatch
 import json
 import os
 import re
@@ -21,6 +22,13 @@ from kb.validate import infer_data_root, run_validation
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LOCK_FILENAME = ".kb-write.lock"
 AUTH_TOKEN_ENV_VAR = "KB_MCP_AUTH_TOKEN"
+TEXT_FILE_SUFFIXES = {".md", ".json", ".jsonl", ".txt", ".yaml", ".yml", ".csv"}
+SEARCH_FILE_TYPE_GLOBS: dict[str, str | None] = {
+    "all": None,
+    "md": "*.md",
+    "jsonl": "*.jsonl",
+    "json": "*.json",
+}
 
 
 class BusyLockError(RuntimeError):
@@ -55,6 +63,32 @@ class SourceUpsertInput(BaseModel):
     frontmatter: dict[str, Any] = Field(default_factory=dict)
     body: str = ""
     commit_message: str | None = None
+
+
+class ReadDataFileInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    path: str
+    max_bytes: int = Field(default=200_000, ge=1, le=5_000_000)
+
+
+class ListDataFilesInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    prefix: str | None = None
+    suffix: str | None = None
+    limit: int = Field(default=200, ge=1, le=10_000)
+
+
+class SearchDataInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(min_length=1)
+    file_type: Literal["all", "md", "jsonl", "json"] = "all"
+    glob: str | None = None
+    case_sensitive: bool = False
+    fixed_strings: bool = False
+    max_results: int = Field(default=100, ge=1, le=2000)
 
 
 def relpath(path: Path, project_root: Path) -> str:
@@ -108,6 +142,77 @@ def list_data_changes(project_root: Path, data_root: Path) -> set[str]:
     return parse_porcelain_paths(result.stdout)
 
 
+def normalize_data_relative_path(path: str, *, allow_empty: bool = False) -> str:
+    text = path.strip().replace("\\", "/")
+    if text.startswith("./"):
+        text = text[2:]
+    if text.startswith("data/"):
+        text = text[5:]
+    text = text.strip("/")
+    if not text:
+        if allow_empty:
+            return ""
+        raise ValueError("path must be non-empty")
+
+    parts = [part for part in text.split("/") if part]
+    if any(part in {".", ".."} for part in parts):
+        raise ValueError("path must stay within data root")
+    return "/".join(parts)
+
+
+def resolve_data_path(data_root: Path, path: str) -> Path:
+    rel = normalize_data_relative_path(path)
+    data_root_resolved = data_root.resolve()
+    candidate = (data_root / rel).resolve()
+    try:
+        candidate.relative_to(data_root_resolved)
+    except ValueError as exc:
+        raise ValueError("path must stay within data root") from exc
+    return candidate
+
+
+def list_scoped_data_files(
+    *,
+    project_root: Path,
+    data_root: Path,
+    prefix: str | None,
+    suffix: str | None,
+    limit: int,
+) -> tuple[list[str], bool, int]:
+    data_root_resolved = data_root.resolve()
+    scope_root = data_root_resolved
+    if prefix:
+        scope_root = resolve_data_path(data_root, prefix)
+        if not scope_root.exists():
+            return [], False, 0
+
+    paths: list[str] = []
+    total = 0
+    truncated = False
+
+    if scope_root.is_file():
+        candidates = [scope_root]
+    else:
+        candidates = sorted(
+            (path for path in scope_root.rglob("*") if path.is_file()),
+            key=lambda path: path.as_posix(),
+        )
+
+    for path in candidates:
+        try:
+            rel = path.relative_to(data_root_resolved).as_posix()
+        except ValueError:
+            continue
+        if suffix and not rel.endswith(suffix):
+            continue
+        total += 1
+        if len(paths) < limit:
+            paths.append(relpath(path, project_root))
+        else:
+            truncated = True
+    return paths, truncated, total
+
+
 def list_repo_changes(project_root: Path) -> set[str]:
     result = run_git(
         project_root,
@@ -120,6 +225,179 @@ def is_path_within_data_root(path: str, data_root_rel: str) -> bool:
     normalized = path.strip("/")
     base = data_root_rel.strip("/")
     return normalized == base or normalized.startswith(f"{base}/")
+
+
+def parse_rg_json_matches(stdout: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    matches: list[dict[str, Any]] = []
+    summary_stats: dict[str, Any] = {}
+    for line in stdout.splitlines():
+        raw = line.strip()
+        if not raw:
+            continue
+        try:
+            event = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        event_type = str(event.get("type") or "")
+        data = event.get("data") or {}
+        if event_type == "match":
+            path = str(((data.get("path") or {}).get("text") or "")).replace("\\", "/")
+            line_number = int(data.get("line_number") or 0)
+            line_text = str(((data.get("lines") or {}).get("text") or "")).rstrip("\n")
+            submatches_payload = data.get("submatches") or []
+            submatches: list[dict[str, Any]] = []
+            for sub in submatches_payload:
+                if not isinstance(sub, dict):
+                    continue
+                match_payload = sub.get("match") or {}
+                submatches.append(
+                    {
+                        "start": sub.get("start"),
+                        "end": sub.get("end"),
+                        "text": str(match_payload.get("text") or ""),
+                    }
+                )
+            matches.append(
+                {
+                    "path": path,
+                    "line_number": line_number,
+                    "line": line_text,
+                    "submatches": submatches,
+                }
+            )
+        elif event_type == "summary":
+            stats = data.get("stats")
+            if isinstance(stats, dict):
+                summary_stats = stats
+    return matches, summary_stats
+
+
+def search_data_with_ripgrep(
+    *,
+    project_root: Path,
+    data_root: Path,
+    payload: SearchDataInput,
+) -> dict[str, Any]:
+    args = [
+        "rg",
+        "--json",
+        "--line-number",
+        "--color",
+        "never",
+    ]
+    if not payload.case_sensitive:
+        args.append("-i")
+    if payload.fixed_strings:
+        args.append("-F")
+    file_glob = SEARCH_FILE_TYPE_GLOBS[payload.file_type]
+    if file_glob:
+        args.extend(["--glob", file_glob])
+    if payload.glob:
+        args.extend(["--glob", payload.glob])
+    args.extend([payload.query, relpath(data_root, project_root)])
+
+    completed = subprocess.run(
+        args,
+        cwd=project_root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode not in {0, 1}:
+        error_text = completed.stderr.strip() or completed.stdout.strip() or "ripgrep query failed"
+        if "regex parse error" in error_text.lower():
+            raise ValueError(error_text)
+        raise RuntimeError(error_text)
+
+    raw_matches, summary = parse_rg_json_matches(completed.stdout)
+    truncated = len(raw_matches) > payload.max_results
+    return {
+        "engine": "ripgrep",
+        "query": payload.query,
+        "matches": raw_matches[: payload.max_results],
+        "match_count": len(raw_matches),
+        "truncated": truncated,
+        "summary": summary,
+    }
+
+
+def search_data_with_python_fallback(
+    *,
+    project_root: Path,
+    data_root: Path,
+    payload: SearchDataInput,
+) -> dict[str, Any]:
+    file_glob = SEARCH_FILE_TYPE_GLOBS[payload.file_type]
+    pattern: re.Pattern[str] | None = None
+    needle = payload.query
+    if payload.fixed_strings:
+        if not payload.case_sensitive:
+            needle = needle.lower()
+    else:
+        flags = 0 if payload.case_sensitive else re.IGNORECASE
+        try:
+            pattern = re.compile(payload.query, flags)
+        except re.error as exc:
+            raise ValueError(f"invalid regex: {exc}") from exc
+
+    matches: list[dict[str, Any]] = []
+    truncated = False
+
+    for path in sorted(data_root.rglob("*"), key=lambda candidate: candidate.as_posix()):
+        if not path.is_file():
+            continue
+        if path.suffix.lower() not in TEXT_FILE_SUFFIXES:
+            continue
+        rel_from_data = path.relative_to(data_root).as_posix()
+        rel_from_project = relpath(path, project_root)
+        if file_glob and not fnmatch.fnmatch(rel_from_data, file_glob):
+            continue
+        if payload.glob and not fnmatch.fnmatch(rel_from_data, payload.glob):
+            continue
+
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        for line_number, line in enumerate(lines, start=1):
+            submatches: list[dict[str, Any]] = []
+            if payload.fixed_strings:
+                haystack = line if payload.case_sensitive else line.lower()
+                start = haystack.find(needle)
+                while start >= 0:
+                    end = start + len(needle)
+                    submatches.append({"start": start, "end": end, "text": line[start:end]})
+                    start = haystack.find(needle, end)
+            else:
+                assert pattern is not None
+                for match in pattern.finditer(line):
+                    submatches.append(
+                        {"start": match.start(), "end": match.end(), "text": match.group(0)}
+                    )
+
+            if not submatches:
+                continue
+
+            matches.append(
+                {
+                    "path": rel_from_project,
+                    "line_number": line_number,
+                    "line": line,
+                    "submatches": submatches,
+                }
+            )
+
+            if len(matches) > payload.max_results:
+                truncated = True
+                break
+        if truncated:
+            break
+
+    return {
+        "engine": "python-fallback",
+        "query": payload.query,
+        "matches": matches[: payload.max_results],
+        "match_count": len(matches) if not truncated else payload.max_results + 1,
+        "truncated": truncated,
+        "summary": {},
+    }
 
 
 @contextmanager
@@ -700,6 +978,139 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
             return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
 
         return result
+
+    @server.tool
+    def list_data_files(
+        prefix: str | None = None,
+        suffix: str | None = None,
+        limit: int = 200,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = ListDataFilesInput(prefix=prefix, suffix=suffix, limit=limit)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except ValidationError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        try:
+            paths, truncated, total = list_scoped_data_files(
+                project_root=project_root,
+                data_root=data_root,
+                prefix=payload.prefix,
+                suffix=payload.suffix,
+                limit=payload.limit,
+            )
+        except ValueError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "query_failed", "retryable": False, "message": str(exc)}}
+
+        return {
+            "ok": True,
+            "paths": paths,
+            "path_count": len(paths),
+            "total_matches": total,
+            "truncated": truncated,
+            "prefix": payload.prefix,
+            "suffix": payload.suffix,
+        }
+
+    @server.tool
+    def read_data_file(
+        path: str,
+        max_bytes: int = 200_000,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = ReadDataFileInput(path=path, max_bytes=max_bytes)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except ValidationError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        try:
+            target = resolve_data_path(data_root, payload.path)
+        except ValueError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        if not target.exists() or not target.is_file():
+            return {
+                "ok": False,
+                "error": {
+                    "code": "not_found",
+                    "retryable": False,
+                    "message": f"data file not found: {payload.path}",
+                },
+            }
+
+        raw = target.read_bytes()
+        truncated = len(raw) > payload.max_bytes
+        content = raw[: payload.max_bytes].decode("utf-8", errors="replace")
+        return {
+            "ok": True,
+            "path": relpath(target, project_root),
+            "size_bytes": len(raw),
+            "truncated": truncated,
+            "content": content,
+        }
+
+    @server.tool
+    def search_data(
+        query: str,
+        file_type: Literal["all", "md", "jsonl", "json"] = "all",
+        glob: str | None = None,
+        case_sensitive: bool = False,
+        fixed_strings: bool = False,
+        max_results: int = 100,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = SearchDataInput(
+                query=query,
+                file_type=file_type,
+                glob=glob,
+                case_sensitive=case_sensitive,
+                fixed_strings=fixed_strings,
+                max_results=max_results,
+            )
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except ValidationError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        try:
+            result = search_data_with_ripgrep(
+                project_root=project_root,
+                data_root=data_root,
+                payload=payload,
+            )
+        except FileNotFoundError:
+            try:
+                result = search_data_with_python_fallback(
+                    project_root=project_root,
+                    data_root=data_root,
+                    payload=payload,
+                )
+            except ValueError as exc:
+                return {
+                    "ok": False,
+                    "error": {"code": "invalid_input", "retryable": False, "message": str(exc)},
+                }
+            except Exception as exc:
+                return {
+                    "ok": False,
+                    "error": {"code": "query_failed", "retryable": False, "message": str(exc)},
+                }
+        except ValueError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "query_failed", "retryable": False, "message": str(exc)}}
+
+        return {"ok": True, **result}
 
     return server
 

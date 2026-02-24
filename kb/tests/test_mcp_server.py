@@ -393,3 +393,74 @@ def test_upsert_source_changes_are_reflected_by_mkdocs_build(tmp_path: Path) -> 
     assert sources_index.exists()
     sources_text = sources_index.read_text(encoding="utf-8")
     assert "Build Reflection Source" in sources_text
+
+
+def test_read_only_query_tools_list_search_and_read(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    source_dir = data_root / "source" / "te" / "source@test-query-source"
+    source_dir.mkdir(parents=True, exist_ok=True)
+    source_path = source_dir / "index.md"
+    source_path.write_text(
+        (
+            "---\n"
+            "id: source@test-query-source\n"
+            "title: Test Query Source\n"
+            "source-type: document\n"
+            "citation-key: test-query-source\n"
+            "source-path: data/source/te/source@test-query-source/index.md\n"
+            "source-category: citations/test\n"
+            "---\n\n"
+            "Unique Query Token 42 appears in this source body.\n"
+        ),
+        encoding="utf-8",
+    )
+    (source_dir / "edges").mkdir(parents=True, exist_ok=True)
+    (source_dir / "edges" / ".gitkeep").write_text("", encoding="utf-8")
+
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    listed = _call_tool(
+        server,
+        "list_data_files",
+        {"prefix": "source", "suffix": "index.md", "limit": 100},
+    )
+    assert listed["ok"] is True
+    assert any(path.endswith("data/source/te/source@test-query-source/index.md") for path in listed["paths"])
+
+    search = _call_tool(
+        server,
+        "search_data",
+        {
+            "query": "Unique Query Token 42",
+            "fixed_strings": True,
+            "file_type": "md",
+            "max_results": 20,
+        },
+    )
+    assert search["ok"] is True
+    assert search["matches"]
+    assert any(
+        match["path"].endswith("data/source/te/source@test-query-source/index.md")
+        for match in search["matches"]
+    )
+
+    read = _call_tool(
+        server,
+        "read_data_file",
+        {"path": "source/te/source@test-query-source/index.md"},
+    )
+    assert read["ok"] is True
+    assert read["path"].endswith("data/source/te/source@test-query-source/index.md")
+    assert "Unique Query Token 42" in read["content"]
+
+
+def test_read_data_file_rejects_path_outside_data_root(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+    result = _call_tool(
+        server,
+        "read_data_file",
+        {"path": "../.git/config"},
+    )
+    assert result["ok"] is False
+    assert result["error"]["code"] == "invalid_input"
