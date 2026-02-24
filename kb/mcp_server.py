@@ -108,6 +108,20 @@ def list_data_changes(project_root: Path, data_root: Path) -> set[str]:
     return parse_porcelain_paths(result.stdout)
 
 
+def list_repo_changes(project_root: Path) -> set[str]:
+    result = run_git(
+        project_root,
+        ["status", "--porcelain", "--untracked-files=all"],
+    )
+    return parse_porcelain_paths(result.stdout)
+
+
+def is_path_within_data_root(path: str, data_root_rel: str) -> bool:
+    normalized = path.strip("/")
+    base = data_root_rel.strip("/")
+    return normalized == base or normalized.startswith(f"{base}/")
+
+
 @contextmanager
 def repo_write_lock(project_root: Path):
     lock_path = project_root / LOCK_FILENAME
@@ -156,11 +170,22 @@ def rollback_changed_paths(project_root: Path, changed_paths: list[str]) -> None
     if not scoped:
         return
 
-    run_git(
-        project_root,
-        ["restore", "--staged", "--worktree", "--", *scoped],
-        check=False,
-    )
+    tracked: list[str] = []
+    for path in scoped:
+        probe = run_git(
+            project_root,
+            ["ls-files", "--error-unmatch", "--", path],
+            check=False,
+        )
+        if probe.returncode == 0:
+            tracked.append(path)
+
+    if tracked:
+        run_git(
+            project_root,
+            ["restore", "--staged", "--worktree", "--", *tracked],
+            check=False,
+        )
     run_git(
         project_root,
         ["clean", "-fd", "--", *scoped],
@@ -188,18 +213,43 @@ def run_transaction(
     data_root: Path,
     commit_message: str,
     apply_changes: Callable[[], dict[str, Any]],
+    push: bool = True,
 ) -> dict[str, Any]:
     with repo_write_lock(project_root):
+        data_root_rel = relpath(data_root, project_root)
+        before_repo = list_repo_changes(project_root)
         before = list_data_changes(project_root, data_root)
         try:
             apply_meta = apply_changes()
         except Exception:
             try:
-                after_failed_apply = list_data_changes(project_root, data_root)
-                rollback_changed_paths(project_root, sorted(after_failed_apply - before))
+                after_failed_apply = list_repo_changes(project_root)
+                rollback_changed_paths(project_root, sorted(after_failed_apply - before_repo))
             except Exception:
                 pass
             raise
+
+        after_repo = list_repo_changes(project_root)
+        repo_delta = sorted(after_repo - before_repo)
+        non_data_delta = sorted(
+            path for path in repo_delta if not is_path_within_data_root(path, data_root_rel)
+        )
+        if non_data_delta:
+            rollback_changed_paths(project_root, repo_delta)
+            return {
+                "ok": False,
+                "error": {
+                    "code": "non_data_changes",
+                    "retryable": False,
+                    "message": "transaction touched paths outside data root",
+                },
+                "changed_paths": repo_delta,
+                "non_data_changed_paths": non_data_delta,
+                "apply": apply_meta,
+                "validation": None,
+                "committed": False,
+                "pushed": False,
+            }
 
         after = list_data_changes(project_root, data_root)
 
@@ -208,6 +258,7 @@ def run_transaction(
             return {
                 "ok": True,
                 "committed": False,
+                "pushed": False,
                 "changed_paths": [],
                 "apply": apply_meta,
                 "validation": None,
@@ -237,6 +288,8 @@ def run_transaction(
                 "changed_paths": delta,
                 "apply": apply_meta,
                 "validation": validation_result,
+                "committed": False,
+                "pushed": False,
             }
 
         try:
@@ -262,12 +315,34 @@ def run_transaction(
                 "changed_paths": delta,
                 "apply": apply_meta,
                 "validation": validation_result,
+                "committed": False,
+                "pushed": False,
             }
 
         commit_sha = run_git(project_root, ["rev-parse", "HEAD"]).stdout.strip()
+        if push:
+            push_result = run_git(project_root, ["push"], check=False)
+            if push_result.returncode != 0:
+                return {
+                    "ok": False,
+                    "error": {
+                        "code": "push_failed",
+                        "retryable": False,
+                        "message": push_result.stderr.strip()
+                        or push_result.stdout.strip()
+                        or "git push failed",
+                    },
+                    "committed": True,
+                    "pushed": False,
+                    "commit": commit_sha,
+                    "changed_paths": delta,
+                    "apply": apply_meta,
+                    "validation": validation_result,
+                }
         return {
             "ok": True,
             "committed": True,
+            "pushed": push,
             "commit": commit_sha,
             "changed_paths": delta,
             "apply": apply_meta,
@@ -414,6 +489,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
         frontmatter: dict[str, Any] | None = None,
         body: str = "",
         commit_message: str | None = None,
+        push: bool = True,
         auth_token: str | None = None,
     ) -> dict[str, Any]:
         try:
@@ -455,6 +531,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
                 data_root=data_root,
                 commit_message=message,
                 apply_changes=apply,
+                push=push,
             )
         except BusyLockError:
             return {
@@ -474,6 +551,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
         frontmatter: dict[str, Any] | None = None,
         body: str = "",
         commit_message: str | None = None,
+        push: bool = True,
         auth_token: str | None = None,
     ) -> dict[str, Any]:
         try:
@@ -513,6 +591,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
                 data_root=data_root,
                 commit_message=message,
                 apply_changes=apply,
+                push=push,
             )
         except BusyLockError:
             return {
@@ -530,6 +609,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
         frontmatter: dict[str, Any] | None = None,
         body: str = "",
         commit_message: str | None = None,
+        push: bool = True,
         auth_token: str | None = None,
     ) -> dict[str, Any]:
         try:
@@ -567,6 +647,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
                 data_root=data_root,
                 commit_message=message,
                 apply_changes=apply,
+                push=push,
             )
         except BusyLockError:
             return {
@@ -582,6 +663,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
     def upsert_edge(
         edge: dict[str, Any],
         commit_message: str | None = None,
+        push: bool = True,
         auth_token: str | None = None,
     ) -> dict[str, Any]:
         try:
@@ -605,6 +687,7 @@ def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
                 data_root=data_root,
                 commit_message=message,
                 apply_changes=apply,
+                push=push,
             )
         except BusyLockError:
             return {
