@@ -514,6 +514,73 @@ def test_streamable_http_oauth_discovery_alias_routes(tmp_path: Path, monkeypatc
         assert prefix_alias.headers["location"] == "/.well-known/oauth-authorization-server"
 
 
+def test_streamable_http_external_jwt_metadata_routes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    monkeypatch.setenv(mcp_server.OAUTH_MODE_ENV_VAR, "external-jwt")
+    monkeypatch.setenv(mcp_server.EXTERNAL_JWT_JWKS_URI_ENV_VAR, "https://idp.example/oauth/jwks")
+    monkeypatch.setenv(
+        mcp_server.EXTERNAL_AUTHORIZATION_SERVERS_ENV_VAR,
+        "https://idp.example",
+    )
+    monkeypatch.setenv(mcp_server.EXTERNAL_REQUIRED_SCOPES_ENV_VAR, "mcp.read,mcp.write")
+
+    auth_provider = mcp_server.create_http_oauth_provider(
+        project_root=project_root,
+        transport="streamable-http",
+        host="127.0.0.1",
+        port=8001,
+    )
+    assert auth_provider is not None
+    assert isinstance(auth_provider, mcp_server.RemoteAuthProvider)
+
+    server = mcp_server.create_mcp_server(
+        project_root=project_root,
+        data_root=data_root,
+        auth_provider=auth_provider,
+        oauth_discovery_mcp_path="/mcp",
+    )
+    app = server.http_app(path="/mcp", transport="streamable-http")
+
+    with TestClient(app) as client:
+        protected = client.get("/.well-known/oauth-protected-resource/mcp")
+        assert protected.status_code == 200
+        payload = protected.json()
+        assert payload["resource"] == "http://127.0.0.1:8001/mcp"
+        assert payload["authorization_servers"] == ["https://idp.example/"]
+        assert payload["scopes_supported"] == ["mcp.read", "mcp.write"]
+
+        authorization_server = client.get("/.well-known/oauth-authorization-server")
+        assert authorization_server.status_code == 404
+
+        suffix_alias = client.get(
+            "/.well-known/oauth-authorization-server/mcp",
+            follow_redirects=False,
+        )
+        assert suffix_alias.status_code == 404
+
+
+def test_external_jwt_mode_requires_verification_key_config(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_root, _ = _init_repo(tmp_path)
+    monkeypatch.setenv(mcp_server.OAUTH_MODE_ENV_VAR, "external-jwt")
+    monkeypatch.setenv(
+        mcp_server.EXTERNAL_AUTHORIZATION_SERVERS_ENV_VAR,
+        "https://idp.example",
+    )
+    monkeypatch.delenv(mcp_server.EXTERNAL_JWT_JWKS_URI_ENV_VAR, raising=False)
+    monkeypatch.delenv(mcp_server.EXTERNAL_JWT_PUBLIC_KEY_ENV_VAR, raising=False)
+
+    with pytest.raises(ValueError, match="requires either"):
+        mcp_server.create_http_oauth_provider(
+            project_root=project_root,
+            transport="streamable-http",
+            host="127.0.0.1",
+            port=8001,
+        )
+
+
 def test_persistent_oauth_refresh_token_can_be_reused(tmp_path: Path) -> None:
     state_path = tmp_path / "oauth-state.json"
     provider = mcp_server.PersistentInMemoryOAuthProvider(

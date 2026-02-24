@@ -1,0 +1,83 @@
+services:
+  kb-mcp:
+    image: vb-kb:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    command:
+      - kb
+      - mcp-server
+      - --project-root
+      - /repo
+      - --data-root
+      - /repo/data
+      - --transport
+      - streamable-http
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8001"
+      - --path
+      - /mcp
+    environment:
+      KB_MCP_OAUTH_MODE: "${KB_MCP_OAUTH_MODE:-in-memory}"
+      KB_MCP_OAUTH_BASE_URL: "https://${VB_KB_HOST}"
+      KB_MCP_OAUTH_STATE_FILE: /var/lib/vb-kb/mcp-oauth-state.json
+      KB_MCP_AUTH_TOKEN: "${KB_MCP_AUTH_TOKEN:-}"
+      KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS: "${KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS:-}"
+      KB_MCP_EXTERNAL_JWT_JWKS_URI: "${KB_MCP_EXTERNAL_JWT_JWKS_URI:-}"
+      KB_MCP_EXTERNAL_JWT_PUBLIC_KEY: "${KB_MCP_EXTERNAL_JWT_PUBLIC_KEY:-}"
+      KB_MCP_EXTERNAL_JWT_ISSUER: "${KB_MCP_EXTERNAL_JWT_ISSUER:-}"
+      KB_MCP_EXTERNAL_JWT_AUDIENCE: "${KB_MCP_EXTERNAL_JWT_AUDIENCE:-}"
+      KB_MCP_EXTERNAL_JWT_ALGORITHM: "${KB_MCP_EXTERNAL_JWT_ALGORITHM:-}"
+      KB_MCP_EXTERNAL_REQUIRED_SCOPES: "${KB_MCP_EXTERNAL_REQUIRED_SCOPES:-}"
+      KB_MCP_EXTERNAL_SCOPES_SUPPORTED: "${KB_MCP_EXTERNAL_SCOPES_SUPPORTED:-}"
+    volumes:
+      - "${VB_KB_REPO_PATH}:/repo"
+      - "vb_kb_mcp_oauth_state:/var/lib/vb-kb"
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vb-kb-mcp.rule=Host(`${VB_KB_HOST}`) && (PathPrefix(`/mcp`) || PathPrefix(`/authorize`) || PathPrefix(`/token`) || PathPrefix(`/register`) || PathPrefix(`/.well-known/oauth-authorization-server`) || PathPrefix(`/.well-known/oauth-protected-resource`))"
+      - "traefik.http.routers.vb-kb-mcp.entrypoints=websecure"
+      - "traefik.http.routers.vb-kb-mcp.tls=true"
+      - "traefik.http.routers.vb-kb-mcp.priority=100"
+      - "traefik.http.services.vb-kb-mcp.loadbalancer.server.port=8001"
+
+  kb-docs:
+    image: vb-kb:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    command:
+      - sh
+      - -lc
+      - |
+        mkdir -p /repo/.build/docs
+        cd /repo
+        mkdocs build
+        cd /repo/.build/site
+        python -m http.server 8000
+    volumes:
+      - "${VB_KB_REPO_PATH}:/repo"
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vb-kb-docs.rule=Host(`${VB_KB_HOST}`)"
+      - "traefik.http.routers.vb-kb-docs.entrypoints=websecure"
+      - "traefik.http.routers.vb-kb-docs.tls=true"
+      - "traefik.http.routers.vb-kb-docs.priority=10"
+      - "traefik.http.routers.vb-kb-docs.middlewares=vb-kb-docs-auth"
+      - "traefik.http.middlewares.vb-kb-docs-auth.basicauth.users=${DOCS_BASIC_AUTH_USERS}"
+      - "traefik.http.services.vb-kb-docs.loadbalancer.server.port=8000"
+
+volumes:
+  vb_kb_mcp_oauth_state:
+
+networks:
+  traefik-public:
+    external: true

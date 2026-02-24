@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 from fastmcp import FastMCP
+from fastmcp.server.auth import AuthProvider, JWTVerifier, OAuthProvider, RemoteAuthProvider
 from fastmcp.server.auth.providers.in_memory import (
     AccessToken,
     AuthorizationCode,
@@ -24,7 +25,7 @@ from fastmcp.server.auth.providers.in_memory import (
     TokenError,
 )
 from mcp.server.auth.settings import ClientRegistrationOptions
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, ValidationError
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 import yaml
@@ -39,9 +40,18 @@ AUTH_TOKEN_ENV_VAR = "KB_MCP_AUTH_TOKEN"
 OAUTH_MODE_ENV_VAR = "KB_MCP_OAUTH_MODE"
 OAUTH_BASE_URL_ENV_VAR = "KB_MCP_OAUTH_BASE_URL"
 OAUTH_STATE_FILE_ENV_VAR = "KB_MCP_OAUTH_STATE_FILE"
+EXTERNAL_AUTHORIZATION_SERVERS_ENV_VAR = "KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS"
+EXTERNAL_JWT_JWKS_URI_ENV_VAR = "KB_MCP_EXTERNAL_JWT_JWKS_URI"
+EXTERNAL_JWT_PUBLIC_KEY_ENV_VAR = "KB_MCP_EXTERNAL_JWT_PUBLIC_KEY"
+EXTERNAL_JWT_ISSUER_ENV_VAR = "KB_MCP_EXTERNAL_JWT_ISSUER"
+EXTERNAL_JWT_AUDIENCE_ENV_VAR = "KB_MCP_EXTERNAL_JWT_AUDIENCE"
+EXTERNAL_JWT_ALGORITHM_ENV_VAR = "KB_MCP_EXTERNAL_JWT_ALGORITHM"
+EXTERNAL_REQUIRED_SCOPES_ENV_VAR = "KB_MCP_EXTERNAL_REQUIRED_SCOPES"
+EXTERNAL_SCOPES_SUPPORTED_ENV_VAR = "KB_MCP_EXTERNAL_SCOPES_SUPPORTED"
 DEFAULT_HTTP_OAUTH_MODE = "in-memory"
 OAUTH_MODE_DISABLED = {"off", "none", "disabled", "false", "0"}
 OAUTH_MODE_IN_MEMORY = {"in-memory", "memory"}
+OAUTH_MODE_EXTERNAL_JWT = {"external-jwt", "external_jwt"}
 TEXT_FILE_SUFFIXES = {".md", ".json", ".jsonl", ".txt", ".yaml", ".yml", ".csv"}
 SEARCH_FILE_TYPE_GLOBS: dict[str, str | None] = {
     "all": None,
@@ -129,6 +139,22 @@ def normalize_public_host(host: str) -> str:
     if cleaned in {"", "0.0.0.0", "::", "[::]"}:
         return "127.0.0.1"
     return cleaned
+
+
+def parse_env_list(raw: str | None) -> list[str]:
+    cleaned = (raw or "").strip()
+    if not cleaned:
+        return []
+    return [item.strip() for item in re.split(r"[,\s]+", cleaned) if item.strip()]
+
+
+def parse_env_str_or_list(raw: str | None) -> str | list[str] | None:
+    values = parse_env_list(raw)
+    if not values:
+        return None
+    if len(values) == 1:
+        return values[0]
+    return values
 
 
 def dump_model_map(mapping: dict[str, Any]) -> dict[str, Any]:
@@ -326,28 +352,90 @@ class PersistentInMemoryOAuthProvider(InMemoryOAuthProvider):
         return await super().verify_token(token)
 
 
+def create_external_jwt_auth_provider(
+    *,
+    base_url: str,
+) -> RemoteAuthProvider:
+    authorization_server_values = parse_env_list(os.getenv(EXTERNAL_AUTHORIZATION_SERVERS_ENV_VAR))
+    if not authorization_server_values:
+        issuer_hint = parse_env_list(os.getenv(EXTERNAL_JWT_ISSUER_ENV_VAR))
+        authorization_server_values = issuer_hint
+
+    if not authorization_server_values:
+        raise ValueError(
+            "external JWT mode requires at least one authorization server URL in "
+            f"{EXTERNAL_AUTHORIZATION_SERVERS_ENV_VAR} (or set {EXTERNAL_JWT_ISSUER_ENV_VAR})."
+        )
+
+    authorization_servers: list[AnyHttpUrl] = []
+    for server_url in authorization_server_values:
+        try:
+            authorization_servers.append(AnyHttpUrl(server_url))
+        except Exception as exc:
+            raise ValueError(f"invalid authorization server URL '{server_url}'") from exc
+
+    jwks_uri = (os.getenv(EXTERNAL_JWT_JWKS_URI_ENV_VAR) or "").strip() or None
+    public_key = (os.getenv(EXTERNAL_JWT_PUBLIC_KEY_ENV_VAR) or "").strip() or None
+    if not jwks_uri and not public_key:
+        raise ValueError(
+            "external JWT mode requires either "
+            f"{EXTERNAL_JWT_JWKS_URI_ENV_VAR} or {EXTERNAL_JWT_PUBLIC_KEY_ENV_VAR}."
+        )
+    if jwks_uri and public_key:
+        raise ValueError(
+            "set only one of "
+            f"{EXTERNAL_JWT_JWKS_URI_ENV_VAR} or {EXTERNAL_JWT_PUBLIC_KEY_ENV_VAR}, not both."
+        )
+
+    required_scopes = parse_env_list(os.getenv(EXTERNAL_REQUIRED_SCOPES_ENV_VAR))
+    scopes_supported = parse_env_list(os.getenv(EXTERNAL_SCOPES_SUPPORTED_ENV_VAR))
+    algorithm = (os.getenv(EXTERNAL_JWT_ALGORITHM_ENV_VAR) or "").strip() or None
+
+    token_verifier = JWTVerifier(
+        public_key=public_key,
+        jwks_uri=jwks_uri,
+        issuer=parse_env_str_or_list(os.getenv(EXTERNAL_JWT_ISSUER_ENV_VAR)),
+        audience=parse_env_str_or_list(os.getenv(EXTERNAL_JWT_AUDIENCE_ENV_VAR)),
+        algorithm=algorithm,
+        required_scopes=required_scopes or None,
+        base_url=base_url,
+    )
+
+    return RemoteAuthProvider(
+        token_verifier=token_verifier,
+        authorization_servers=authorization_servers,
+        base_url=base_url,
+        scopes_supported=scopes_supported or None,
+    )
+
+
 def create_http_oauth_provider(
     *,
     project_root: Path,
     transport: Literal["stdio", "http", "sse", "streamable-http"],
     host: str,
     port: int,
-) -> InMemoryOAuthProvider | None:
+) -> AuthProvider | None:
     if transport not in {"http", "sse", "streamable-http"}:
         return None
 
     mode = (os.getenv(OAUTH_MODE_ENV_VAR) or DEFAULT_HTTP_OAUTH_MODE).strip().lower()
     if mode in OAUTH_MODE_DISABLED:
         return None
-    if mode not in OAUTH_MODE_IN_MEMORY:
-        raise ValueError(
-            f"unsupported OAuth mode '{mode}' in {OAUTH_MODE_ENV_VAR}; expected one of: "
-            "in-memory, off"
-        )
 
     base_url = (
         os.getenv(OAUTH_BASE_URL_ENV_VAR) or f"http://{normalize_public_host(host)}:{port}"
     ).strip()
+
+    if mode in OAUTH_MODE_EXTERNAL_JWT:
+        return create_external_jwt_auth_provider(base_url=base_url)
+
+    if mode not in OAUTH_MODE_IN_MEMORY:
+        raise ValueError(
+            f"unsupported OAuth mode '{mode}' in {OAUTH_MODE_ENV_VAR}; expected one of: "
+            "in-memory, external-jwt, off"
+        )
+
     state_path_raw = (os.getenv(OAUTH_STATE_FILE_ENV_VAR) or "").strip()
     if state_path_raw:
         state_path = Path(state_path_raw).expanduser()
@@ -1056,7 +1144,7 @@ def create_mcp_server(
     *,
     project_root: Path,
     data_root: Path,
-    auth_provider: InMemoryOAuthProvider | None = None,
+    auth_provider: AuthProvider | None = None,
     oauth_discovery_mcp_path: str | None = None,
 ) -> FastMCP:
     server = FastMCP(
@@ -1067,7 +1155,7 @@ def create_mcp_server(
         ),
         auth=auth_provider,
     )
-    if auth_provider is not None:
+    if isinstance(auth_provider, OAuthProvider):
         register_oauth_discovery_alias_routes(server, mcp_path=oauth_discovery_mcp_path)
 
     @server.tool

@@ -73,6 +73,7 @@ Optional OAuth overrides:
 
 - `KB_MCP_OAUTH_BASE_URL` (for externally-reachable issuer/base URL)
 - `KB_MCP_OAUTH_STATE_FILE` (for custom token-state file location)
+- `KB_MCP_OAUTH_MODE=external-jwt` (validate external JWTs instead of issuing local OAuth tokens)
 
 Use a shared local auth token when needed:
 
@@ -103,4 +104,5 @@ Site styles are in `kb/tools/site_assets/stylesheets/kb.css`.
 
 ## Deployment notes
 
-Python MCP deployment and auth notes are in `CLOUDFLARE_ACCESS.md`.
+- Simple Docker + Traefik deployment guide is in `DEPLOYMENT.md`.
+- Cloudflare-specific notes are in `CLOUDFLARE_ACCESS.md`.
