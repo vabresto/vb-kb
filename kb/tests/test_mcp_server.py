@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import os
 import subprocess
 import sys
 import time
@@ -395,6 +397,192 @@ def test_upsert_source_changes_are_reflected_by_mkdocs_build(tmp_path: Path) -> 
     assert sources_index.exists()
     sources_text = sources_index.read_text(encoding="utf-8")
     assert "Build Reflection Source" in sources_text
+
+
+def test_relation_tools_upsert_update_and_sync_symlinks(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    for slug in ("alice", "bob"):
+        person_result = _call_tool(
+            server,
+            "upsert_person",
+            {
+                "slug": slug,
+                "frontmatter": {"person": slug.title()},
+                "push": False,
+            },
+        )
+        assert person_result["ok"] is True
+
+    org_result = _call_tool(
+        server,
+        "upsert_org",
+        {
+            "slug": "acme",
+            "frontmatter": {"org": "Acme"},
+            "push": False,
+        },
+    )
+    assert org_result["ok"] is True
+
+    source_slug = "relation-source"
+    source_result = _call_tool(
+        server,
+        "upsert_source",
+        {
+            "slug": source_slug,
+            "frontmatter": {
+                "title": "Relation Source",
+                "source-category": "citations/tests",
+                "url": "https://example.com/relation-source",
+            },
+            "body": "Source used by relation tools tests.",
+            "push": False,
+        },
+    )
+    assert source_result["ok"] is True
+
+    source_ref = f"source/{mcp_server.shard_for_slug(source_slug)}/source@{source_slug}"
+
+    works_at_edge_id = "works-at-alice-acme-current"
+    works_result = _call_tool(
+        server,
+        "upsert_works_at_relation",
+        {
+            "edge_id": works_at_edge_id,
+            "person_ref": "person/al/person@alice",
+            "org_ref": "org/ac/org@acme",
+            "first_noted_at": "2026-01-01",
+            "last_verified_at": "2026-01-10",
+            "sources": [source_ref],
+            "notes": "Initial role",
+            "push": False,
+        },
+    )
+    assert works_result["ok"] is True
+
+    works_path = project_root / works_result["apply"]["edge_path"]
+    works_payload = json.loads(works_path.read_text(encoding="utf-8"))
+    assert works_payload["relation"] == "works_at"
+    assert works_payload["from"] == "person/al/person@alice"
+    assert works_payload["to"] == "org/ac/org@acme"
+
+    for link in (
+        data_root / "person" / "al" / "person@alice" / "edges" / f"edge@{works_at_edge_id}.json",
+        data_root / "org" / "ac" / "org@acme" / "edges" / f"edge@{works_at_edge_id}.json",
+    ):
+        assert link.is_symlink()
+        target = os.readlink(link)
+        assert not os.path.isabs(target)
+        assert (link.parent / target).resolve() == works_path.resolve()
+
+    update_works = _call_tool(
+        server,
+        "update_works_at_relation",
+        {
+            "edge_id": works_at_edge_id,
+            "patch": {"valid_to": "2025-12-31", "notes": "Ended role"},
+            "push": False,
+        },
+    )
+    assert update_works["ok"] is True
+    works_payload = json.loads(works_path.read_text(encoding="utf-8"))
+    assert works_payload["valid_to"] == "2025-12-31"
+    assert works_payload["notes"] == "Ended role"
+
+    clear_works = _call_tool(
+        server,
+        "update_works_at_relation",
+        {
+            "edge_id": works_at_edge_id,
+            "patch": {"valid_to": None},
+            "push": False,
+        },
+    )
+    assert clear_works["ok"] is True
+    works_payload = json.loads(works_path.read_text(encoding="utf-8"))
+    assert works_payload["valid_to"] is None
+
+    knows_result = _call_tool(
+        server,
+        "upsert_knows_relation",
+        {
+            "person_a_ref": "person/bo/person@bob",
+            "person_b_ref": "person/al/person@alice",
+            "strength": -3,
+            "first_noted_at": "2026-01-05",
+            "last_verified_at": "2026-01-10",
+            "sources": [source_ref],
+            "push": False,
+        },
+    )
+    assert knows_result["ok"] is True
+    knows_edge_id = knows_result["apply"]["edge_id"]
+    knows_path = project_root / knows_result["apply"]["edge_path"]
+    knows_payload = json.loads(knows_path.read_text(encoding="utf-8"))
+    assert knows_payload["relation"] == "knows"
+    assert knows_payload["directed"] is False
+    assert knows_payload["from"] == "person/al/person@alice"
+    assert knows_payload["to"] == "person/bo/person@bob"
+    assert knows_payload["strength"] == -3
+    assert knows_edge_id.startswith("knows-alice-bob")
+
+    update_knows = _call_tool(
+        server,
+        "update_knows_relation",
+        {
+            "edge_id": knows_edge_id,
+            "patch": {"strength": -8, "valid_to": "2024-01-01"},
+            "push": False,
+        },
+    )
+    assert update_knows["ok"] is True
+    knows_payload = json.loads(knows_path.read_text(encoding="utf-8"))
+    assert knows_payload["strength"] == -8
+    assert knows_payload["valid_to"] == "2024-01-01"
+
+    cites_result = _call_tool(
+        server,
+        "upsert_cites_relation",
+        {
+            "source_entity_ref": "org/ac/org@acme",
+            "target_source_ref": source_ref,
+            "first_noted_at": "2026-01-06",
+            "last_verified_at": "2026-01-10",
+            "sources": [source_ref],
+            "push": False,
+        },
+    )
+    assert cites_result["ok"] is True
+    cites_edge_id = cites_result["apply"]["edge_id"]
+    cites_path = project_root / cites_result["apply"]["edge_path"]
+    cites_payload = json.loads(cites_path.read_text(encoding="utf-8"))
+    assert cites_payload["relation"] == "cites"
+    assert cites_payload["directed"] is True
+
+    source_link = (
+        data_root
+        / "source"
+        / mcp_server.shard_for_slug(source_slug)
+        / f"source@{source_slug}"
+        / "edges"
+        / f"edge@{cites_edge_id}.json"
+    )
+    assert source_link.is_symlink()
+    assert (source_link.parent / os.readlink(source_link)).resolve() == cites_path.resolve()
+
+    bad_patch = _call_tool(
+        server,
+        "update_works_at_relation",
+        {
+            "edge_id": works_at_edge_id,
+            "patch": {"strength": 1},
+            "push": False,
+        },
+    )
+    assert bad_patch["ok"] is False
+    assert bad_patch["error"]["code"] == "invalid_input"
 
 
 def test_read_only_query_tools_list_search_and_read(tmp_path: Path) -> None:

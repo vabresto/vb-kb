@@ -59,6 +59,45 @@ SEARCH_FILE_TYPE_GLOBS: dict[str, str | None] = {
     "jsonl": "*.jsonl",
     "json": "*.json",
 }
+EDGE_ID_SANITIZE_RE = re.compile(r"[^a-z0-9]+")
+RELATION_ALLOWED_PATCH_FIELDS: dict[str, set[str]] = {
+    "works_at": {
+        "person_ref",
+        "org_ref",
+        "first_noted_at",
+        "last_verified_at",
+        "valid_from",
+        "valid_to",
+        "sources",
+        "notes",
+    },
+    "knows": {
+        "person_a_ref",
+        "person_b_ref",
+        "first_noted_at",
+        "last_verified_at",
+        "valid_from",
+        "valid_to",
+        "sources",
+        "notes",
+        "strength",
+    },
+    "cites": {
+        "source_entity_ref",
+        "target_source_ref",
+        "first_noted_at",
+        "last_verified_at",
+        "valid_from",
+        "valid_to",
+        "sources",
+        "notes",
+    },
+}
+RELATION_ENDPOINT_PATCH_KEYS: dict[str, dict[str, str]] = {
+    "works_at": {"person_ref": "from", "org_ref": "to"},
+    "knows": {"person_a_ref": "from", "person_b_ref": "to"},
+    "cites": {"source_entity_ref": "from", "target_source_ref": "to"},
+}
 
 
 class BusyLockError(RuntimeError):
@@ -92,6 +131,57 @@ class SourceUpsertInput(BaseModel):
     note_type: str | None = None
     frontmatter: dict[str, Any] = Field(default_factory=dict)
     body: str = ""
+    commit_message: str | None = None
+
+
+class WorksAtRelationUpsertInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    edge_id: str | None = Field(default=None, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    person_ref: str
+    org_ref: str
+    first_noted_at: str
+    last_verified_at: str
+    valid_from: str | None = None
+    valid_to: str | None = None
+    sources: list[str]
+    notes: str | None = None
+
+
+class KnowsRelationUpsertInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    edge_id: str | None = Field(default=None, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    person_a_ref: str
+    person_b_ref: str
+    first_noted_at: str
+    last_verified_at: str
+    valid_from: str | None = None
+    valid_to: str | None = None
+    sources: list[str]
+    notes: str | None = None
+    strength: int = Field(ge=-10, le=10)
+
+
+class CitesRelationUpsertInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    edge_id: str | None = Field(default=None, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    source_entity_ref: str
+    target_source_ref: str
+    first_noted_at: str
+    last_verified_at: str
+    valid_from: str | None = None
+    valid_to: str | None = None
+    sources: list[str]
+    notes: str | None = None
+
+
+class RelationUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    edge_id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    patch: dict[str, Any]
     commit_message: str | None = None
 
 
@@ -1024,6 +1114,178 @@ def ensure_slug(slug: str) -> str:
     return cleaned
 
 
+def normalize_edge_id_token(value: str) -> str:
+    cleaned = EDGE_ID_SANITIZE_RE.sub("-", value.strip().lower()).strip("-")
+    if not cleaned:
+        raise ValueError("unable to derive edge id")
+    return cleaned
+
+
+def edge_path_for_id(*, data_root: Path, edge_id: str) -> Path:
+    return data_root / "edge" / shard_for_slug(edge_id) / f"edge@{edge_id}.json"
+
+
+def relation_edge_path_rel(*, project_root: Path, data_root: Path, edge_id: str) -> str:
+    return relpath(edge_path_for_id(data_root=data_root, edge_id=edge_id), project_root)
+
+
+def entity_slug_from_ref(entity_ref: str) -> str:
+    text = entity_ref.strip()
+    tail = text.rsplit("/", 1)[-1]
+    if "@" not in tail:
+        raise ValueError(f"invalid entity reference: {entity_ref}")
+    return tail.split("@", 1)[1]
+
+
+def derive_relation_edge_id(
+    *,
+    relation: str,
+    from_entity: str,
+    to_entity: str,
+) -> str:
+    relation_token = normalize_edge_id_token(relation.replace("_", "-"))
+    from_slug = normalize_edge_id_token(entity_slug_from_ref(from_entity))
+    to_slug = normalize_edge_id_token(entity_slug_from_ref(to_entity))
+    return f"{relation_token}-{from_slug}-{to_slug}"
+
+
+def build_works_at_relation_record(payload: WorksAtRelationUpsertInput) -> EdgeRecord:
+    edge_id = payload.edge_id or derive_relation_edge_id(
+        relation="works_at",
+        from_entity=payload.person_ref,
+        to_entity=payload.org_ref,
+    )
+    return EdgeRecord.model_validate(
+        {
+            "id": edge_id,
+            "relation": "works_at",
+            "directed": True,
+            "from": payload.person_ref,
+            "to": payload.org_ref,
+            "first_noted_at": payload.first_noted_at,
+            "last_verified_at": payload.last_verified_at,
+            "valid_from": payload.valid_from,
+            "valid_to": payload.valid_to,
+            "sources": payload.sources,
+            "notes": payload.notes,
+        }
+    )
+
+
+def build_knows_relation_record(payload: KnowsRelationUpsertInput) -> EdgeRecord:
+    from_entity, to_entity = sorted([payload.person_a_ref, payload.person_b_ref])
+    edge_id = payload.edge_id or derive_relation_edge_id(
+        relation="knows",
+        from_entity=from_entity,
+        to_entity=to_entity,
+    )
+    return EdgeRecord.model_validate(
+        {
+            "id": edge_id,
+            "relation": "knows",
+            "directed": False,
+            "from": from_entity,
+            "to": to_entity,
+            "first_noted_at": payload.first_noted_at,
+            "last_verified_at": payload.last_verified_at,
+            "valid_from": payload.valid_from,
+            "valid_to": payload.valid_to,
+            "sources": payload.sources,
+            "notes": payload.notes,
+            "strength": payload.strength,
+        }
+    )
+
+
+def build_cites_relation_record(payload: CitesRelationUpsertInput) -> EdgeRecord:
+    edge_id = payload.edge_id or derive_relation_edge_id(
+        relation="cites",
+        from_entity=payload.source_entity_ref,
+        to_entity=payload.target_source_ref,
+    )
+    return EdgeRecord.model_validate(
+        {
+            "id": edge_id,
+            "relation": "cites",
+            "directed": True,
+            "from": payload.source_entity_ref,
+            "to": payload.target_source_ref,
+            "first_noted_at": payload.first_noted_at,
+            "last_verified_at": payload.last_verified_at,
+            "valid_from": payload.valid_from,
+            "valid_to": payload.valid_to,
+            "sources": payload.sources,
+            "notes": payload.notes,
+        }
+    )
+
+
+def merge_relation_patch(
+    *,
+    relation: str,
+    record: EdgeRecord,
+    patch: dict[str, Any],
+) -> EdgeRecord:
+    if not isinstance(patch, dict):
+        raise ValueError("patch must be an object")
+
+    allowed = RELATION_ALLOWED_PATCH_FIELDS[relation]
+    unknown = sorted(key for key in patch if key not in allowed)
+    if unknown:
+        raise ValueError(
+            "unsupported patch fields: " + ", ".join(unknown)
+        )
+
+    merged = record.model_dump(by_alias=True)
+    endpoint_aliases = RELATION_ENDPOINT_PATCH_KEYS[relation]
+    for key, value in patch.items():
+        target_key = endpoint_aliases.get(key, key)
+        merged[target_key] = value
+
+    merged["id"] = record.id
+    merged["relation"] = relation
+    merged["directed"] = relation != "knows"
+    if relation == "knows":
+        from_entity, to_entity = sorted([str(merged["from"]), str(merged["to"])])
+        merged["from"] = from_entity
+        merged["to"] = to_entity
+
+    return EdgeRecord.model_validate(merged)
+
+
+def update_relation_edge_file(
+    *,
+    project_root: Path,
+    data_root: Path,
+    relation: Literal["works_at", "knows", "cites"],
+    edge_id: str,
+    patch: dict[str, Any],
+) -> tuple[Path, dict[str, Any]]:
+    edge_path = edge_path_for_id(data_root=data_root, edge_id=edge_id)
+    if not edge_path.exists():
+        raise FileNotFoundError(f"edge not found: {relation_edge_path_rel(project_root=project_root, data_root=data_root, edge_id=edge_id)}")
+
+    payload = json.loads(edge_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("edge file must contain a JSON object")
+    record = EdgeRecord.model_validate(payload)
+    if record.relation.value != relation:
+        raise ValueError(
+            f"edge {edge_id} relation is {record.relation.value}, expected {relation}"
+        )
+
+    updated_record = merge_relation_patch(
+        relation=relation,
+        record=record,
+        patch=patch,
+    )
+    return upsert_edge_file(
+        project_root=project_root,
+        data_root=data_root,
+        edge_payload=updated_record.model_dump(by_alias=True),
+    )
+
+
 def upsert_entity_file(
     *,
     project_root: Path,
@@ -1126,7 +1388,7 @@ def upsert_edge_file(
     edge_payload: dict[str, Any],
 ) -> tuple[Path, dict[str, Any]]:
     record = EdgeRecord.model_validate(edge_payload)
-    edge_path = data_root / "edge" / shard_for_slug(record.id) / f"edge@{record.id}.json"
+    edge_path = edge_path_for_id(data_root=data_root, edge_id=record.id)
     edge_path.parent.mkdir(parents=True, exist_ok=True)
     edge_path.write_text(
         json.dumps(record.model_dump(by_alias=True), sort_keys=True, indent=2) + "\n",
@@ -1218,6 +1480,44 @@ def create_mcp_server(
             return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
 
         return result
+
+    @server.tool
+    def upsert_person(
+        slug: str,
+        frontmatter: dict[str, Any] | None = None,
+        body: str = "",
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        return upsert_entity(
+            kind="person",
+            slug=slug,
+            frontmatter=frontmatter,
+            body=body,
+            commit_message=commit_message,
+            push=push,
+            auth_token=auth_token,
+        )
+
+    @server.tool
+    def upsert_org(
+        slug: str,
+        frontmatter: dict[str, Any] | None = None,
+        body: str = "",
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        return upsert_entity(
+            kind="org",
+            slug=slug,
+            frontmatter=frontmatter,
+            body=body,
+            commit_message=commit_message,
+            push=push,
+            auth_token=auth_token,
+        )
 
     @server.tool
     def upsert_source(
@@ -1370,6 +1670,380 @@ def create_mcp_server(
                 "ok": False,
                 "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
             }
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
+    def upsert_works_at_relation(
+        person_ref: str,
+        org_ref: str,
+        first_noted_at: str,
+        last_verified_at: str,
+        sources: list[str],
+        edge_id: str | None = None,
+        valid_from: str | None = None,
+        valid_to: str | None = None,
+        notes: str | None = None,
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = WorksAtRelationUpsertInput(
+                edge_id=edge_id,
+                person_ref=person_ref,
+                org_ref=org_ref,
+                first_noted_at=first_noted_at,
+                last_verified_at=last_verified_at,
+                valid_from=valid_from,
+                valid_to=valid_to,
+                sources=sources,
+                notes=notes,
+            )
+            record = build_works_at_relation_record(payload)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        edge_path_rel = relation_edge_path_rel(
+            project_root=project_root,
+            data_root=data_root,
+            edge_id=record.id,
+        )
+        message = commit_message or default_commit_message("upsert-works-at-relation", edge_path_rel)
+
+        def apply() -> dict[str, Any]:
+            edge_path, apply_meta = upsert_edge_file(
+                project_root=project_root,
+                data_root=data_root,
+                edge_payload=record.model_dump(by_alias=True),
+            )
+            apply_meta["edge_path"] = relpath(edge_path, project_root)
+            return apply_meta
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+                push=push,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
+    def upsert_knows_relation(
+        person_a_ref: str,
+        person_b_ref: str,
+        strength: int,
+        first_noted_at: str,
+        last_verified_at: str,
+        sources: list[str],
+        edge_id: str | None = None,
+        valid_from: str | None = None,
+        valid_to: str | None = None,
+        notes: str | None = None,
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = KnowsRelationUpsertInput(
+                edge_id=edge_id,
+                person_a_ref=person_a_ref,
+                person_b_ref=person_b_ref,
+                strength=strength,
+                first_noted_at=first_noted_at,
+                last_verified_at=last_verified_at,
+                valid_from=valid_from,
+                valid_to=valid_to,
+                sources=sources,
+                notes=notes,
+            )
+            record = build_knows_relation_record(payload)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        edge_path_rel = relation_edge_path_rel(
+            project_root=project_root,
+            data_root=data_root,
+            edge_id=record.id,
+        )
+        message = commit_message or default_commit_message("upsert-knows-relation", edge_path_rel)
+
+        def apply() -> dict[str, Any]:
+            edge_path, apply_meta = upsert_edge_file(
+                project_root=project_root,
+                data_root=data_root,
+                edge_payload=record.model_dump(by_alias=True),
+            )
+            apply_meta["edge_path"] = relpath(edge_path, project_root)
+            return apply_meta
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+                push=push,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
+    def upsert_cites_relation(
+        source_entity_ref: str,
+        target_source_ref: str,
+        first_noted_at: str,
+        last_verified_at: str,
+        sources: list[str],
+        edge_id: str | None = None,
+        valid_from: str | None = None,
+        valid_to: str | None = None,
+        notes: str | None = None,
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = CitesRelationUpsertInput(
+                edge_id=edge_id,
+                source_entity_ref=source_entity_ref,
+                target_source_ref=target_source_ref,
+                first_noted_at=first_noted_at,
+                last_verified_at=last_verified_at,
+                valid_from=valid_from,
+                valid_to=valid_to,
+                sources=sources,
+                notes=notes,
+            )
+            record = build_cites_relation_record(payload)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        edge_path_rel = relation_edge_path_rel(
+            project_root=project_root,
+            data_root=data_root,
+            edge_id=record.id,
+        )
+        message = commit_message or default_commit_message("upsert-cites-relation", edge_path_rel)
+
+        def apply() -> dict[str, Any]:
+            edge_path, apply_meta = upsert_edge_file(
+                project_root=project_root,
+                data_root=data_root,
+                edge_payload=record.model_dump(by_alias=True),
+            )
+            apply_meta["edge_path"] = relpath(edge_path, project_root)
+            return apply_meta
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+                push=push,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
+    def update_works_at_relation(
+        edge_id: str,
+        patch: dict[str, Any],
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = RelationUpdateInput(edge_id=edge_id, patch=patch, commit_message=commit_message)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except ValidationError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        edge_path_rel = relation_edge_path_rel(
+            project_root=project_root,
+            data_root=data_root,
+            edge_id=payload.edge_id,
+        )
+        message = payload.commit_message or default_commit_message("update-works-at-relation", edge_path_rel)
+
+        def apply() -> dict[str, Any]:
+            edge_path, apply_meta = update_relation_edge_file(
+                project_root=project_root,
+                data_root=data_root,
+                relation="works_at",
+                edge_id=payload.edge_id,
+                patch=payload.patch,
+            )
+            apply_meta["edge_path"] = relpath(edge_path, project_root)
+            return apply_meta
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+                push=push,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except FileNotFoundError as exc:
+            return {"ok": False, "error": {"code": "not_found", "retryable": False, "message": str(exc)}}
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
+    def update_knows_relation(
+        edge_id: str,
+        patch: dict[str, Any],
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = RelationUpdateInput(edge_id=edge_id, patch=patch, commit_message=commit_message)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except ValidationError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        edge_path_rel = relation_edge_path_rel(
+            project_root=project_root,
+            data_root=data_root,
+            edge_id=payload.edge_id,
+        )
+        message = payload.commit_message or default_commit_message("update-knows-relation", edge_path_rel)
+
+        def apply() -> dict[str, Any]:
+            edge_path, apply_meta = update_relation_edge_file(
+                project_root=project_root,
+                data_root=data_root,
+                relation="knows",
+                edge_id=payload.edge_id,
+                patch=payload.patch,
+            )
+            apply_meta["edge_path"] = relpath(edge_path, project_root)
+            return apply_meta
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+                push=push,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except FileNotFoundError as exc:
+            return {"ok": False, "error": {"code": "not_found", "retryable": False, "message": str(exc)}}
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
+    def update_cites_relation(
+        edge_id: str,
+        patch: dict[str, Any],
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = RelationUpdateInput(edge_id=edge_id, patch=patch, commit_message=commit_message)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except ValidationError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        edge_path_rel = relation_edge_path_rel(
+            project_root=project_root,
+            data_root=data_root,
+            edge_id=payload.edge_id,
+        )
+        message = payload.commit_message or default_commit_message("update-cites-relation", edge_path_rel)
+
+        def apply() -> dict[str, Any]:
+            edge_path, apply_meta = update_relation_edge_file(
+                project_root=project_root,
+                data_root=data_root,
+                relation="cites",
+                edge_id=payload.edge_id,
+                patch=payload.patch,
+            )
+            apply_meta["edge_path"] = relpath(edge_path, project_root)
+            return apply_meta
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+                push=push,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except FileNotFoundError as exc:
+            return {"ok": False, "error": {"code": "not_found", "retryable": False, "message": str(exc)}}
         except (ValidationError, ValueError) as exc:
             return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
         except Exception as exc:
