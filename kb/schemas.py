@@ -44,26 +44,13 @@ class SourceType(str, Enum):
 
 class EdgeRelation(str, Enum):
     works_at = "works_at"
-    founds = "founds"
-    co_founds = "co_founds"
-    invests_in = "invests_in"
-    advises = "advises"
-    introduces = "introduces"
     knows = "knows"
-    partners_with = "partners_with"
-    acquires = "acquires"
     cites = "cites"
 
 
 EDGE_RELATIONS_V1 = tuple(item.value for item in EdgeRelation)
 LEGACY_EDGE_RELATION_ALIASES = {
     "worked_at": "works_at",
-    "founded": "founds",
-    "co_founded": "co_founds",
-    "invested_in": "invests_in",
-    "introduced": "introduces",
-    "partnered_with": "partners_with",
-    "acquired": "acquires",
 }
 
 
@@ -438,6 +425,7 @@ class EdgeRecord(KBBaseModel):
     valid_to: str | None = None
     sources: list[str]
     notes: str | None = None
+    strength: int | None = Field(default=None, ge=-10, le=10)
 
     @field_validator("id")
     @classmethod
@@ -484,6 +472,30 @@ class EdgeRecord(KBBaseModel):
     def validate_edge_consistency(self) -> "EdgeRecord":
         if self.from_entity == self.to_entity:
             raise ValueError("from and to must be different entities")
+
+        from_kind = self.from_entity.split("/", 1)[0]
+        to_kind = self.to_entity.split("/", 1)[0]
+        if self.relation == EdgeRelation.works_at:
+            if not self.directed:
+                raise ValueError("works_at edges must be directed")
+            if from_kind != "person" or to_kind != "org":
+                raise ValueError("works_at edges must connect person -> org")
+            if self.strength is not None:
+                raise ValueError("strength is only allowed for knows edges")
+        elif self.relation == EdgeRelation.knows:
+            if self.directed:
+                raise ValueError("knows edges must be undirected")
+            if from_kind != "person" or to_kind != "person":
+                raise ValueError("knows edges must connect person <-> person")
+            if self.strength is None:
+                raise ValueError("knows edges require strength in range [-10, 10]")
+        elif self.relation == EdgeRelation.cites:
+            if not self.directed:
+                raise ValueError("cites edges must be directed")
+            if from_kind not in {"person", "org", "source"} or to_kind != "source":
+                raise ValueError("cites edges must connect person|org|source -> source")
+            if self.strength is not None:
+                raise ValueError("strength is only allowed for knows edges")
 
         if partial_date_sort_key(self.last_verified_at) < partial_date_sort_key(self.first_noted_at):
             raise ValueError("last_verified_at must be on/after first_noted_at")

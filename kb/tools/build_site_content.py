@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import html
 import json
 import os
@@ -18,7 +19,7 @@ from urllib.parse import urlparse
 import yaml
 from pydantic import ValidationError
 
-from kb.schemas import ChangelogRow, EdgeRecord, EmploymentHistoryRow, LookingForRow
+from kb.schemas import ChangelogRow, EdgeRecord, EmploymentHistoryRow, LookingForRow, partial_date_sort_key
 
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
 IMAGE_ONLY_RE = re.compile(
@@ -768,8 +769,12 @@ def render_changelog_section(page: Page, source_to_output: dict[Path, Path]) -> 
     return lines
 
 
-def relation_display(value: str) -> str:
-    return value.replace("_", " ")
+def relation_display(record: EdgeRecord, *, as_of: str | None = None) -> str:
+    if record.relation.value == "works_at" and record.valid_to:
+        today = as_of or dt.date.today().isoformat()
+        if partial_date_sort_key(record.valid_to) < partial_date_sort_key(today):
+            return "worked at"
+    return record.relation.value.replace("_", " ")
 
 
 def load_entity_edges(page: Page) -> list[EdgeRecord]:
@@ -804,12 +809,14 @@ def render_relations_section(
     for record in records:
         if record.from_entity == page.entity_rel_path:
             other = record.to_entity
-            arrow = "->"
         elif record.to_entity == page.entity_rel_path:
             other = record.from_entity
-            arrow = "<-"
         else:
             continue
+        if record.directed:
+            arrow = "->" if record.from_entity == page.entity_rel_path else "<-"
+        else:
+            arrow = "<->"
 
         other_target = relation_targets.get(other)
         if other_target is None:
@@ -826,7 +833,7 @@ def render_relations_section(
                 f"Missing edge page for edge `{record.id}` while rendering `{page.entity_rel_path}`"
             )
         edge_rel = os.path.relpath(edge_output_path, start=page.output_path.parent).replace(os.sep, "/")
-        edge_label = f"[{relation_display(record.relation.value)}]({edge_rel})"
+        edge_label = f"[{relation_display(record)}]({edge_rel})"
 
         lines.append(
             f"- {edge_label} {arrow} {other_label} ({record.last_verified_at})"
