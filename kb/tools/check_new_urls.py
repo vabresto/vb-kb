@@ -16,7 +16,7 @@ import urllib.request
 from dataclasses import dataclass
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
-URL_RE = re.compile(r"https?://[^\s<>()\"'`]+")
+URL_RE = re.compile(r"https?://[^/\s<>(){}\"'`][^\s<>(){}\"'`]*")
 USER_AGENT = "vb-kb-url-check/1.0"
 SKIPPED_HOSTS = {
     "localhost",
@@ -78,14 +78,20 @@ def clean_url(raw_url: str) -> str:
 
 
 def should_check_url(url: str) -> bool:
+    if "{" in url or "}" in url:
+        return False
+
     try:
         hostname = urllib.parse.urlsplit(url).hostname
     except ValueError:
-        return True
+        return False
 
     if not hostname:
-        return True
+        return False
     hostname = hostname.lower()
+
+    if "{" in hostname or "}" in hostname or "$" in hostname:
+        return False
 
     if hostname in SKIPPED_HOSTS:
         return False

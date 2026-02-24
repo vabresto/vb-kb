@@ -60,6 +60,20 @@ For HTTP transport:
 uv run kb mcp-server --transport streamable-http --host 127.0.0.1 --port 8001 --path /mcp
 ```
 
+HTTP transports now enable a local in-memory OAuth provider by default (with state persisted at `.build/mcp-oauth-state.json`) so MCP clients that require OAuth discovery can connect cleanly.
+
+Disable built-in OAuth for HTTP transport:
+
+```bash
+KB_MCP_OAUTH_MODE=off \
+uv run kb mcp-server --transport streamable-http --host 127.0.0.1 --port 8001 --path /mcp
+```
+
+Optional OAuth overrides:
+
+- `KB_MCP_OAUTH_BASE_URL` (for externally-reachable issuer/base URL)
+- `KB_MCP_OAUTH_STATE_FILE` (for custom token-state file location)
+
 Use a shared local auth token when needed:
 
 ```bash
@@ -70,7 +84,8 @@ uv run kb mcp-server --transport streamable-http --host 127.0.0.1 --port 8001 --
 ## MCP auth model
 
 - ChatGPT MCP supports OAuth2 Authorization Code + PKCE (S256) and does not support fixed API keys.
-- Production ChatGPT integrations should use PKCE OAuth in front of the Python MCP endpoint.
+- The local HTTP MCP server includes a development OAuth provider (enabled by default for HTTP transports).
+- Production ChatGPT integrations should still use PKCE OAuth in front of the Python MCP endpoint.
 - The in-repo write server supports an optional shared token gate (`KB_MCP_AUTH_TOKEN`) for trusted/local flows.
 
 ## Transformation layer

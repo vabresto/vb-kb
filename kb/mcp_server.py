@@ -7,12 +7,26 @@ import os
 import re
 import secrets
 import subprocess
+import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Literal
 
 from fastmcp import FastMCP
+from fastmcp.server.auth.providers.in_memory import (
+    AccessToken,
+    AuthorizationCode,
+    DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS,
+    InMemoryOAuthProvider,
+    OAuthClientInformationFull,
+    OAuthToken,
+    RefreshToken,
+    TokenError,
+)
+from mcp.server.auth.settings import ClientRegistrationOptions
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from starlette.requests import Request
+from starlette.responses import RedirectResponse, Response
 import yaml
 
 from kb.edges import sync_edge_backlinks
@@ -22,6 +36,12 @@ from kb.validate import infer_data_root, run_validation
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LOCK_FILENAME = ".kb-write.lock"
 AUTH_TOKEN_ENV_VAR = "KB_MCP_AUTH_TOKEN"
+OAUTH_MODE_ENV_VAR = "KB_MCP_OAUTH_MODE"
+OAUTH_BASE_URL_ENV_VAR = "KB_MCP_OAUTH_BASE_URL"
+OAUTH_STATE_FILE_ENV_VAR = "KB_MCP_OAUTH_STATE_FILE"
+DEFAULT_HTTP_OAUTH_MODE = "in-memory"
+OAUTH_MODE_DISABLED = {"off", "none", "disabled", "false", "0"}
+OAUTH_MODE_IN_MEMORY = {"in-memory", "memory"}
 TEXT_FILE_SUFFIXES = {".md", ".json", ".jsonl", ".txt", ".yaml", ".yml", ".csv"}
 SEARCH_FILE_TYPE_GLOBS: dict[str, str | None] = {
     "all": None,
@@ -89,6 +109,287 @@ class SearchDataInput(BaseModel):
     case_sensitive: bool = False
     fixed_strings: bool = False
     max_results: int = Field(default=100, ge=1, le=2000)
+
+
+def normalize_http_path(path: str | None) -> str:
+    raw = (path or "/mcp").strip()
+    if not raw:
+        raw = "/mcp"
+    if not raw.startswith("/"):
+        raw = f"/{raw}"
+    if len(raw) > 1:
+        raw = raw.rstrip("/")
+        if not raw:
+            raw = "/"
+    return raw
+
+
+def normalize_public_host(host: str) -> str:
+    cleaned = host.strip()
+    if cleaned in {"", "0.0.0.0", "::", "[::]"}:
+        return "127.0.0.1"
+    return cleaned
+
+
+def dump_model_map(mapping: dict[str, Any]) -> dict[str, Any]:
+    dumped: dict[str, Any] = {}
+    for key, value in mapping.items():
+        if not isinstance(key, str):
+            continue
+        if hasattr(value, "model_dump"):
+            dumped[key] = value.model_dump(mode="json")
+    return dumped
+
+
+def load_model_map(payload: Any, model_type: Any) -> dict[str, Any]:
+    loaded: dict[str, Any] = {}
+    if not isinstance(payload, dict):
+        return loaded
+    for raw_key, raw_value in payload.items():
+        if not isinstance(raw_key, str):
+            continue
+        try:
+            loaded[raw_key] = model_type.model_validate(raw_value)
+        except Exception:
+            continue
+    return loaded
+
+
+class PersistentInMemoryOAuthProvider(InMemoryOAuthProvider):
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        state_path: Path,
+        required_scopes: list[str] | None = None,
+    ) -> None:
+        super().__init__(
+            base_url=base_url,
+            client_registration_options=ClientRegistrationOptions(enabled=True),
+            required_scopes=required_scopes,
+        )
+        self.state_path = state_path.resolve()
+        self._load_state()
+
+    def _load_state(self) -> None:
+        if not self.state_path.exists():
+            return
+
+        try:
+            payload = json.loads(self.state_path.read_text(encoding="utf-8"))
+        except Exception:
+            return
+
+        self.clients = load_model_map(payload.get("clients"), OAuthClientInformationFull)
+        self.auth_codes = load_model_map(payload.get("auth_codes"), AuthorizationCode)
+        self.access_tokens = load_model_map(payload.get("access_tokens"), AccessToken)
+        self.refresh_tokens = load_model_map(payload.get("refresh_tokens"), RefreshToken)
+
+        raw_access_to_refresh = payload.get("access_to_refresh_map")
+        if isinstance(raw_access_to_refresh, dict):
+            self._access_to_refresh_map = {
+                str(access): str(refresh)
+                for access, refresh in raw_access_to_refresh.items()
+                if str(access) in self.access_tokens and str(refresh) in self.refresh_tokens
+            }
+        else:
+            self._access_to_refresh_map = {}
+
+        raw_refresh_to_access = payload.get("refresh_to_access_map")
+        if isinstance(raw_refresh_to_access, dict):
+            self._refresh_to_access_map = {
+                str(refresh): str(access)
+                for refresh, access in raw_refresh_to_access.items()
+                if str(refresh) in self.refresh_tokens and str(access) in self.access_tokens
+            }
+        else:
+            self._refresh_to_access_map = {}
+
+    def _save_state(self) -> None:
+        payload = {
+            "clients": dump_model_map(self.clients),
+            "auth_codes": dump_model_map(self.auth_codes),
+            "access_tokens": dump_model_map(self.access_tokens),
+            "refresh_tokens": dump_model_map(self.refresh_tokens),
+            "access_to_refresh_map": dict(self._access_to_refresh_map),
+            "refresh_to_access_map": dict(self._refresh_to_access_map),
+        }
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            temp_path = self.state_path.with_suffix(f"{self.state_path.suffix}.tmp")
+            temp_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+            temp_path.replace(self.state_path)
+        except Exception:
+            return
+
+    async def register_client(self, client_info: OAuthClientInformationFull) -> None:
+        await super().register_client(client_info)
+        self._save_state()
+
+    async def authorize(self, client: OAuthClientInformationFull, params: Any) -> str:
+        redirect_uri = await super().authorize(client, params)
+        self._save_state()
+        return redirect_uri
+
+    async def exchange_authorization_code(
+        self,
+        client: OAuthClientInformationFull,
+        authorization_code: AuthorizationCode,
+    ) -> OAuthToken:
+        token = await super().exchange_authorization_code(client, authorization_code)
+        self._save_state()
+        return token
+
+    async def exchange_refresh_token(
+        self,
+        client: OAuthClientInformationFull,
+        refresh_token: RefreshToken,
+        scopes: list[str],
+    ) -> OAuthToken:
+        token_obj = self.refresh_tokens.get(refresh_token.token)
+        if token_obj is None:
+            raise TokenError("invalid_grant", "Refresh token not found.")
+        if token_obj.client_id != client.client_id:
+            raise TokenError("invalid_grant", "Refresh token does not belong to this client.")
+        if token_obj.expires_at is not None and token_obj.expires_at < time.time():
+            self._revoke_internal(refresh_token_str=token_obj.token)
+            raise TokenError("invalid_grant", "Refresh token expired.")
+
+        effective_scopes = scopes or list(token_obj.scopes)
+        original_scopes = set(token_obj.scopes)
+        requested_scopes = set(effective_scopes)
+        if not requested_scopes.issubset(original_scopes):
+            raise TokenError(
+                "invalid_scope",
+                "Requested scopes exceed those authorized by the refresh token.",
+            )
+
+        if client.client_id is None:
+            raise TokenError("invalid_client", "Client ID is required")
+
+        new_access_token = f"test_access_token_{secrets.token_hex(32)}"
+        access_token_expires_at = int(time.time() + DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS)
+
+        self.access_tokens[new_access_token] = AccessToken(
+            token=new_access_token,
+            client_id=client.client_id,
+            scopes=effective_scopes,
+            expires_at=access_token_expires_at,
+        )
+        self.refresh_tokens[token_obj.token] = RefreshToken(
+            token=token_obj.token,
+            client_id=client.client_id,
+            scopes=effective_scopes,
+            expires_at=token_obj.expires_at,
+        )
+        self._refresh_to_access_map[token_obj.token] = new_access_token
+        self._access_to_refresh_map[new_access_token] = token_obj.token
+        self._save_state()
+
+        return OAuthToken(
+            access_token=new_access_token,
+            token_type="Bearer",
+            expires_in=DEFAULT_ACCESS_TOKEN_EXPIRY_SECONDS,
+            refresh_token=token_obj.token,
+            scope=" ".join(effective_scopes),
+        )
+
+    def _revoke_internal(
+        self,
+        access_token_str: str | None = None,
+        refresh_token_str: str | None = None,
+    ) -> None:
+        if refresh_token_str:
+            mapped_access_tokens = [
+                token for token, mapped_refresh in self._access_to_refresh_map.items() if mapped_refresh == refresh_token_str
+            ]
+            for access_token in mapped_access_tokens:
+                self.access_tokens.pop(access_token, None)
+                self._access_to_refresh_map.pop(access_token, None)
+            self.refresh_tokens.pop(refresh_token_str, None)
+            self._refresh_to_access_map.pop(refresh_token_str, None)
+            self._save_state()
+            return
+
+        super()._revoke_internal(
+            access_token_str=access_token_str,
+            refresh_token_str=refresh_token_str,
+        )
+        self._save_state()
+
+    async def verify_token(self, token: str) -> AccessToken | None:
+        token_obj = await super().verify_token(token)
+        if token_obj is not None:
+            return token_obj
+
+        self._load_state()
+        return await super().verify_token(token)
+
+
+def create_http_oauth_provider(
+    *,
+    project_root: Path,
+    transport: Literal["stdio", "http", "sse", "streamable-http"],
+    host: str,
+    port: int,
+) -> InMemoryOAuthProvider | None:
+    if transport not in {"http", "sse", "streamable-http"}:
+        return None
+
+    mode = (os.getenv(OAUTH_MODE_ENV_VAR) or DEFAULT_HTTP_OAUTH_MODE).strip().lower()
+    if mode in OAUTH_MODE_DISABLED:
+        return None
+    if mode not in OAUTH_MODE_IN_MEMORY:
+        raise ValueError(
+            f"unsupported OAuth mode '{mode}' in {OAUTH_MODE_ENV_VAR}; expected one of: "
+            "in-memory, off"
+        )
+
+    base_url = (
+        os.getenv(OAUTH_BASE_URL_ENV_VAR) or f"http://{normalize_public_host(host)}:{port}"
+    ).strip()
+    state_path_raw = (os.getenv(OAUTH_STATE_FILE_ENV_VAR) or "").strip()
+    if state_path_raw:
+        state_path = Path(state_path_raw).expanduser()
+        if not state_path.is_absolute():
+            state_path = (project_root / state_path).resolve()
+    else:
+        state_path = project_root / ".build" / "mcp-oauth-state.json"
+
+    return PersistentInMemoryOAuthProvider(
+        base_url=base_url,
+        state_path=state_path,
+    )
+
+
+def register_oauth_discovery_alias_routes(server: FastMCP, *, mcp_path: str | None) -> None:
+    expected_resource = normalize_http_path(mcp_path).strip("/")
+    metadata_path = "/.well-known/oauth-authorization-server"
+
+    def matches_expected_resource(path_value: str) -> bool:
+        return path_value.strip("/") == expected_resource
+
+    @server.custom_route(
+        "/.well-known/oauth-authorization-server/{resource_path:path}",
+        methods=["GET", "HEAD"],
+        include_in_schema=False,
+    )
+    async def oauth_authorization_server_suffix_alias(request: Request) -> Response:
+        resource_path = str(request.path_params.get("resource_path") or "")
+        if not matches_expected_resource(resource_path):
+            return Response(status_code=404)
+        return RedirectResponse(url=metadata_path, status_code=307)
+
+    @server.custom_route(
+        "/{resource_path:path}/.well-known/oauth-authorization-server",
+        methods=["GET", "HEAD"],
+        include_in_schema=False,
+    )
+    async def oauth_authorization_server_prefix_alias(request: Request) -> Response:
+        resource_path = str(request.path_params.get("resource_path") or "")
+        if not matches_expected_resource(resource_path):
+            return Response(status_code=404)
+        return RedirectResponse(url=metadata_path, status_code=307)
 
 
 def relpath(path: Path, project_root: Path) -> str:
@@ -751,14 +1052,23 @@ def upsert_edge_file(
     return edge_path, {"edge_id": record.id, "edge_path": relpath(edge_path, project_root), "sync": sync_result}
 
 
-def create_mcp_server(*, project_root: Path, data_root: Path) -> FastMCP:
+def create_mcp_server(
+    *,
+    project_root: Path,
+    data_root: Path,
+    auth_provider: InMemoryOAuthProvider | None = None,
+    oauth_discovery_mcp_path: str | None = None,
+) -> FastMCP:
     server = FastMCP(
         name="VB KB Write Server",
         instructions=(
             "Mutating MCP server for KB v2 canonical files. "
             "All writes are lock-protected, validated, and committed to git."
         ),
+        auth=auth_provider,
     )
+    if auth_provider is not None:
+        register_oauth_discovery_alias_routes(server, mcp_path=oauth_discovery_mcp_path)
 
     @server.tool
     def upsert_entity(
@@ -1124,7 +1434,18 @@ def run_server(
     port: int = 8001,
     path: str | None = None,
 ) -> None:
-    server = create_mcp_server(project_root=project_root, data_root=data_root)
+    auth_provider = create_http_oauth_provider(
+        project_root=project_root,
+        transport=transport,
+        host=host,
+        port=port,
+    )
+    server = create_mcp_server(
+        project_root=project_root,
+        data_root=data_root,
+        auth_provider=auth_provider,
+        oauth_discovery_mcp_path=path,
+    )
     kwargs: dict[str, Any] = {}
     if transport in {"http", "sse", "streamable-http"}:
         kwargs["host"] = host

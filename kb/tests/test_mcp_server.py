@@ -3,9 +3,11 @@ from __future__ import annotations
 import asyncio
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
+from starlette.testclient import TestClient
 
 from kb import mcp_server
 
@@ -464,3 +466,130 @@ def test_read_data_file_rejects_path_outside_data_root(tmp_path: Path) -> None:
     )
     assert result["ok"] is False
     assert result["error"]["code"] == "invalid_input"
+
+
+def test_streamable_http_oauth_discovery_alias_routes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    monkeypatch.setenv(mcp_server.OAUTH_MODE_ENV_VAR, "in-memory")
+
+    auth_provider = mcp_server.create_http_oauth_provider(
+        project_root=project_root,
+        transport="streamable-http",
+        host="127.0.0.1",
+        port=8001,
+    )
+    assert auth_provider is not None
+
+    server = mcp_server.create_mcp_server(
+        project_root=project_root,
+        data_root=data_root,
+        auth_provider=auth_provider,
+        oauth_discovery_mcp_path="/mcp",
+    )
+    app = server.http_app(path="/mcp", transport="streamable-http")
+
+    with TestClient(app) as client:
+        metadata = client.get("/.well-known/oauth-authorization-server")
+        assert metadata.status_code == 200
+        metadata_payload = metadata.json()
+        assert metadata_payload["issuer"].rstrip("/") == "http://127.0.0.1:8001"
+        assert metadata_payload["token_endpoint"] == "http://127.0.0.1:8001/token"
+        assert metadata_payload["registration_endpoint"] == "http://127.0.0.1:8001/register"
+
+        register = client.post("/register", json={})
+        assert register.status_code == 400
+
+        suffix_alias = client.get(
+            "/.well-known/oauth-authorization-server/mcp",
+            follow_redirects=False,
+        )
+        assert suffix_alias.status_code == 307
+        assert suffix_alias.headers["location"] == "/.well-known/oauth-authorization-server"
+
+        prefix_alias = client.get(
+            "/mcp/.well-known/oauth-authorization-server",
+            follow_redirects=False,
+        )
+        assert prefix_alias.status_code == 307
+        assert prefix_alias.headers["location"] == "/.well-known/oauth-authorization-server"
+
+
+def test_persistent_oauth_refresh_token_can_be_reused(tmp_path: Path) -> None:
+    state_path = tmp_path / "oauth-state.json"
+    provider = mcp_server.PersistentInMemoryOAuthProvider(
+        base_url="http://127.0.0.1:8001",
+        state_path=state_path,
+    )
+    client = mcp_server.OAuthClientInformationFull(
+        client_id="test-client",
+        redirect_uris=["http://localhost/callback"],
+        scope="mcp",
+    )
+    asyncio.run(provider.register_client(client))
+
+    refresh_token = mcp_server.RefreshToken(
+        token="test-refresh-token",
+        client_id="test-client",
+        scopes=["mcp"],
+        expires_at=int(time.time()) + 3600,
+    )
+    provider.refresh_tokens[refresh_token.token] = refresh_token
+    provider._refresh_to_access_map[refresh_token.token] = "seed-access-token"
+    provider.access_tokens["seed-access-token"] = mcp_server.AccessToken(
+        token="seed-access-token",
+        client_id="test-client",
+        scopes=["mcp"],
+        expires_at=int(time.time()) + 3600,
+    )
+    provider._access_to_refresh_map["seed-access-token"] = refresh_token.token
+
+    first = asyncio.run(provider.exchange_refresh_token(client, refresh_token, ["mcp"]))
+    second = asyncio.run(provider.exchange_refresh_token(client, refresh_token, ["mcp"]))
+
+    assert first.refresh_token == refresh_token.token
+    assert second.refresh_token == refresh_token.token
+    assert first.access_token != second.access_token
+    assert asyncio.run(provider.load_access_token(first.access_token)) is not None
+    assert asyncio.run(provider.load_access_token(second.access_token)) is not None
+    assert asyncio.run(provider.load_refresh_token(client, refresh_token.token)) is not None
+
+    reloaded = mcp_server.PersistentInMemoryOAuthProvider(
+        base_url="http://127.0.0.1:8001",
+        state_path=state_path,
+    )
+    persisted_client = asyncio.run(reloaded.get_client("test-client"))
+    assert persisted_client is not None
+    assert asyncio.run(reloaded.load_access_token(first.access_token)) is not None
+    assert asyncio.run(reloaded.load_access_token(second.access_token)) is not None
+    assert asyncio.run(reloaded.load_refresh_token(persisted_client, refresh_token.token)) is not None
+
+
+def test_persistent_oauth_verify_token_reloads_state_on_miss(tmp_path: Path) -> None:
+    state_path = tmp_path / "oauth-state.json"
+    writer = mcp_server.PersistentInMemoryOAuthProvider(
+        base_url="http://127.0.0.1:8001",
+        state_path=state_path,
+    )
+    reader = mcp_server.PersistentInMemoryOAuthProvider(
+        base_url="http://127.0.0.1:8001",
+        state_path=state_path,
+    )
+    client = mcp_server.OAuthClientInformationFull(
+        client_id="reload-client",
+        redirect_uris=["http://localhost/callback"],
+        scope="mcp",
+    )
+    asyncio.run(writer.register_client(client))
+
+    token_value = "test-access-token-reload"
+    writer.access_tokens[token_value] = mcp_server.AccessToken(
+        token=token_value,
+        client_id="reload-client",
+        scopes=["mcp"],
+        expires_at=int(time.time()) + 3600,
+    )
+    writer._save_state()
+
+    verified = asyncio.run(reader.verify_token(token_value))
+    assert verified is not None
+    assert verified.token == token_value
