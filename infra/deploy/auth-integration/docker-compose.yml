@@ -20,7 +20,7 @@ services:
     image: vb-kb:latest
     build:
       context: ../../..
-      dockerfile: infra/deploy/dev/Dockerfile
+      dockerfile: infra/deploy/shared/Dockerfile
     depends_on:
       - keycloak
     command:

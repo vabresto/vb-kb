@@ -116,5 +116,5 @@ Site styles are in `kb/tools/site_assets/stylesheets/kb.css`.
 
 ## Deployment notes
 
-- Simple Docker + Traefik deployment guide is in `DEPLOYMENT.md`.
+- Docker + Traefik deployment guide (dev/prod/auth-integration envs) is in `DEPLOYMENT.md`.
 - Cloudflare-specific notes are in `CLOUDFLARE_ACCESS.md`.

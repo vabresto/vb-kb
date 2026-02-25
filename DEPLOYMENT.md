@@ -1,51 +1,42 @@
-# Deployment (Docker + Traefik + Keycloak)
+# Deployment (Docker + Traefik)
 
-This repo now ships deployment environments under `infra/deploy/`.
+Deployment assets are organized by environment under `infra/deploy/`.
 
-The dev stack (`infra/deploy/dev`) hosts:
+## Environment layout
 
-- MCP write server at `https://<host>/mcp`
-- Human-friendly docs site at `https://<host>/` (password protected)
-- Keycloak at `https://<auth-host>/` for external JWT/OIDC flows
+- `infra/deploy/dev`: local/dev deployment with bundled Keycloak + MCP + docs behind Traefik.
+- `infra/deploy/prod`: production deployment with MCP + docs behind Traefik, expecting an external IdP.
+- `infra/deploy/auth-integration`: isolated no-port integration test stack for `external-jwt` + Keycloak confidential client.
 
-The examples below use:
+## Shared files
 
-- One Docker image for both services
-- Traefik for TLS + routing
-- Keycloak as external issuer (`KB_MCP_OAUTH_MODE=external-jwt`)
-- Traefik BasicAuth for docs (with optional OIDC alternatives)
+- `infra/deploy/shared/Dockerfile`
+- `infra/deploy/shared/keycloak/realm-vb-kb.json`
 
 ## Prerequisites
 
-- Docker + Docker Compose on the host.
-- Traefik already running with an external Docker network (called `traefik-public` in examples).
-- A checked-out git repo on host (for example `/srv/vb-kb`) including `.git/` and `data/`.
-  - MCP writes use git transactions and require a real repo.
+- Docker + Docker Compose on host.
+- Traefik running with an external Docker network named `traefik-public`.
+- Checked-out repo path on host containing `.git/` and `data/`.
 
-## Files in this repo
+## Dev stack (`infra/deploy/dev`)
 
-- `infra/deploy/dev/Dockerfile`
-- `infra/deploy/dev/docker-compose.traefik.yml`
-- `infra/deploy/dev/env`
-- `infra/deploy/dev/keycloak/realm-vb-kb.json`
+This stack includes:
 
-## Quick Start
+- `kb-mcp` (`/mcp`, OAuth metadata endpoints)
+- `kb-docs` (`/`, protected with BasicAuth middleware)
+- `keycloak` (OIDC issuer for external JWT validation)
 
-1. Edit `infra/deploy/dev/env` and set at least:
-- `VB_KB_HOST` (for example `kb.example.com`).
-- `VB_KC_HOST` (for example `auth-kb.example.com`).
-- Set `VB_KB_REPO_PATH` (for example `/srv/vb-kb`).
-- Set `DOCS_BASIC_AUTH_USERS` to an htpasswd hash.
+### Configure
 
-Generate a hash example:
+Edit `infra/deploy/dev/env`:
 
-```bash
-htpasswd -nB admin
-```
+- Set `VB_KB_HOST` and `VB_KC_HOST`.
+- Set `VB_KB_REPO_PATH`.
+- Set `DOCS_BASIC_AUTH_USERS` (htpasswd hash; escape `$` as `$$`).
+- Keep Keycloak realm/client values aligned with `infra/deploy/shared/keycloak/realm-vb-kb.json`.
 
-Use output as `DOCS_BASIC_AUTH_USERS` (escape `$` as `$$` in `env`).
-
-2. Start dev stack:
+### Run
 
 ```bash
 docker compose \
@@ -54,130 +45,68 @@ docker compose \
   up -d --build
 ```
 
-Optional local overrides can be stored in `infra/deploy/dev/env.local` (ignored by git).
+Optional local overrides can live in `infra/deploy/dev/env.local` (gitignored).
 
-## Route Layout
+## Auth integration suite (`infra/deploy/auth-integration`)
 
-`kb-mcp` handles:
+Run:
 
-- `/mcp`
-- `/authorize`
-- `/token`
-- `/register`
-- `/.well-known/oauth-authorization-server...`
-- `/.well-known/oauth-protected-resource...`
+```bash
+just test-auth-integration
+```
 
-`kb-docs` handles:
+This suite:
 
-- everything else on the same host (`/`)
+- spins up Keycloak + MCP on an internal Docker network only
+- does not publish host ports
+- obtains a token with Keycloak confidential `client_credentials`
+- validates MCP rejects missing/invalid bearer tokens and accepts the Keycloak token in `external-jwt` mode
 
-`keycloak` handles:
+The runner uses a unique Compose project name per invocation, so concurrent runs are safe.
 
-- all OIDC endpoints on `VB_KC_HOST`
+## Prod stack (`infra/deploy/prod`)
 
-Traefik router priorities in the compose file ensure MCP paths win over docs.
+This stack includes:
 
-## OAuth Notes
+- `kb-mcp`
+- `kb-docs`
 
-### Built-in OAuth provider (available in server)
+It does **not** run Keycloak. Configure `external-jwt` to point at your external issuer.
 
-Configured via env vars:
+### Configure
 
-- `KB_MCP_OAUTH_MODE` (`in-memory`, `external-jwt`, or `off`)
-- `KB_MCP_OAUTH_BASE_URL` (public HTTPS origin)
-- `KB_MCP_OAUTH_STATE_FILE` (persistent token/client state file)
+Edit `infra/deploy/prod/env`:
 
-With `in-memory` mode, the server validates access tokens locally against its state file, so there is no external auth-server round trip per MCP query.
+- `VB_KB_HOST`
+- `VB_KB_REPO_PATH`
+- `KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS`
+- exactly one of `KB_MCP_EXTERNAL_JWT_JWKS_URI` or `KB_MCP_EXTERNAL_JWT_PUBLIC_KEY`
+- optional `KB_MCP_EXTERNAL_JWT_ISSUER`, `KB_MCP_EXTERNAL_JWT_AUDIENCE`, and scope vars
+- `DOCS_BASIC_AUTH_USERS`
 
-Client credentials (`client_id`/`client_secret`) are not statically configured in env vars today.
-They are created via OAuth Dynamic Client Registration (`/register`) and persisted in `KB_MCP_OAUTH_STATE_FILE`.
+### Run
 
-### External token validation mode (`external-jwt`)
+```bash
+docker compose \
+  -f infra/deploy/prod/docker-compose.traefik.yml \
+  --env-file infra/deploy/prod/env \
+  up -d --build
+```
 
-Use this when tokens are issued by Keycloak/Nextcloud/another external IdP and this server should only validate bearer tokens.
+Optional local overrides can live in `infra/deploy/prod/env.local` (gitignored).
 
-Required env vars:
+## OAuth mode notes
 
-- `KB_MCP_OAUTH_MODE=external-jwt`
-- `KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS` (comma-separated issuer/auth server URLs advertised in resource metadata)
-- Exactly one of:
-  - `KB_MCP_EXTERNAL_JWT_JWKS_URI`
-  - `KB_MCP_EXTERNAL_JWT_PUBLIC_KEY`
+- Server default for HTTP transports is still in-memory OAuth unless overridden.
+- Dev/prod deploy envs are preconfigured for `KB_MCP_OAUTH_MODE=external-jwt`.
+- In `external-jwt`, MCP does not expose `/authorize`, `/token`, or `/register`; it validates bearer JWTs locally using JWKS/public key config.
 
-Optional env vars:
+## Verification
 
-- `KB_MCP_EXTERNAL_JWT_ISSUER` (string or comma-separated list)
-- `KB_MCP_EXTERNAL_JWT_AUDIENCE` (string or comma-separated list)
-- `KB_MCP_EXTERNAL_JWT_ALGORITHM` (default `RS256`)
-- `KB_MCP_EXTERNAL_REQUIRED_SCOPES` (required on every MCP request)
-- `KB_MCP_EXTERNAL_SCOPES_SUPPORTED` (advertised only)
+For deployed host:
 
-In `external-jwt` mode, this server does not expose `/authorize`, `/token`, or `/register`.
-It exposes protected-resource metadata and validates incoming bearer JWTs locally (JWKS/public key), so no IdP round trip is needed per query.
-
-### Where `client_id`/`client_secret` are configured
-
-- Not at Traefik.
-- In `in-memory` mode, MCP clients register themselves against `/register`.
-- In `external-jwt` mode, this server does not issue client credentials; client registration/auth happens at your external IdP.
-- The dev Keycloak import includes a confidential client: `vb-kb-mcp-confidential`.
-
-### Identity and scope propagation (current state)
-
-Current in-repo OAuth setup is client-centric and does not expose end-user identity claims into tool handlers.
-In `external-jwt` mode, required scopes can be enforced globally via `KB_MCP_EXTERNAL_REQUIRED_SCOPES`, but there is still no per-tool scope matrix by default.
-
-If you need user-level identity + scope enforcement in the MCP tool layer, add a custom auth integration:
-
-1. Validate JWT/introspection from your IdP (Keycloak/Nextcloud) in the MCP auth provider.
-2. Map claims (`sub`, `email`, `groups`, `scope`) into request context.
-3. Enforce tool-level scopes (for example read vs write) in server code.
-4. Emit audit logs with resolved user identity.
-
-### External Keycloak/Nextcloud (OIDC) considerations
-
-Yes, this can work, but behavior depends on token validation mode:
-
-- JWT validated locally by gateway/service: no IdP round trip per query.
-- Opaque token introspection per request: does round trip to IdP.
-
-For good UX, use short-lived access tokens plus refresh tokens (for example 5-15 min access token).
-
-Minimal recommendation for this repo:
-
-1. Run MCP with `KB_MCP_OAUTH_MODE=external-jwt`.
-2. Set `KB_MCP_EXTERNAL_JWT_JWKS_URI` to your IdP JWKS endpoint.
-3. Set `KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS` and `KB_MCP_EXTERNAL_JWT_ISSUER` to your IdP issuer URL.
-4. Set `KB_MCP_EXTERNAL_JWT_AUDIENCE` and `KB_MCP_EXTERNAL_REQUIRED_SCOPES` to match your MCP client registration.
-
-## Docs Protection Options
-
-### Option A: Traefik BasicAuth (included in compose example)
-
-- Easiest path.
-- Fully password protects docs.
-
-### Option B: Cloudflare Access
-
-- Keep docs private without exposing app-level auth logic.
-- If you already run Cloudflare Access, this is still a good option.
-
-### Option C: Self-hosted OIDC (oauth2-proxy + Keycloak/Nextcloud)
-
-- Replace docs router middleware (`vb-kb-docs-auth`) with `forwardAuth` middleware to `oauth2-proxy`.
-- `oauth2-proxy` handles OIDC login and session cookies; users do not re-auth on every page request.
-- This secures docs access but does not by itself make Traefik an MCP OAuth authorization server.
-
-## Verify
-
-1. Docs:
-- Open `https://<host>/`.
-- Expect auth challenge before content.
-
+1. Docs: `https://<host>/` prompts for docs auth.
 2. MCP metadata:
-- `in-memory` mode: `curl https://<host>/.well-known/oauth-authorization-server`
-- `external-jwt` mode: `curl https://<host>/.well-known/oauth-protected-resource/mcp`
-
-3. MCP handshake:
-- `curl -i https://<host>/mcp`
-- Expect `401` with OAuth `WWW-Authenticate` challenge before login.
+   - in-memory mode: `/.well-known/oauth-authorization-server`
+   - external-jwt mode: `/.well-known/oauth-protected-resource/mcp`
+3. MCP challenge: `curl -i https://<host>/mcp` returns `401` before bearer token.
