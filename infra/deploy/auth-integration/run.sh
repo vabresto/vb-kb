@@ -2,16 +2,16 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
-ENV_FILE="${SCRIPT_DIR}/env"
 PROJECT_NAME="vb-kb-auth-it-$(date +%s)-${RANDOM}"
 
 compose() {
-  docker compose \
-    --project-name "${PROJECT_NAME}" \
-    -f "${COMPOSE_FILE}" \
-    --env-file "${ENV_FILE}" \
-    "$@"
+  (
+    cd "${SCRIPT_DIR}"
+    docker compose \
+      --project-name "${PROJECT_NAME}" \
+      -f docker-compose.yml \
+      "$@"
+  )
 }
 
 cleanup() {

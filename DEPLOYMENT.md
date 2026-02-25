@@ -29,7 +29,7 @@ This stack includes:
 
 ### Configure
 
-Edit `infra/deploy/dev/env`:
+Edit `infra/deploy/dev/.env`:
 
 - Set `VB_KB_HOST` and `VB_KC_HOST`.
 - Set `VB_KB_REPO_PATH`.
@@ -39,13 +39,11 @@ Edit `infra/deploy/dev/env`:
 ### Run
 
 ```bash
-docker compose \
-  -f infra/deploy/dev/docker-compose.traefik.yml \
-  --env-file infra/deploy/dev/env \
-  up -d --build
+cd infra/deploy/dev
+docker compose -f docker-compose.traefik.yml up -d --build
 ```
 
-Optional local overrides can live in `infra/deploy/dev/env.local` (gitignored).
+Optional local overrides can live in `infra/deploy/dev/.env.local` (gitignored).
 
 ## Auth integration suite (`infra/deploy/auth-integration`)
 
@@ -75,7 +73,7 @@ It does **not** run Keycloak. Configure `external-jwt` to point at your external
 
 ### Configure
 
-Edit `infra/deploy/prod/env`:
+Edit `infra/deploy/prod/.env`:
 
 - `VB_KB_HOST`
 - `VB_KB_REPO_PATH`
@@ -87,13 +85,11 @@ Edit `infra/deploy/prod/env`:
 ### Run
 
 ```bash
-docker compose \
-  -f infra/deploy/prod/docker-compose.traefik.yml \
-  --env-file infra/deploy/prod/env \
-  up -d --build
+cd infra/deploy/prod
+docker compose -f docker-compose.traefik.yml up -d --build
 ```
 
-Optional local overrides can live in `infra/deploy/prod/env.local` (gitignored).
+Optional local overrides can live in `infra/deploy/prod/.env.local` (gitignored).
 
 ## OAuth mode notes
 

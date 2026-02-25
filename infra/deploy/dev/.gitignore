@@ -1,2 +1,2 @@
 # Local deploy overrides and secrets.
-env.local
+.env.local
