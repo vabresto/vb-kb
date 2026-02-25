@@ -8,7 +8,9 @@ import re
 import secrets
 import subprocess
 import time
+from dataclasses import dataclass
 from contextlib import contextmanager
+from datetime import date as _date
 from pathlib import Path
 from typing import Any, Callable, Literal
 
@@ -40,7 +42,15 @@ from kb.semantic import (
     resolve_runtime_path as semantic_resolve_runtime_path,
     search_semantic_index,
 )
-from kb.schemas import EdgeRecord, SourceRecord, SourceType, shard_for_slug
+from kb.schemas import (
+    ChangelogRow,
+    EdgeRecord,
+    SourceRecord,
+    SourceType,
+    parse_partial_date,
+    shard_for_slug,
+    validate_entity_rel_path,
+)
 from kb.validate import infer_data_root, run_validation
 
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -69,6 +79,8 @@ SEARCH_FILE_TYPE_GLOBS: dict[str, str | None] = {
     "json": "*.json",
 }
 EDGE_ID_SANITIZE_RE = re.compile(r"[^a-z0-9]+")
+FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
+FOOTNOTE_REF_RE = re.compile(r"\[\^([^\]]+)\]")
 RELATION_ALLOWED_PATCH_FIELDS: dict[str, set[str]] = {
     "works_at": {
         "person_ref",
@@ -107,10 +119,23 @@ RELATION_ENDPOINT_PATCH_KEYS: dict[str, dict[str, str]] = {
     "knows": {"person_a_ref": "from", "person_b_ref": "to"},
     "cites": {"source_entity_ref": "from", "target_source_ref": "to"},
 }
+ENTITY_APPEND_RECOMMENDED_SECTIONS: dict[str, list[str]] = {
+    "person": ["Snapshot", "Bio", "Conversation Notes"],
+    "org": ["Snapshot", "Bio", "Notes"],
+}
 
 
 class BusyLockError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True)
+class SourceCatalogEntry:
+    source_ref: str
+    citation_key: str
+    source_id: str
+    slug: str
+    allow_orphan_source: bool
 
 
 class EntityUpsertInput(BaseModel):
@@ -191,6 +216,50 @@ class RelationUpdateInput(BaseModel):
 
     edge_id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
     patch: dict[str, Any]
+    commit_message: str | None = None
+
+
+class AppendEntitySectionParagraphInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    entity_ref: str
+    section: str
+    paragraph: str
+    changelog_note: str
+    source_refs: list[str] | None = None
+    changelog_date: str | None = None
+    create_section_if_missing: bool = False
+    commit_message: str | None = None
+
+
+class CreateSourceOperationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    op: Literal["create_source"]
+    slug: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    source_type: str = SourceType.document.value
+    note_type: str | None = None
+    frontmatter: dict[str, Any] = Field(default_factory=dict)
+    body: str = ""
+
+
+class AppendEntitySectionParagraphOperationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    op: Literal["append_entity_section_paragraph"]
+    entity_ref: str
+    section: str
+    paragraph: str
+    changelog_note: str
+    source_refs: list[str] | None = None
+    changelog_date: str | None = None
+    create_section_if_missing: bool = False
+
+
+class ApplySourcedChangesInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    operations: list[dict[str, Any]] = Field(min_length=1)
     commit_message: str | None = None
 
 
@@ -992,6 +1061,7 @@ def run_transaction(
     commit_message: str,
     apply_changes: Callable[[], dict[str, Any]],
     push: bool = True,
+    validate_full: bool = False,
 ) -> dict[str, Any]:
     with repo_write_lock(project_root):
         data_root_rel = relpath(data_root, project_root)
@@ -1042,13 +1112,14 @@ def run_transaction(
                 "validation": None,
             }
 
-        scope_paths = {(project_root / rel).absolute() for rel in delta}
+        scope_paths = None if validate_full else {(project_root / rel).absolute() for rel in delta}
+        scope_label = "mcp-transaction-full" if validate_full else "mcp-transaction"
         try:
             validation_result = run_validation(
                 project_root=project_root,
                 data_root=data_root,
                 scope_paths=scope_paths,
-                scope_label="mcp-transaction",
+                scope_label=scope_label,
             )
         except Exception:
             rollback_changed_paths(project_root, delta)
@@ -1344,16 +1415,18 @@ def upsert_entity_file(
     return index_path, {"kind": payload.kind, "slug": slug, "index_path": relpath(index_path, project_root)}
 
 
-def upsert_source_file(
-    *,
-    project_root: Path,
-    data_root: Path,
-    payload: SourceUpsertInput,
-) -> tuple[Path, dict[str, Any]]:
-    slug = ensure_slug(payload.slug)
-    source_dir = data_root / "source" / shard_for_slug(slug) / f"source@{slug}"
-    source_dir.mkdir(parents=True, exist_ok=True)
+def parse_frontmatter_payload(markdown: str) -> dict[str, Any]:
+    match = FRONTMATTER_RE.match(markdown)
+    if not match:
+        return {}
+    payload = yaml.safe_load(match.group(1)) or {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload
 
+
+def source_record_from_upsert_payload(payload: SourceUpsertInput) -> SourceRecord:
+    slug = ensure_slug(payload.slug)
     metadata = dict(payload.frontmatter)
     metadata["id"] = f"source@{slug}"
     metadata["title"] = str(metadata.get("title") or title_from_slug(slug)).strip()
@@ -1368,9 +1441,310 @@ def upsert_source_file(
     ).strip()
     metadata["source-category"] = str(metadata.get("source-category") or "mcp").strip()
     metadata["allow-orphan-source"] = bool(metadata.get("allow-orphan-source", False))
+    return SourceRecord.model_validate(metadata)
 
-    # Validate canonical frontmatter before writing.
-    SourceRecord.model_validate(metadata)
+
+def source_catalog_entry_from_record(record: SourceRecord) -> SourceCatalogEntry:
+    source_id = record.id
+    slug = source_id[len("source@") :]
+    source_ref = f"source/{shard_for_slug(slug)}/source@{slug}"
+    return SourceCatalogEntry(
+        source_ref=source_ref,
+        citation_key=record.citation_key,
+        source_id=source_id,
+        slug=slug,
+        allow_orphan_source=record.allow_orphan_source,
+    )
+
+
+def source_catalog_aliases(entry: SourceCatalogEntry) -> set[str]:
+    aliases = {
+        entry.source_ref,
+        entry.source_ref.lower(),
+        entry.source_id,
+        entry.source_id.lower(),
+        entry.slug,
+        entry.slug.lower(),
+        entry.citation_key,
+        entry.citation_key.lower(),
+    }
+    aliases.add(f"source@{entry.slug}")
+    aliases.add(f"source@{entry.slug}".lower())
+    aliases.add(f"data/{entry.source_ref}")
+    aliases.add(f"data/{entry.source_ref}".lower())
+    aliases.add(f"{entry.source_ref}/index.md")
+    aliases.add(f"{entry.source_ref}/index.md".lower())
+    aliases.add(f"data/{entry.source_ref}/index.md")
+    aliases.add(f"data/{entry.source_ref}/index.md".lower())
+    return {alias for alias in aliases if alias}
+
+
+def load_source_catalog(data_root: Path) -> dict[str, SourceCatalogEntry]:
+    by_alias: dict[str, SourceCatalogEntry] = {}
+    source_root = data_root / "source"
+    if not source_root.exists():
+        return by_alias
+
+    for index_path in sorted(source_root.rglob("index.md"), key=lambda path: path.as_posix()):
+        parent = index_path.parent
+        if not parent.name.startswith("source@"):
+            continue
+        frontmatter = parse_frontmatter_payload(index_path.read_text(encoding="utf-8"))
+        record = SourceRecord.model_validate(frontmatter)
+        entry = source_catalog_entry_from_record(record)
+        for alias in source_catalog_aliases(entry):
+            by_alias[alias] = entry
+    return by_alias
+
+
+def register_source_catalog_entry(
+    catalog: dict[str, SourceCatalogEntry],
+    entry: SourceCatalogEntry,
+) -> None:
+    for alias in source_catalog_aliases(entry):
+        catalog[alias] = entry
+
+
+def normalize_source_identifier(value: str) -> str:
+    text = value.strip()
+    if not text:
+        raise ValueError("source identifier must be non-empty")
+    path_part = text.split("#", 1)[0].strip()
+    return path_part or text
+
+
+def resolve_source_identifier(
+    *,
+    value: str,
+    catalog: dict[str, SourceCatalogEntry],
+) -> SourceCatalogEntry:
+    normalized = normalize_source_identifier(value)
+    candidates = [
+        normalized,
+        normalized.lower(),
+    ]
+    if normalized.startswith("./"):
+        candidates.append(normalized[2:])
+        candidates.append(normalized[2:].lower())
+
+    for candidate in candidates:
+        entry = catalog.get(candidate)
+        if entry is not None:
+            return entry
+    raise ValueError(f"unknown source identifier: {value}")
+
+
+def extract_footnote_tokens(text: str) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for match in FOOTNOTE_REF_RE.finditer(text):
+        token = match.group(1).strip()
+        if not token or token in seen:
+            continue
+        seen.add(token)
+        ordered.append(token)
+    return ordered
+
+
+def normalize_paragraph_and_resolve_sources(
+    *,
+    paragraph: str,
+    source_refs: list[str] | None,
+    catalog: dict[str, SourceCatalogEntry],
+) -> tuple[str, list[SourceCatalogEntry]]:
+    text = paragraph.strip()
+    if not text:
+        raise ValueError("paragraph must be non-empty")
+
+    used_entries: list[SourceCatalogEntry] = []
+    seen_source_refs: set[str] = set()
+
+    def register_entry(entry: SourceCatalogEntry) -> None:
+        if entry.source_ref in seen_source_refs:
+            return
+        seen_source_refs.add(entry.source_ref)
+        used_entries.append(entry)
+
+    def replace(match: re.Match[str]) -> str:
+        token = match.group(1).strip()
+        entry = resolve_source_identifier(value=token, catalog=catalog)
+        register_entry(entry)
+        return f"[^{entry.citation_key}]"
+
+    normalized_text = FOOTNOTE_REF_RE.sub(replace, text)
+
+    if source_refs:
+        for source_ref in source_refs:
+            entry = resolve_source_identifier(value=source_ref, catalog=catalog)
+            register_entry(entry)
+
+    if not used_entries:
+        raise ValueError(
+            "paragraph must cite at least one source via source_refs or resolvable inline footnotes"
+        )
+
+    citation_keys_in_text = extract_footnote_tokens(normalized_text)
+    citation_key_set = set(citation_keys_in_text)
+    missing = [entry.citation_key for entry in used_entries if entry.citation_key not in citation_key_set]
+    if missing:
+        suffix = "".join(f"[^{citation_key}]" for citation_key in missing)
+        normalized_text = f"{normalized_text.rstrip()} {suffix}".strip()
+
+    return normalized_text, used_entries
+
+
+def normalize_changelog_note_with_citations(
+    *,
+    note: str,
+    citation_keys: list[str],
+) -> str:
+    text = note.strip()
+    if not text:
+        raise ValueError("changelog_note must be non-empty")
+    existing = set(extract_footnote_tokens(text))
+    missing = [citation_key for citation_key in citation_keys if citation_key not in existing]
+    if missing:
+        text = f"{text} {''.join(f'[^{citation_key}]' for citation_key in missing)}".strip()
+    return text
+
+
+def split_frontmatter_and_body(markdown: str) -> tuple[str, str]:
+    match = FRONTMATTER_RE.match(markdown)
+    if not match:
+        return "", markdown
+    return markdown[: match.end()], markdown[match.end() :]
+
+
+def normalize_section_name(value: str) -> str:
+    return " ".join(value.strip().split()).lower()
+
+
+def split_h2_sections(body: str) -> tuple[str, list[tuple[str, str]]]:
+    lines = body.splitlines()
+    preamble_lines: list[str] = []
+    sections: list[tuple[str, str]] = []
+    current_heading: str | None = None
+    current_lines: list[str] = []
+
+    for line in lines:
+        if line.startswith("## "):
+            if current_heading is None:
+                preamble_lines = current_lines
+            else:
+                sections.append((current_heading, "\n".join(current_lines).rstrip()))
+            current_heading = line[3:].strip()
+            current_lines = [line]
+            continue
+        current_lines.append(line)
+
+    if current_heading is None:
+        return body.strip(), []
+
+    sections.append((current_heading, "\n".join(current_lines).rstrip()))
+    return "\n".join(preamble_lines).strip(), sections
+
+
+def join_h2_sections(preamble: str, sections: list[tuple[str, str]]) -> str:
+    blocks: list[str] = []
+    if preamble.strip():
+        blocks.append(preamble.strip())
+    for _, block in sections:
+        if block.strip():
+            blocks.append(block.strip())
+    if not blocks:
+        return ""
+    return "\n\n".join(blocks).strip() + "\n"
+
+
+def find_h2_section_index(sections: list[tuple[str, str]], heading: str) -> int | None:
+    target = normalize_section_name(heading)
+    for index, (title, _) in enumerate(sections):
+        if normalize_section_name(title) == target:
+            return index
+    return None
+
+
+def append_paragraph_to_entity_section(
+    *,
+    entity_index_path: Path,
+    section: str,
+    paragraph: str,
+    create_section_if_missing: bool,
+    recommended_sections: list[str],
+) -> dict[str, Any]:
+    markdown = entity_index_path.read_text(encoding="utf-8")
+    frontmatter, body = split_frontmatter_and_body(markdown)
+    preamble, sections = split_h2_sections(body)
+    existing_sections = [title for title, _ in sections]
+    target_index = find_h2_section_index(sections, section)
+
+    if target_index is None and not create_section_if_missing:
+        raise ValueError(
+            f"section '{section}' not found. Existing sections: {existing_sections}. "
+            f"Recommended sections: {recommended_sections}. Set create_section_if_missing=true to add a new section."
+        )
+
+    if target_index is None:
+        section_title = " ".join(section.strip().split())
+        section_block = f"## {section_title}\n\n{paragraph.strip()}"
+        sections.append((section_title, section_block))
+        updated_body = join_h2_sections(preamble, sections)
+        created_section = True
+    else:
+        section_title, section_block = sections[target_index]
+        updated_section_block = f"{section_block.rstrip()}\n\n{paragraph.strip()}"
+        sections[target_index] = (section_title, updated_section_block)
+        updated_body = join_h2_sections(preamble, sections)
+        created_section = False
+
+    rendered_body = updated_body.rstrip() + "\n"
+    if frontmatter:
+        rendered = f"{frontmatter.rstrip()}\n\n{rendered_body}"
+    else:
+        rendered = rendered_body
+    entity_index_path.write_text(rendered, encoding="utf-8")
+
+    return {
+        "section": section if target_index is None else sections[target_index][0],
+        "created_section": created_section,
+        "existing_sections": existing_sections,
+        "recommended_sections": recommended_sections,
+    }
+
+
+def append_changelog_row(
+    *,
+    changelog_path: Path,
+    changelog_date: str | None,
+    changelog_note: str,
+) -> dict[str, Any]:
+    resolved_date = parse_partial_date(changelog_date or _date.today().isoformat())
+    row = ChangelogRow.model_validate(
+        {
+            "date": resolved_date,
+            "note": changelog_note,
+        }
+    )
+    changelog_path.parent.mkdir(parents=True, exist_ok=True)
+    if not changelog_path.exists():
+        changelog_path.write_text("", encoding="utf-8")
+    with changelog_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row.model_dump(by_alias=True), sort_keys=True) + "\n")
+    return {"date": row.date, "note": row.note}
+
+
+def upsert_source_file(
+    *,
+    project_root: Path,
+    data_root: Path,
+    payload: SourceUpsertInput,
+) -> tuple[Path, dict[str, Any]]:
+    slug = ensure_slug(payload.slug)
+    source_dir = data_root / "source" / shard_for_slug(slug) / f"source@{slug}"
+    source_dir.mkdir(parents=True, exist_ok=True)
+
+    record = source_record_from_upsert_payload(payload)
+    metadata = record.model_dump(mode="json", by_alias=True, exclude_none=True)
 
     index_path = source_dir / "index.md"
     index_path.write_text(render_markdown(metadata, payload.body), encoding="utf-8")
@@ -1422,6 +1796,101 @@ def upsert_edge_file(
         raise RuntimeError(json.dumps(sync_result, sort_keys=True))
 
     return edge_path, {"edge_id": record.id, "edge_path": relpath(edge_path, project_root), "sync": sync_result}
+
+
+def append_entity_section_paragraph_file(
+    *,
+    project_root: Path,
+    data_root: Path,
+    entity_ref: str,
+    section: str,
+    paragraph: str,
+    changelog_note: str,
+    source_refs: list[str] | None,
+    changelog_date: str | None,
+    create_section_if_missing: bool,
+    source_catalog: dict[str, SourceCatalogEntry],
+) -> dict[str, Any]:
+    normalized_entity_ref = validate_entity_rel_path(entity_ref)
+    entity_kind = normalized_entity_ref.split("/", 1)[0]
+    if entity_kind not in {"person", "org"}:
+        raise ValueError("entity_ref must reference a person or org entity")
+
+    entity_dir = data_root / normalized_entity_ref
+    entity_index = entity_dir / "index.md"
+    if not entity_index.exists():
+        raise FileNotFoundError(f"entity index not found: {relpath(entity_index, project_root)}")
+
+    recommended_sections = ENTITY_APPEND_RECOMMENDED_SECTIONS[entity_kind]
+    normalized_paragraph, used_sources = normalize_paragraph_and_resolve_sources(
+        paragraph=paragraph,
+        source_refs=source_refs,
+        catalog=source_catalog,
+    )
+    section_meta = append_paragraph_to_entity_section(
+        entity_index_path=entity_index,
+        section=section,
+        paragraph=normalized_paragraph,
+        create_section_if_missing=create_section_if_missing,
+        recommended_sections=recommended_sections,
+    )
+
+    citation_keys = [entry.citation_key for entry in used_sources]
+    normalized_note = normalize_changelog_note_with_citations(
+        note=changelog_note,
+        citation_keys=citation_keys,
+    )
+    changelog_meta = append_changelog_row(
+        changelog_path=entity_dir / "changelog.jsonl",
+        changelog_date=changelog_date,
+        changelog_note=normalized_note,
+    )
+
+    return {
+        "entity_ref": normalized_entity_ref,
+        "entity_index_path": relpath(entity_index, project_root),
+        "changelog_path": relpath(entity_dir / "changelog.jsonl", project_root),
+        "used_source_refs": [entry.source_ref for entry in used_sources],
+        "used_citation_keys": citation_keys,
+        "section": section_meta["section"],
+        "created_section": section_meta["created_section"],
+        "existing_sections": section_meta["existing_sections"],
+        "recommended_sections": section_meta["recommended_sections"],
+        "changelog": changelog_meta,
+    }
+
+
+def parse_sourced_change_operations(
+    operations: list[dict[str, Any]],
+) -> tuple[list[CreateSourceOperationInput | AppendEntitySectionParagraphOperationInput], list[SourceCatalogEntry]]:
+    parsed_ops: list[CreateSourceOperationInput | AppendEntitySectionParagraphOperationInput] = []
+    preview_created_sources: list[SourceCatalogEntry] = []
+
+    for index, raw_operation in enumerate(operations):
+        op_name = str(raw_operation.get("op") or "").strip()
+        if op_name == "create_source":
+            op_payload = CreateSourceOperationInput.model_validate(raw_operation)
+            parsed_ops.append(op_payload)
+
+            source_payload = SourceUpsertInput(
+                slug=op_payload.slug,
+                source_type=SourceType(str(op_payload.source_type).strip()),
+                note_type=op_payload.note_type,
+                frontmatter=op_payload.frontmatter,
+                body=op_payload.body,
+            )
+            record = source_record_from_upsert_payload(source_payload)
+            preview_created_sources.append(source_catalog_entry_from_record(record))
+            continue
+
+        if op_name == "append_entity_section_paragraph":
+            op_payload = AppendEntitySectionParagraphOperationInput.model_validate(raw_operation)
+            parsed_ops.append(op_payload)
+            continue
+
+        raise ValueError(f"unsupported operation at index {index}: '{op_name}'")
+
+    return parsed_ops, preview_created_sources
 
 
 def create_mcp_server(
@@ -1590,6 +2059,7 @@ def create_mcp_server(
                 commit_message=message,
                 apply_changes=apply,
                 push=push,
+                validate_full=True,
             )
         except BusyLockError:
             return {
@@ -1652,6 +2122,197 @@ def create_mcp_server(
                 "ok": False,
                 "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
             }
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
+    def append_entity_section_paragraph(
+        entity_ref: str,
+        section: str,
+        paragraph: str,
+        changelog_note: str,
+        source_refs: list[str] | None = None,
+        changelog_date: str | None = None,
+        create_section_if_missing: bool = False,
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = AppendEntitySectionParagraphInput(
+                entity_ref=entity_ref,
+                section=section,
+                paragraph=paragraph,
+                changelog_note=changelog_note,
+                source_refs=source_refs,
+                changelog_date=changelog_date,
+                create_section_if_missing=create_section_if_missing,
+                commit_message=commit_message,
+            )
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except ValidationError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        message = payload.commit_message or "mcp(kbv2): append-entity-section-paragraph"
+
+        def apply() -> dict[str, Any]:
+            source_catalog = load_source_catalog(data_root)
+            apply_meta = append_entity_section_paragraph_file(
+                project_root=project_root,
+                data_root=data_root,
+                entity_ref=payload.entity_ref,
+                section=payload.section,
+                paragraph=payload.paragraph,
+                changelog_note=payload.changelog_note,
+                source_refs=payload.source_refs,
+                changelog_date=payload.changelog_date,
+                create_section_if_missing=payload.create_section_if_missing,
+                source_catalog=source_catalog,
+            )
+            return apply_meta
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+                push=push,
+                validate_full=True,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except FileNotFoundError as exc:
+            return {"ok": False, "error": {"code": "not_found", "retryable": False, "message": str(exc)}}
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
+
+        return result
+
+    @server.tool
+    def apply_sourced_changes(
+        operations: list[dict[str, Any]],
+        commit_message: str | None = None,
+        push: bool = True,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = ApplySourcedChangesInput(
+                operations=operations,
+                commit_message=commit_message,
+            )
+            parsed_operations, preview_sources = parse_sourced_change_operations(payload.operations)
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        message = payload.commit_message or "mcp(kbv2): apply-sourced-changes"
+
+        def apply() -> dict[str, Any]:
+            source_catalog = load_source_catalog(data_root)
+            for preview in preview_sources:
+                register_source_catalog_entry(source_catalog, preview)
+
+            created_sources: list[SourceCatalogEntry] = []
+            consumed_source_refs: set[str] = set()
+            operation_results: list[dict[str, Any]] = []
+
+            for operation in parsed_operations:
+                if isinstance(operation, CreateSourceOperationInput):
+                    source_payload = SourceUpsertInput(
+                        slug=operation.slug,
+                        source_type=SourceType(str(operation.source_type).strip()),
+                        note_type=operation.note_type,
+                        frontmatter=operation.frontmatter,
+                        body=operation.body,
+                    )
+                    _, source_meta = upsert_source_file(
+                        project_root=project_root,
+                        data_root=data_root,
+                        payload=source_payload,
+                    )
+                    record = source_record_from_upsert_payload(source_payload)
+                    entry = source_catalog_entry_from_record(record)
+                    created_sources.append(entry)
+                    register_source_catalog_entry(source_catalog, entry)
+                    operation_results.append(
+                        {
+                            "op": operation.op,
+                            **source_meta,
+                            "source_ref": entry.source_ref,
+                            "citation_key": entry.citation_key,
+                            "allow_orphan_source": entry.allow_orphan_source,
+                        }
+                    )
+                    continue
+
+                if isinstance(operation, AppendEntitySectionParagraphOperationInput):
+                    append_meta = append_entity_section_paragraph_file(
+                        project_root=project_root,
+                        data_root=data_root,
+                        entity_ref=operation.entity_ref,
+                        section=operation.section,
+                        paragraph=operation.paragraph,
+                        changelog_note=operation.changelog_note,
+                        source_refs=operation.source_refs,
+                        changelog_date=operation.changelog_date,
+                        create_section_if_missing=operation.create_section_if_missing,
+                        source_catalog=source_catalog,
+                    )
+                    consumed_source_refs.update(append_meta["used_source_refs"])
+                    operation_results.append({"op": operation.op, **append_meta})
+                    continue
+
+                raise ValueError(f"unsupported parsed operation type: {type(operation).__name__}")
+
+            orphaned_sources = sorted(
+                entry.source_ref
+                for entry in created_sources
+                if not entry.allow_orphan_source and entry.source_ref not in consumed_source_refs
+            )
+            if orphaned_sources:
+                raise ValueError(
+                    "newly created sources must be consumed by at least one non-source operation unless "
+                    "allow-orphan-source is true: "
+                    + ", ".join(orphaned_sources)
+                )
+
+            return {
+                "operations": operation_results,
+                "operation_count": len(operation_results),
+                "created_source_refs": [entry.source_ref for entry in created_sources],
+                "consumed_source_refs": sorted(consumed_source_refs),
+            }
+
+        try:
+            result = run_transaction(
+                project_root=project_root,
+                data_root=data_root,
+                commit_message=message,
+                apply_changes=apply,
+                push=push,
+                validate_full=True,
+            )
+        except BusyLockError:
+            return {
+                "ok": False,
+                "error": {"code": "busy", "retryable": True, "message": "write lock is currently held"},
+            }
+        except FileNotFoundError as exc:
+            return {"ok": False, "error": {"code": "not_found", "retryable": False, "message": str(exc)}}
+        except (ValidationError, ValueError) as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
         except Exception as exc:
             return {"ok": False, "error": {"code": "write_failed", "retryable": False, "message": str(exc)}}
 

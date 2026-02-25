@@ -649,6 +649,203 @@ def test_relation_tools_upsert_update_and_sync_symlinks(tmp_path: Path) -> None:
     assert bad_patch["error"]["code"] == "invalid_input"
 
 
+def test_apply_sourced_changes_creates_source_and_appends_entity_paragraph(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    person_result = _call_tool(
+        server,
+        "upsert_person",
+        {
+            "slug": "alice",
+            "frontmatter": {"person": "Alice"},
+            "body": "# Alice\n\n## Snapshot\n\n- Baseline.\n\n## Bio\n\nInitial bio.\n\n## Conversation Notes\n\n- Initial note.\n",
+            "push": False,
+        },
+    )
+    assert person_result["ok"] is True
+
+    sourced_result = _call_tool(
+        server,
+        "apply_sourced_changes",
+        {
+            "operations": [
+                {
+                    "op": "create_source",
+                    "slug": "inline-cited-source",
+                    "frontmatter": {
+                        "title": "Inline Cited Source",
+                        "source-category": "citations/tests",
+                        "url": "https://example.com/inline-cited-source",
+                    },
+                    "body": "Source body",
+                },
+                {
+                    "op": "append_entity_section_paragraph",
+                    "entity_ref": "person/al/person@alice",
+                    "section": "Bio",
+                    "paragraph": "New sourced paragraph for Alice.[^inline-cited-source]",
+                    "changelog_note": "Added sourced bio detail.",
+                },
+            ],
+            "push": False,
+        },
+    )
+    assert sourced_result["ok"] is True
+    assert sourced_result["apply"]["operation_count"] == 2
+    assert sourced_result["apply"]["created_source_refs"] == [
+        "source/in/source@inline-cited-source"
+    ]
+    assert sourced_result["apply"]["consumed_source_refs"] == [
+        "source/in/source@inline-cited-source"
+    ]
+
+    person_index_path = data_root / "person" / "al" / "person@alice" / "index.md"
+    person_index_text = person_index_path.read_text(encoding="utf-8")
+    assert "New sourced paragraph for Alice.[^inline-cited-source]" in person_index_text
+
+    changelog_path = data_root / "person" / "al" / "person@alice" / "changelog.jsonl"
+    changelog_lines = [line for line in changelog_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert changelog_lines
+    changelog_last = json.loads(changelog_lines[-1])
+    assert changelog_last["note"].endswith("[^inline-cited-source]")
+
+    source_index_path = data_root / "source" / "in" / "source@inline-cited-source" / "index.md"
+    source_payload = mcp_server.SourceRecord.model_validate(
+        mcp_server.yaml.safe_load(source_index_path.read_text(encoding="utf-8").split("---", 2)[1])
+    )
+    assert source_payload.allow_orphan_source is False
+
+
+def test_apply_sourced_changes_rejects_orphan_source_by_default(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    result = _call_tool(
+        server,
+        "apply_sourced_changes",
+        {
+            "operations": [
+                {
+                    "op": "create_source",
+                    "slug": "orphan-source-disallowed",
+                    "frontmatter": {
+                        "title": "Orphan Source Disallowed",
+                        "source-category": "citations/tests",
+                    },
+                }
+            ],
+            "push": False,
+        },
+    )
+    assert result["ok"] is False
+    assert result["error"]["code"] == "invalid_input"
+    assert "newly created sources must be consumed" in result["error"]["message"]
+
+
+def test_apply_sourced_changes_allows_orphan_source_when_flagged(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    result = _call_tool(
+        server,
+        "apply_sourced_changes",
+        {
+            "operations": [
+                {
+                    "op": "create_source",
+                    "slug": "orphan-source-allowed",
+                    "frontmatter": {
+                        "title": "Orphan Source Allowed",
+                        "source-category": "citations/tests",
+                        "allow-orphan-source": True,
+                    },
+                }
+            ],
+            "push": False,
+        },
+    )
+    assert result["ok"] is True
+    assert result["apply"]["created_source_refs"] == ["source/or/source@orphan-source-allowed"]
+    assert result["apply"]["consumed_source_refs"] == []
+
+
+def test_append_entity_section_paragraph_suggests_sections_and_can_create_new(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    org_result = _call_tool(
+        server,
+        "upsert_org",
+        {
+            "slug": "acme",
+            "frontmatter": {"org": "Acme"},
+            "body": "# Acme\n\n## Snapshot\n\n- Baseline.\n\n## Bio\n\nInitial bio.\n\n## Notes\n\nInitial notes.\n",
+            "push": False,
+        },
+    )
+    assert org_result["ok"] is True
+
+    source_result = _call_tool(
+        server,
+        "upsert_source",
+        {
+            "slug": "org-section-source",
+            "frontmatter": {
+                "title": "Org Section Source",
+                "source-category": "citations/tests",
+                "url": "https://example.com/org-section-source",
+            },
+            "push": False,
+        },
+    )
+    assert source_result["ok"] is True
+
+    missing_section = _call_tool(
+        server,
+        "append_entity_section_paragraph",
+        {
+            "entity_ref": "org/ac/org@acme",
+            "section": "Random Stuff",
+            "paragraph": "Added section content.",
+            "source_refs": ["org-section-source"],
+            "changelog_note": "Added random section paragraph.",
+            "push": False,
+        },
+    )
+    assert missing_section["ok"] is False
+    assert missing_section["error"]["code"] == "invalid_input"
+    assert "Existing sections" in missing_section["error"]["message"]
+    assert "Recommended sections" in missing_section["error"]["message"]
+
+    create_section = _call_tool(
+        server,
+        "append_entity_section_paragraph",
+        {
+            "entity_ref": "org/ac/org@acme",
+            "section": "Random Stuff",
+            "paragraph": "Added section content.",
+            "source_refs": ["org-section-source"],
+            "changelog_note": "Added random section paragraph.",
+            "create_section_if_missing": True,
+            "push": False,
+        },
+    )
+    assert create_section["ok"] is True
+    assert create_section["apply"]["created_section"] is True
+
+    org_index_path = data_root / "org" / "ac" / "org@acme" / "index.md"
+    org_index_text = org_index_path.read_text(encoding="utf-8")
+    assert "## Random Stuff" in org_index_text
+    assert "Added section content. [^org-section-source]" in org_index_text
+
+    changelog_path = data_root / "org" / "ac" / "org@acme" / "changelog.jsonl"
+    changelog_lines = [line for line in changelog_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert changelog_lines
+    latest = json.loads(changelog_lines[-1])
+    assert latest["note"].endswith("[^org-section-source]")
+
+
 def test_read_only_query_tools_list_search_and_read(tmp_path: Path) -> None:
     project_root, data_root = _init_repo(tmp_path)
     source_dir = data_root / "source" / "te" / "source@test-query-source"
