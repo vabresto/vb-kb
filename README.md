@@ -12,6 +12,12 @@
 uv sync
 ```
 
+To use semantic index/search commands, install the optional semantic extras:
+
+```bash
+uv sync --extra semantic
+```
+
 ## Command discovery
 
 ```bash
@@ -70,6 +76,29 @@ To run the full test suite (unit + auth integration):
 ```bash
 just test-all
 ```
+
+## Semantic search
+
+Build/update semantic vector index from markdown under `data/`:
+
+```bash
+just semantic-index
+```
+
+Query semantic index:
+
+```bash
+just semantic-search "founder profile for payments infra"
+```
+
+MCP clients can query the same index via the read-only tool:
+
+- `semantic_search_data(query=..., limit=..., index_path=\".build/semantic/index.json\")`
+
+Notes:
+
+- Semantic index is derived and written to `.build/semantic/index.json` (not canonical data).
+- Canonical truth remains markdown and structured files under `data/`.
 
 ## Run FastMCP write server
 

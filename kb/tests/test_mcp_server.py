@@ -12,6 +12,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from kb import mcp_server
+from kb import semantic
 
 
 def _run_git(project_root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -642,6 +643,104 @@ def test_read_only_query_tools_list_search_and_read(tmp_path: Path) -> None:
     assert read["ok"] is True
     assert read["path"].endswith("data/source/te/source@test-query-source/index.md")
     assert "Unique Query Token 42" in read["content"]
+
+
+def test_semantic_search_data_tool_uses_test_repo_index(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+
+    alice_path = data_root / "person" / "al" / "person@alice" / "index.md"
+    alice_path.parent.mkdir(parents=True, exist_ok=True)
+    alice_path.write_text(
+        (
+            "---\n"
+            "person: Alice\n"
+            "---\n\n"
+            "Alice is a founder building payments infrastructure.\n"
+        ),
+        encoding="utf-8",
+    )
+    bob_path = data_root / "person" / "bo" / "person@bob" / "index.md"
+    bob_path.parent.mkdir(parents=True, exist_ok=True)
+    bob_path.write_text(
+        (
+            "---\n"
+            "person: Bob\n"
+            "---\n\n"
+            "Bob focuses on gaming graphics systems.\n"
+        ),
+        encoding="utf-8",
+    )
+
+    class FakeBackend(semantic.EmbeddingBackend):
+        backend_id = "fake"
+        model_name = "fake-model"
+
+        def embed_texts(self, texts: list[str]) -> list[list[float]]:
+            vectors: list[list[float]] = []
+            for text in texts:
+                lowered = text.lower()
+                vectors.append(
+                    [
+                        float(lowered.count("founder")),
+                        float(lowered.count("payments")),
+                        float(lowered.count("infrastructure")),
+                        float(lowered.count("gaming")),
+                    ]
+                )
+            return vectors
+
+    fake_backend = FakeBackend()
+    index_path = project_root / ".build" / "semantic" / "index.json"
+    semantic.build_semantic_index(
+        project_root=project_root,
+        data_root=data_root,
+        index_path=index_path,
+        embedding_backend=fake_backend,
+        max_chars=256,
+        min_chars=1,
+        overlap_chars=0,
+    )
+
+    monkeypatch.setattr(
+        mcp_server,
+        "FastEmbedBackend",
+        lambda model_name, cache_dir=None: fake_backend,
+    )
+
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+    result = _call_tool(
+        server,
+        "semantic_search_data",
+        {
+            "query": "founder payments infra",
+            "limit": 3,
+            "index_path": ".build/semantic/index.json",
+        },
+    )
+
+    assert result["ok"] is True
+    assert result["results"]
+    assert result["results"][0]["data_path"].endswith("person/al/person@alice/index.md")
+    assert result["index_path"] == ".build/semantic/index.json"
+
+
+def test_semantic_search_data_tool_returns_not_found_for_missing_index(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    result = _call_tool(
+        server,
+        "semantic_search_data",
+        {
+            "query": "founder payments infra",
+            "index_path": ".build/semantic/missing-index.json",
+        },
+    )
+    assert result["ok"] is False
+    assert result["error"]["code"] == "not_found"
 
 
 def test_read_data_file_rejects_path_outside_data_root(tmp_path: Path) -> None:

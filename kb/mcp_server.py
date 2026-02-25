@@ -31,6 +31,15 @@ from starlette.responses import RedirectResponse, Response
 import yaml
 
 from kb.edges import sync_edge_backlinks
+from kb.semantic import (
+    DEFAULT_INDEX_PATH,
+    DEFAULT_MODEL_CACHE_PATH,
+    DEFAULT_MODEL_NAME,
+    FastEmbedBackend,
+    load_semantic_index,
+    resolve_runtime_path as semantic_resolve_runtime_path,
+    search_semantic_index,
+)
 from kb.schemas import EdgeRecord, SourceRecord, SourceType, shard_for_slug
 from kb.validate import infer_data_root, run_validation
 
@@ -209,6 +218,18 @@ class SearchDataInput(BaseModel):
     case_sensitive: bool = False
     fixed_strings: bool = False
     max_results: int = Field(default=100, ge=1, le=2000)
+
+
+class SemanticSearchInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(min_length=1)
+    limit: int = Field(default=8, ge=1, le=200)
+    min_score: float | None = None
+    index_path: str = DEFAULT_INDEX_PATH
+    model: str | None = None
+    cache_dir: str = DEFAULT_MODEL_CACHE_PATH
+    allow_model_mismatch: bool = False
 
 
 def normalize_http_path(path: str | None) -> str:
@@ -2183,6 +2204,79 @@ def create_mcp_server(
             return {"ok": False, "error": {"code": "query_failed", "retryable": False, "message": str(exc)}}
 
         return {"ok": True, **result}
+
+    @server.tool
+    def semantic_search_data(
+        query: str,
+        limit: int = 8,
+        min_score: float | None = None,
+        index_path: str = DEFAULT_INDEX_PATH,
+        model: str | None = None,
+        cache_dir: str = DEFAULT_MODEL_CACHE_PATH,
+        allow_model_mismatch: bool = False,
+        auth_token: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            verify_auth_token(auth_token)
+            payload = SemanticSearchInput(
+                query=query,
+                limit=limit,
+                min_score=min_score,
+                index_path=index_path,
+                model=model,
+                cache_dir=cache_dir,
+                allow_model_mismatch=allow_model_mismatch,
+            )
+        except PermissionError as exc:
+            return unauthorized_error(str(exc))
+        except ValidationError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+
+        index_file = semantic_resolve_runtime_path(project_root, payload.index_path)
+        cache_dir_path = semantic_resolve_runtime_path(project_root, payload.cache_dir)
+
+        try:
+            index_payload = load_semantic_index(index_file)
+        except FileNotFoundError:
+            return {
+                "ok": False,
+                "error": {
+                    "code": "not_found",
+                    "retryable": False,
+                    "message": (
+                        "semantic index not found; build it first with `kb semantic-index` or "
+                        "`just semantic-index`."
+                    ),
+                },
+            }
+        except ValueError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "query_failed", "retryable": False, "message": str(exc)}}
+
+        model_payload = index_payload.get("model") or {}
+        model_name = payload.model or str(model_payload.get("name") or DEFAULT_MODEL_NAME)
+        backend = FastEmbedBackend(model_name=model_name, cache_dir=cache_dir_path)
+
+        try:
+            result = search_semantic_index(
+                index_payload=index_payload,
+                query=payload.query,
+                embedding_backend=backend,
+                limit=payload.limit,
+                min_score=payload.min_score,
+                allow_model_mismatch=payload.allow_model_mismatch,
+            )
+        except ValueError as exc:
+            return {"ok": False, "error": {"code": "invalid_input", "retryable": False, "message": str(exc)}}
+        except Exception as exc:
+            return {"ok": False, "error": {"code": "query_failed", "retryable": False, "message": str(exc)}}
+
+        return {
+            "ok": True,
+            "index_path": relpath(index_file, project_root),
+            **result,
+        }
 
     return server
 

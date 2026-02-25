@@ -22,6 +22,9 @@ kb = "kb.cli:main"
 dev = [
   "pytest>=8.4.0",
 ]
+semantic = [
+  "fastembed>=0.3.0",
+]
 
 [tool.uv]
 package = true

@@ -6,6 +6,19 @@ from pathlib import Path
 
 from kb.edges import derive_citation_edges, derive_employment_edges, sync_edge_backlinks
 from kb.mcp_server import run_server as run_fastmcp_server
+from kb.semantic import (
+    DEFAULT_INDEX_PATH,
+    DEFAULT_MAX_CHARS,
+    DEFAULT_MIN_CHARS,
+    DEFAULT_MODEL_CACHE_PATH,
+    DEFAULT_MODEL_NAME,
+    DEFAULT_OVERLAP_CHARS,
+    FastEmbedBackend,
+    build_semantic_index,
+    load_semantic_index,
+    resolve_runtime_path,
+    search_semantic_index,
+)
 from kb.validate import run_validation, infer_data_root, collect_changed_paths, normalize_scope_paths
 
 
@@ -126,6 +139,98 @@ def build_parser() -> argparse.ArgumentParser:
     mcp_parser.add_argument("--port", type=int, default=8001, help="HTTP port for HTTP transports.")
     mcp_parser.add_argument("--path", default=None, help="Optional HTTP route path.")
 
+    semantic_index_parser = subparsers.add_parser(
+        "semantic-index",
+        help="Build semantic index for markdown files under data root.",
+    )
+    semantic_index_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Repository root path.",
+    )
+    semantic_index_parser.add_argument(
+        "--data-root",
+        default=None,
+        help="Data root directory (default: data).",
+    )
+    semantic_index_parser.add_argument(
+        "--index-path",
+        default=DEFAULT_INDEX_PATH,
+        help=f"Index output path (default: {DEFAULT_INDEX_PATH}).",
+    )
+    semantic_index_parser.add_argument(
+        "--model",
+        default=DEFAULT_MODEL_NAME,
+        help=f"Embedding model name (default: {DEFAULT_MODEL_NAME}).",
+    )
+    semantic_index_parser.add_argument(
+        "--cache-dir",
+        default=DEFAULT_MODEL_CACHE_PATH,
+        help=f"Model cache directory (default: {DEFAULT_MODEL_CACHE_PATH}).",
+    )
+    semantic_index_parser.add_argument(
+        "--max-chars",
+        type=int,
+        default=DEFAULT_MAX_CHARS,
+        help=f"Maximum chunk size in characters (default: {DEFAULT_MAX_CHARS}).",
+    )
+    semantic_index_parser.add_argument(
+        "--min-chars",
+        type=int,
+        default=DEFAULT_MIN_CHARS,
+        help=f"Minimum chunk size in characters (default: {DEFAULT_MIN_CHARS}).",
+    )
+    semantic_index_parser.add_argument(
+        "--overlap-chars",
+        type=int,
+        default=DEFAULT_OVERLAP_CHARS,
+        help=f"Overlap for splitting large paragraphs (default: {DEFAULT_OVERLAP_CHARS}).",
+    )
+
+    semantic_search_parser = subparsers.add_parser(
+        "semantic-search",
+        help="Search an existing semantic index.",
+    )
+    semantic_search_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Repository root path.",
+    )
+    semantic_search_parser.add_argument(
+        "--index-path",
+        default=DEFAULT_INDEX_PATH,
+        help=f"Index path to search (default: {DEFAULT_INDEX_PATH}).",
+    )
+    semantic_search_parser.add_argument(
+        "--query",
+        required=True,
+        help="Natural language search query.",
+    )
+    semantic_search_parser.add_argument(
+        "--limit",
+        type=int,
+        default=8,
+        help="Maximum number of results to return.",
+    )
+    semantic_search_parser.add_argument(
+        "--min-score",
+        type=float,
+        default=None,
+        help="Optional minimum cosine similarity score.",
+    )
+    semantic_search_parser.add_argument(
+        "--model",
+        default=None,
+        help="Optional embedding model name (default: use model from index metadata).",
+    )
+    semantic_search_parser.add_argument(
+        "--cache-dir",
+        default=DEFAULT_MODEL_CACHE_PATH,
+        help=f"Model cache directory (default: {DEFAULT_MODEL_CACHE_PATH}).",
+    )
+
     return parser
 
 
@@ -222,6 +327,52 @@ def run_mcp_server(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_semantic_index(args: argparse.Namespace) -> int:
+    project_root = args.project_root.resolve()
+    data_root = infer_data_root(project_root, args.data_root)
+    index_path = resolve_runtime_path(project_root, args.index_path)
+    cache_dir = resolve_runtime_path(project_root, args.cache_dir)
+
+    backend = FastEmbedBackend(
+        model_name=args.model,
+        cache_dir=cache_dir,
+    )
+    result = build_semantic_index(
+        project_root=project_root,
+        data_root=data_root,
+        index_path=index_path,
+        embedding_backend=backend,
+        max_chars=args.max_chars,
+        min_chars=args.min_chars,
+        overlap_chars=args.overlap_chars,
+    )
+    print(json.dumps(result, sort_keys=True))
+    return 0 if result["ok"] else 1
+
+
+def run_semantic_search(args: argparse.Namespace) -> int:
+    project_root = args.project_root.resolve()
+    index_path = resolve_runtime_path(project_root, args.index_path)
+    index_payload = load_semantic_index(index_path)
+
+    model_payload = index_payload.get("model") or {}
+    model_name = args.model or str(model_payload.get("name") or DEFAULT_MODEL_NAME)
+    cache_dir = resolve_runtime_path(project_root, args.cache_dir)
+    backend = FastEmbedBackend(
+        model_name=model_name,
+        cache_dir=cache_dir,
+    )
+    result = search_semantic_index(
+        index_payload=index_payload,
+        query=args.query,
+        embedding_backend=backend,
+        limit=args.limit,
+        min_score=args.min_score,
+    )
+    print(json.dumps(result, sort_keys=True))
+    return 0 if result["ok"] else 1
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -236,6 +387,10 @@ def main() -> int:
         return run_derive_citation_edges(args)
     if args.command == "mcp-server":
         return run_mcp_server(args)
+    if args.command == "semantic-index":
+        return run_semantic_index(args)
+    if args.command == "semantic-search":
+        return run_semantic_search(args)
     parser.error(f"Unknown command: {args.command}")
     return 2
 

@@ -18,7 +18,7 @@ validate-changed:
 
 # Run fast unit tests.
 test:
-  uv run --extra dev pytest -q
+  uv run --extra dev python -m pytest -q
 
 # Run dockerized Keycloak external-jwt integration flow tests.
 test-auth-integration:
@@ -28,6 +28,14 @@ test-auth-integration:
 test-all:
   just test
   just test-auth-integration
+
+# Build semantic vector index from canonical markdown data.
+semantic-index model="BAAI/bge-small-en-v1.5" data_root="data" index_path=".build/semantic/index.json":
+  uv run --extra semantic kb semantic-index --model {{model}} --data-root {{data_root}} --index-path {{index_path}}
+
+# Query semantic vector index.
+semantic-search query limit="8" index_path=".build/semantic/index.json":
+  uv run --extra semantic kb semantic-search --query "{{query}}" --limit {{limit}} --index-path {{index_path}}
 
 # Build static site output into .build/site.
 site-build:
