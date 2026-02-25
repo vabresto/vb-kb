@@ -6,7 +6,8 @@ VB_KC_HOST=auth-kb.example.com
 VB_KB_REPO_PATH=/srv/vb-kb
 
 # Keycloak bootstrap + imported realm config.
-# NOTE: the shipped realm import file is fixed to realm "vb-kb" and client
+# NOTE: the shipped realm import file (`infra/deploy/shared/keycloak/realm-vb-kb.json`)
+# is fixed to realm "vb-kb" and client
 # "vb-kb-mcp-confidential" with secret "change-me-vb-kb-client-secret".
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=change-me-admin-password

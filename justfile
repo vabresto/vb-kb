@@ -20,6 +20,10 @@ validate-changed:
 test:
   uv run --extra dev pytest -q
 
+# Run dockerized Keycloak external-jwt integration flow tests.
+test-auth-integration:
+  ./infra/deploy/auth-integration/run.sh
+
 # Build static site output into .build/site.
 site-build:
   mkdir -p .build/docs

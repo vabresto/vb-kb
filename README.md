@@ -48,6 +48,18 @@ just site-build
 
 Build output is written to `.build/site/`.
 
+## Run auth integration tests (Keycloak external-jwt)
+
+```bash
+just test-auth-integration
+```
+
+This runs an isolated Docker Compose stack under `infra/deploy/auth-integration` and verifies that:
+
+- a Keycloak confidential client can mint a bearer token
+- `KB_MCP_OAUTH_MODE=external-jwt` validates that token at `/mcp`
+- no container ports are published to the host (safe for concurrent runs)
+
 ## Run FastMCP write server
 
 ```bash

@@ -9,12 +9,26 @@
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
       "secret": "change-me-vb-kb-client-secret",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "implicitFlowEnabled": false,
       "fullScopeAllowed": true,
+      "protocolMappers": [
+        {
+          "name": "audience-vb-kb-mcp-confidential",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "vb-kb-mcp-confidential",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ],
       "redirectUris": [
         "http://localhost/*",
         "http://127.0.0.1/*",

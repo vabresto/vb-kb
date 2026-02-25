@@ -16,7 +16,7 @@ services:
       KC_HOSTNAME_STRICT: "${KC_HOSTNAME_STRICT:-false}"
     volumes:
       - "vb_kb_keycloak_data:/opt/keycloak/data"
-      - "./keycloak/realm-vb-kb.json:/opt/keycloak/data/import/realm-vb-kb.json:ro"
+      - "../shared/keycloak/realm-vb-kb.json:/opt/keycloak/data/import/realm-vb-kb.json:ro"
     networks:
       - traefik-public
       - mcp-private
