@@ -1,15 +1,18 @@
-# Deployment (Docker + Traefik)
+# Deployment (Docker + Traefik + Keycloak)
 
-This is a simple production shape for hosting both:
+This repo now ships deployment environments under `infra/deploy/`.
+
+The dev stack (`infra/deploy/dev`) hosts:
 
 - MCP write server at `https://<host>/mcp`
 - Human-friendly docs site at `https://<host>/` (password protected)
+- Keycloak at `https://<auth-host>/` for external JWT/OIDC flows
 
 The examples below use:
 
 - One Docker image for both services
 - Traefik for TLS + routing
-- Built-in MCP OAuth provider from `kb/mcp_server.py`
+- Keycloak as external issuer (`KB_MCP_OAUTH_MODE=external-jwt`)
 - Traefik BasicAuth for docs (with optional OIDC alternatives)
 
 ## Prerequisites
@@ -21,20 +24,16 @@ The examples below use:
 
 ## Files in this repo
 
-- `deploy/Dockerfile`
-- `deploy/docker-compose.traefik.yml`
-- `deploy/.env.example`
+- `infra/deploy/dev/Dockerfile`
+- `infra/deploy/dev/docker-compose.traefik.yml`
+- `infra/deploy/dev/env`
+- `infra/deploy/dev/keycloak/realm-vb-kb.json`
 
 ## Quick Start
 
-1. Copy env template:
-
-```bash
-cp deploy/.env.example deploy/.env
-```
-
-2. Edit `deploy/.env`:
-- Set `VB_KB_HOST` (for example `kb.example.com`).
+1. Edit `infra/deploy/dev/env` and set at least:
+- `VB_KB_HOST` (for example `kb.example.com`).
+- `VB_KC_HOST` (for example `auth-kb.example.com`).
 - Set `VB_KB_REPO_PATH` (for example `/srv/vb-kb`).
 - Set `DOCS_BASIC_AUTH_USERS` to an htpasswd hash.
 
@@ -44,13 +43,18 @@ Generate a hash example:
 htpasswd -nB admin
 ```
 
-Use output as `DOCS_BASIC_AUTH_USERS` (escape `$` as `$$` in `.env`).
+Use output as `DOCS_BASIC_AUTH_USERS` (escape `$` as `$$` in `env`).
 
-3. Start:
+2. Start dev stack:
 
 ```bash
-docker compose -f deploy/docker-compose.traefik.yml --env-file deploy/.env up -d --build
+docker compose \
+  -f infra/deploy/dev/docker-compose.traefik.yml \
+  --env-file infra/deploy/dev/env \
+  up -d --build
 ```
+
+Optional local overrides can be stored in `infra/deploy/dev/env.local` (ignored by git).
 
 ## Route Layout
 
@@ -67,11 +71,15 @@ docker compose -f deploy/docker-compose.traefik.yml --env-file deploy/.env up -d
 
 - everything else on the same host (`/`)
 
+`keycloak` handles:
+
+- all OIDC endpoints on `VB_KC_HOST`
+
 Traefik router priorities in the compose file ensure MCP paths win over docs.
 
 ## OAuth Notes
 
-### Built-in OAuth provider (default in this repo)
+### Built-in OAuth provider (available in server)
 
 Configured via env vars:
 
@@ -112,6 +120,7 @@ It exposes protected-resource metadata and validates incoming bearer JWTs locall
 - Not at Traefik.
 - In `in-memory` mode, MCP clients register themselves against `/register`.
 - In `external-jwt` mode, this server does not issue client credentials; client registration/auth happens at your external IdP.
+- The dev Keycloak import includes a confidential client: `vb-kb-mcp-confidential`.
 
 ### Identity and scope propagation (current state)
 

@@ -1,10 +1,41 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    restart: unless-stopped
+    command:
+      - start-dev
+      - --import-realm
+      - --http-port=8080
+    environment:
+      KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN:-admin}"
+      KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD:-change-me-admin-password}"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME: "${KC_HOSTNAME:-}"
+      KC_HOSTNAME_STRICT: "${KC_HOSTNAME_STRICT:-false}"
+    volumes:
+      - "vb_kb_keycloak_data:/opt/keycloak/data"
+      - "./keycloak/realm-vb-kb.json:/opt/keycloak/data/import/realm-vb-kb.json:ro"
+    networks:
+      - traefik-public
+      - mcp-private
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vb-kb-keycloak.rule=Host(`${VB_KC_HOST}`)"
+      - "traefik.http.routers.vb-kb-keycloak.entrypoints=websecure"
+      - "traefik.http.routers.vb-kb-keycloak.tls=true"
+      - "traefik.http.routers.vb-kb-keycloak.priority=95"
+      - "traefik.http.services.vb-kb-keycloak.loadbalancer.server.port=8080"
+
   kb-mcp:
     image: vb-kb:latest
     build:
-      context: ..
-      dockerfile: deploy/Dockerfile
+      context: ../../..
+      dockerfile: infra/deploy/dev/Dockerfile
     restart: unless-stopped
+    depends_on:
+      - keycloak
     command:
       - kb
       - mcp-server
@@ -21,12 +52,12 @@ services:
       - --path
       - /mcp
     environment:
-      KB_MCP_OAUTH_MODE: "${KB_MCP_OAUTH_MODE:-in-memory}"
+      KB_MCP_OAUTH_MODE: "${KB_MCP_OAUTH_MODE:-external-jwt}"
       KB_MCP_OAUTH_BASE_URL: "https://${VB_KB_HOST}"
       KB_MCP_OAUTH_STATE_FILE: /var/lib/vb-kb/mcp-oauth-state.json
       KB_MCP_AUTH_TOKEN: "${KB_MCP_AUTH_TOKEN:-}"
-      KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS: "${KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS:-}"
-      KB_MCP_EXTERNAL_JWT_JWKS_URI: "${KB_MCP_EXTERNAL_JWT_JWKS_URI:-}"
+      KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS: "${KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS:-http://keycloak:8080/realms/vb-kb}"
+      KB_MCP_EXTERNAL_JWT_JWKS_URI: "${KB_MCP_EXTERNAL_JWT_JWKS_URI:-http://keycloak:8080/realms/vb-kb/protocol/openid-connect/certs}"
       KB_MCP_EXTERNAL_JWT_PUBLIC_KEY: "${KB_MCP_EXTERNAL_JWT_PUBLIC_KEY:-}"
       KB_MCP_EXTERNAL_JWT_ISSUER: "${KB_MCP_EXTERNAL_JWT_ISSUER:-}"
       KB_MCP_EXTERNAL_JWT_AUDIENCE: "${KB_MCP_EXTERNAL_JWT_AUDIENCE:-}"
@@ -38,6 +69,7 @@ services:
       - "vb_kb_mcp_oauth_state:/var/lib/vb-kb"
     networks:
       - traefik-public
+      - mcp-private
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.vb-kb-mcp.rule=Host(`${VB_KB_HOST}`) && (PathPrefix(`/mcp`) || PathPrefix(`/authorize`) || PathPrefix(`/token`) || PathPrefix(`/register`) || PathPrefix(`/.well-known/oauth-authorization-server`) || PathPrefix(`/.well-known/oauth-protected-resource`))"
@@ -49,8 +81,8 @@ services:
   kb-docs:
     image: vb-kb:latest
     build:
-      context: ..
-      dockerfile: deploy/Dockerfile
+      context: ../../..
+      dockerfile: infra/deploy/dev/Dockerfile
     restart: unless-stopped
     command:
       - sh
@@ -76,8 +108,11 @@ services:
       - "traefik.http.services.vb-kb-docs.loadbalancer.server.port=8000"
 
 volumes:
+  vb_kb_keycloak_data:
   vb_kb_mcp_oauth_state:
 
 networks:
   traefik-public:
     external: true
+  mcp-private:
+    internal: true
