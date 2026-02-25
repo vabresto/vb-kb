@@ -7,6 +7,7 @@ Date: 2026-02-22
 
 This document captures the current KB v2 decisions from design discussions.
 It is the baseline for migration and implementation work.
+Supplemental ADRs are tracked under `adr/`.
 
 ## Goals
 
