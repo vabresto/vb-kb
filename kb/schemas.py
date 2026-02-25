@@ -312,6 +312,7 @@ class SourceRecord(KBBaseModel):
     citation_key: str = Field(alias="citation-key")
     source_path: str = Field(alias="source-path")
     source_category: str | None = Field(alias="source-category", default=None)
+    allow_orphan_source: bool = Field(alias="allow-orphan-source", default=False)
     note_type: str | None = Field(alias="note-type", default=None)
     date: str | None = None
     updated_at: str | None = Field(alias="updated-at", default=None)

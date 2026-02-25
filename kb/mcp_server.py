@@ -1367,6 +1367,7 @@ def upsert_source_file(
         metadata.get("source-path") or f"data/source/{shard_for_slug(slug)}/source@{slug}/index.md"
     ).strip()
     metadata["source-category"] = str(metadata.get("source-category") or "mcp").strip()
+    metadata["allow-orphan-source"] = bool(metadata.get("allow-orphan-source", False))
 
     # Validate canonical frontmatter before writing.
     SourceRecord.model_validate(metadata)

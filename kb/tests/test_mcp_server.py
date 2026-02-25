@@ -400,6 +400,69 @@ def test_upsert_source_changes_are_reflected_by_mkdocs_build(tmp_path: Path) -> 
     assert "Build Reflection Source" in sources_text
 
 
+def test_upsert_source_sets_allow_orphan_source_flag(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    default_result = _call_tool(
+        server,
+        "upsert_source",
+        {
+            "slug": "default-orphan-flag-source",
+            "frontmatter": {
+                "title": "Default Orphan Flag Source",
+                "source-category": "citations/mcp",
+                "url": "https://example.com/default-orphan-flag-source",
+            },
+            "push": False,
+        },
+    )
+    assert default_result["ok"] is True
+
+    default_path = (
+        data_root
+        / "source"
+        / mcp_server.shard_for_slug("default-orphan-flag-source")
+        / "source@default-orphan-flag-source"
+        / "index.md"
+    )
+    default_payload = mcp_server.SourceRecord.model_validate(
+        mcp_server.yaml.safe_load(
+            default_path.read_text(encoding="utf-8").split("---", 2)[1]
+        )
+    )
+    assert default_payload.allow_orphan_source is False
+
+    explicit_result = _call_tool(
+        server,
+        "upsert_source",
+        {
+            "slug": "explicit-orphan-flag-source",
+            "frontmatter": {
+                "title": "Explicit Orphan Flag Source",
+                "source-category": "citations/mcp",
+                "allow-orphan-source": True,
+            },
+            "push": False,
+        },
+    )
+    assert explicit_result["ok"] is True
+
+    explicit_path = (
+        data_root
+        / "source"
+        / mcp_server.shard_for_slug("explicit-orphan-flag-source")
+        / "source@explicit-orphan-flag-source"
+        / "index.md"
+    )
+    explicit_payload = mcp_server.SourceRecord.model_validate(
+        mcp_server.yaml.safe_load(
+            explicit_path.read_text(encoding="utf-8").split("---", 2)[1]
+        )
+    )
+    assert explicit_payload.allow_orphan_source is True
+
+
 def test_relation_tools_upsert_update_and_sync_symlinks(tmp_path: Path) -> None:
     project_root, data_root = _init_repo(tmp_path)
     server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
