@@ -1,5 +1,11 @@
 # Knowledge Base Rules
 
+## Automation Surface
+
+- Any runnable workflow in this repo must be exposed in the root `justfile`.
+- When adding new scripts, integration suites, deploy commands, or maintenance tasks, add/update the corresponding `just` target in the same change.
+- Prefer documenting usage as `just <target>` instead of ad-hoc shell invocations.
+
 ## Reference Integrity
 
 - In structured reference fields (for example `known-people`), reference entities like people by file path link, not by plain name.

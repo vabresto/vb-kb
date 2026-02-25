@@ -20,6 +20,11 @@ just
 
 The `justfile` in the repo root lists common workflows (validation, migrations, tests, site build/serve, and MCP server commands).
 
+## Automation policy
+
+- Any runnable workflow in this repo must be represented in the root `justfile`.
+- When adding scripts, deploy commands, tests, or maintenance tasks, add or update a `just` target in the same change.
+
 ## Validate data
 
 ```bash
@@ -59,6 +64,12 @@ This runs an isolated Docker Compose stack under `infra/deploy/auth-integration`
 - a Keycloak confidential client can mint a bearer token
 - `KB_MCP_OAUTH_MODE=external-jwt` validates that token at `/mcp`
 - no container ports are published to the host (safe for concurrent runs)
+
+To run the full test suite (unit + auth integration):
+
+```bash
+just test-all
+```
 
 ## Run FastMCP write server
 

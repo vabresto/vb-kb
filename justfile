@@ -16,13 +16,18 @@ validate:
 validate-changed:
   uv run kb validate --changed --pretty
 
-# Run unit tests.
+# Run fast unit tests.
 test:
   uv run --extra dev pytest -q
 
 # Run dockerized Keycloak external-jwt integration flow tests.
 test-auth-integration:
   ./infra/deploy/auth-integration/run.sh
+
+# Run all tests, including slower dockerized auth integration.
+test-all:
+  just test
+  just test-auth-integration
 
 # Build static site output into .build/site.
 site-build:
