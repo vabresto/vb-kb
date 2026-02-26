@@ -137,13 +137,13 @@ services:
     restart: unless-stopped
     command:
       - sh
-      - -lc
+      - -ec
       - |
         mkdir -p /repo/.build/docs
         cd /repo
-        mkdocs build
-        cd /repo/.build/site
-        python -m http.server 8000
+        mkdocs build --strict
+        test -f /repo/.build/site/index.html
+        exec python -m http.server --directory /repo/.build/site 8000
     volumes:
       - "${VB_KB_REPO_PATH}:/repo"
     networks:

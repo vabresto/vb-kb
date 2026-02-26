@@ -125,3 +125,14 @@ For deployed host:
    - in-memory mode: `/.well-known/oauth-authorization-server`
    - external-jwt mode: `/.well-known/oauth-protected-resource/mcp`
 4. MCP challenge: `curl -i https://<host>/mcp` returns `401` before bearer token.
+
+## Troubleshooting
+
+- If docs at `https://<host>/` show a directory listing, inspect `kb-docs` logs first:
+
+```bash
+cd infra/deploy/prod
+docker compose logs --tail=200 kb-docs
+```
+
+- The prod docs container now runs `mkdocs build --strict` and exits on build/startup errors instead of serving a fallback directory.
