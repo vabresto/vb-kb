@@ -14,6 +14,10 @@ services:
       - "--certificatesresolvers.le.acme.httpchallenge=true"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
       - "--api.dashboard=${TRAEFIK_DASHBOARD_ENABLED:-false}"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-DEBUG}"
+      - "--log.format=${TRAEFIK_LOG_FORMAT:-json}"
+      - "--accesslog=${TRAEFIK_ACCESSLOG_ENABLED:-true}"
+      - "--accesslog.format=${TRAEFIK_ACCESSLOG_FORMAT:-json}"
     ports:
       - "80:80"
       - "443:443"
