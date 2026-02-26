@@ -11,7 +11,7 @@ Deployment assets are organized by environment under `infra/deploy/`.
 ## Shared files
 
 - `infra/deploy/shared/Dockerfile`
-- `infra/deploy/shared/keycloak/realm-vb-kb.json`
+- `infra/deploy/shared/keycloak/realm-vb-kb.json` (used by dev/auth-integration only)
 
 ## Prerequisites
 
@@ -72,6 +72,7 @@ This stack includes:
 
 - `traefik` (TLS termination + routing)
 - `keycloak` (OIDC issuer for external JWT validation)
+- `keycloak-init` (idempotent runtime realm/client bootstrap from env)
 - `kb-mcp`
 - `kb-docs`
 
@@ -85,11 +86,14 @@ Edit `infra/deploy/prod/.env`:
 - `TRAEFIK_ACME_EMAIL`
 - `DOCS_BASIC_AUTH_USERS`
 - Keycloak bootstrap values (`KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`)
+- Keycloak realm/client values (`KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`)
 - `KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS`
 - exactly one of `KB_MCP_EXTERNAL_JWT_JWKS_URI` or `KB_MCP_EXTERNAL_JWT_PUBLIC_KEY`
 - optional `KB_MCP_EXTERNAL_JWT_ISSUER`, `KB_MCP_EXTERNAL_JWT_AUDIENCE`, and scope vars
 
 Optional local overrides can live in `infra/deploy/prod/.env.local` (gitignored).
+
+In prod, Keycloak credentials should come from env values, not committed realm JSON.
 
 ### Run
 

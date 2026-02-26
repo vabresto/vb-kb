@@ -28,7 +28,6 @@ services:
     restart: unless-stopped
     command:
       - start-dev
-      - --import-realm
       - --http-port=8080
     environment:
       KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN:-admin}"
@@ -40,7 +39,6 @@ services:
       KC_HOSTNAME_STRICT: "${KC_HOSTNAME_STRICT:-true}"
     volumes:
       - "vb_kb_keycloak_data:/opt/keycloak/data"
-      - "../shared/keycloak/realm-vb-kb.json:/opt/keycloak/data/import/realm-vb-kb.json:ro"
     networks:
       - edge
       - mcp-private
@@ -53,6 +51,26 @@ services:
       - "traefik.http.routers.vb-kb-keycloak.priority=95"
       - "traefik.http.services.vb-kb-keycloak.loadbalancer.server.port=8080"
 
+  keycloak-init:
+    image: quay.io/keycloak/keycloak:26.1
+    restart: "no"
+    depends_on:
+      - keycloak
+    entrypoint:
+      - /bin/sh
+      - /bootstrap/keycloak-bootstrap.sh
+    environment:
+      KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN:-admin}"
+      KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD:-change-me-admin-password}"
+      KEYCLOAK_REALM: "${KEYCLOAK_REALM:-vb-kb}"
+      KEYCLOAK_CLIENT_ID: "${KEYCLOAK_CLIENT_ID:-vb-kb-mcp-confidential}"
+      KEYCLOAK_CLIENT_SECRET: "${KEYCLOAK_CLIENT_SECRET:-change-me-vb-kb-client-secret}"
+      KEYCLOAK_CLIENT_NAME: "${KEYCLOAK_CLIENT_NAME:-VB KB MCP Confidential}"
+    volumes:
+      - "./keycloak-bootstrap.sh:/bootstrap/keycloak-bootstrap.sh:ro"
+    networks:
+      - mcp-private
+
   kb-mcp:
     image: vb-kb:latest
     build:
@@ -60,7 +78,10 @@ services:
       dockerfile: infra/deploy/shared/Dockerfile
     restart: unless-stopped
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_started
+      keycloak-init:
+        condition: service_completed_successfully
     command:
       - kb
       - mcp-server
@@ -81,10 +102,10 @@ services:
       KB_MCP_OAUTH_BASE_URL: "https://${VB_KB_HOST}"
       KB_MCP_OAUTH_STATE_FILE: /var/lib/vb-kb/mcp-oauth-state.json
       KB_MCP_AUTH_TOKEN: "${KB_MCP_AUTH_TOKEN:-}"
-      KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS: "${KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS:-https://${VB_KC_HOST}/realms/vb-kb}"
-      KB_MCP_EXTERNAL_JWT_JWKS_URI: "${KB_MCP_EXTERNAL_JWT_JWKS_URI:-https://${VB_KC_HOST}/realms/vb-kb/protocol/openid-connect/certs}"
+      KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS: "${KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS:-https://${VB_KC_HOST}/realms/${KEYCLOAK_REALM}}"
+      KB_MCP_EXTERNAL_JWT_JWKS_URI: "${KB_MCP_EXTERNAL_JWT_JWKS_URI:-https://${VB_KC_HOST}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs}"
       KB_MCP_EXTERNAL_JWT_PUBLIC_KEY: "${KB_MCP_EXTERNAL_JWT_PUBLIC_KEY:-}"
-      KB_MCP_EXTERNAL_JWT_ISSUER: "${KB_MCP_EXTERNAL_JWT_ISSUER:-https://${VB_KC_HOST}/realms/vb-kb}"
+      KB_MCP_EXTERNAL_JWT_ISSUER: "${KB_MCP_EXTERNAL_JWT_ISSUER:-https://${VB_KC_HOST}/realms/${KEYCLOAK_REALM}}"
       KB_MCP_EXTERNAL_JWT_AUDIENCE: "${KB_MCP_EXTERNAL_JWT_AUDIENCE:-vb-kb-mcp-confidential}"
       KB_MCP_EXTERNAL_JWT_ALGORITHM: "${KB_MCP_EXTERNAL_JWT_ALGORITHM:-RS256}"
       KB_MCP_EXTERNAL_REQUIRED_SCOPES: "${KB_MCP_EXTERNAL_REQUIRED_SCOPES:-}"

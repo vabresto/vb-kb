@@ -101,6 +101,14 @@ deploy-prod-ps:
     docker compose --env-file infra/deploy/prod/.env -f infra/deploy/prod/docker-compose.yml ps; \
   fi
 
+# Re-run prod Keycloak runtime bootstrap (realm/client provisioning).
+deploy-prod-keycloak-init:
+  if [ -f infra/deploy/prod/.env.local ]; then \
+    docker compose --env-file infra/deploy/prod/.env --env-file infra/deploy/prod/.env.local -f infra/deploy/prod/docker-compose.yml up --no-deps --force-recreate keycloak-init; \
+  else \
+    docker compose --env-file infra/deploy/prod/.env -f infra/deploy/prod/docker-compose.yml up --no-deps --force-recreate keycloak-init; \
+  fi
+
 # Tail bundled prod stack logs (optionally pass a service name).
 deploy-prod-logs service="":
   if [ -f infra/deploy/prod/.env.local ]; then \
