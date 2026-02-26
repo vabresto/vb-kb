@@ -27,6 +27,7 @@ from fastmcp.server.auth.providers.in_memory import (
     TokenError,
 )
 from mcp.server.auth.settings import ClientRegistrationOptions
+from mcp.types import ToolAnnotations
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, ValidationError
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
@@ -123,6 +124,11 @@ ENTITY_APPEND_RECOMMENDED_SECTIONS: dict[str, list[str]] = {
     "person": ["Snapshot", "Bio", "Conversation Notes"],
     "org": ["Snapshot", "Bio", "Notes"],
 }
+READ_ONLY_TOOL_ANNOTATIONS = ToolAnnotations(
+    readOnlyHint=True,
+    destructiveHint=False,
+    idempotentHint=True,
+)
 
 
 class BusyLockError(RuntimeError):
@@ -2734,7 +2740,7 @@ def create_mcp_server(
 
         return result
 
-    @server.tool
+    @server.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     def list_data_files(
         prefix: str | None = None,
         suffix: str | None = None,
@@ -2772,7 +2778,7 @@ def create_mcp_server(
             "suffix": payload.suffix,
         }
 
-    @server.tool
+    @server.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     def read_data_file(
         path: str,
         max_bytes: int = 200_000,
@@ -2812,7 +2818,7 @@ def create_mcp_server(
             "content": content,
         }
 
-    @server.tool
+    @server.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     def search_data(
         query: str,
         file_type: Literal["all", "md", "jsonl", "json"] = "all",
@@ -2867,7 +2873,7 @@ def create_mcp_server(
 
         return {"ok": True, **result}
 
-    @server.tool
+    @server.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)
     def semantic_search_data(
         query: str,
         limit: int = 8,

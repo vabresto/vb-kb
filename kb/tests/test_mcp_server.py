@@ -905,6 +905,21 @@ def test_read_only_query_tools_list_search_and_read(tmp_path: Path) -> None:
     assert "Unique Query Token 42" in read["content"]
 
 
+def test_read_only_query_tools_have_non_destructive_annotations(tmp_path: Path) -> None:
+    project_root, data_root = _init_repo(tmp_path)
+    server = mcp_server.create_mcp_server(project_root=project_root, data_root=data_root)
+
+    tools = asyncio.run(server.list_tools())
+    tools_by_name = {tool.name: tool for tool in tools}
+
+    for name in ("list_data_files", "read_data_file", "search_data", "semantic_search_data"):
+        annotations = tools_by_name[name].annotations
+        assert annotations is not None
+        assert annotations.readOnlyHint is True
+        assert annotations.destructiveHint is False
+        assert annotations.idempotentHint is True
+
+
 def test_semantic_search_data_tool_uses_test_repo_index(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
