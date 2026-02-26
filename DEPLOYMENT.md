@@ -87,6 +87,8 @@ Edit `infra/deploy/prod/.env`:
 - `DOCS_BASIC_AUTH_USERS`
 - Keycloak bootstrap values (`KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`)
 - Keycloak realm/client values (`KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`)
+- `KEYCLOAK_CHATGPT_REDIRECT_URI` for ChatGPT OAuth callback URL allowlisting
+- optional `KEYCLOAK_FIRST_PARTY_REDIRECT_URI` (if unset, defaults to host wildcard derived from `VB_KB_HOST`)
 - `KC_HOSTNAME` as host only (for example `auth.example.com`, no `https://` prefix)
 - `KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS`
 - exactly one of `KB_MCP_EXTERNAL_JWT_JWKS_URI` or `KB_MCP_EXTERNAL_JWT_PUBLIC_KEY`
