@@ -76,3 +76,43 @@ run-mcp-http host="127.0.0.1" port="8001" path="/mcp":
 # Run MCP server over streamable HTTP with token gate enabled.
 run-mcp-http-auth token="dev-secret" host="127.0.0.1" port="8001" path="/mcp":
   KB_MCP_AUTH_TOKEN={{token}} uv run kb mcp-server --transport streamable-http --host {{host}} --port {{port}} --path {{path}}
+
+# Deploy bundled prod stack (Traefik + Keycloak + MCP + docs).
+deploy-prod-up:
+  if [ -f infra/deploy/prod/.env.local ]; then \
+    docker compose --env-file infra/deploy/prod/.env --env-file infra/deploy/prod/.env.local -f infra/deploy/prod/docker-compose.yml up -d --build; \
+  else \
+    docker compose --env-file infra/deploy/prod/.env -f infra/deploy/prod/docker-compose.yml up -d --build; \
+  fi
+
+# Stop bundled prod stack.
+deploy-prod-down:
+  if [ -f infra/deploy/prod/.env.local ]; then \
+    docker compose --env-file infra/deploy/prod/.env --env-file infra/deploy/prod/.env.local -f infra/deploy/prod/docker-compose.yml down --remove-orphans; \
+  else \
+    docker compose --env-file infra/deploy/prod/.env -f infra/deploy/prod/docker-compose.yml down --remove-orphans; \
+  fi
+
+# Show bundled prod stack status.
+deploy-prod-ps:
+  if [ -f infra/deploy/prod/.env.local ]; then \
+    docker compose --env-file infra/deploy/prod/.env --env-file infra/deploy/prod/.env.local -f infra/deploy/prod/docker-compose.yml ps; \
+  else \
+    docker compose --env-file infra/deploy/prod/.env -f infra/deploy/prod/docker-compose.yml ps; \
+  fi
+
+# Tail bundled prod stack logs (optionally pass a service name).
+deploy-prod-logs service="":
+  if [ -f infra/deploy/prod/.env.local ]; then \
+    if [ -n "{{service}}" ]; then \
+      docker compose --env-file infra/deploy/prod/.env --env-file infra/deploy/prod/.env.local -f infra/deploy/prod/docker-compose.yml logs -f {{service}}; \
+    else \
+      docker compose --env-file infra/deploy/prod/.env --env-file infra/deploy/prod/.env.local -f infra/deploy/prod/docker-compose.yml logs -f; \
+    fi; \
+  else \
+    if [ -n "{{service}}" ]; then \
+      docker compose --env-file infra/deploy/prod/.env -f infra/deploy/prod/docker-compose.yml logs -f {{service}}; \
+    else \
+      docker compose --env-file infra/deploy/prod/.env -f infra/deploy/prod/docker-compose.yml logs -f; \
+    fi; \
+  fi

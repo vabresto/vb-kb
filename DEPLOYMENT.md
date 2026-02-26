@@ -5,7 +5,7 @@ Deployment assets are organized by environment under `infra/deploy/`.
 ## Environment layout
 
 - `infra/deploy/dev`: local/dev deployment with bundled Keycloak + MCP + docs behind Traefik.
-- `infra/deploy/prod`: production deployment with MCP + docs behind Traefik, expecting an external IdP.
+- `infra/deploy/prod`: production deployment with bundled Traefik + Keycloak + MCP + docs.
 - `infra/deploy/auth-integration`: isolated no-port integration test stack for `external-jwt` + Keycloak confidential client.
 
 ## Shared files
@@ -16,8 +16,12 @@ Deployment assets are organized by environment under `infra/deploy/`.
 ## Prerequisites
 
 - Docker + Docker Compose on host.
-- Traefik running with an external Docker network named `traefik-public`.
 - Checked-out repo path on host containing `.git/` and `data/`.
+- DNS records for the hosts configured in env files.
+
+Additional requirement for dev stack:
+
+- Traefik already running with an external Docker network named `traefik-public`.
 
 ## Dev stack (`infra/deploy/dev`)
 
@@ -66,30 +70,40 @@ The runner uses a unique Compose project name per invocation, so concurrent runs
 
 This stack includes:
 
+- `traefik` (TLS termination + routing)
+- `keycloak` (OIDC issuer for external JWT validation)
 - `kb-mcp`
 - `kb-docs`
-
-It does **not** run Keycloak. Configure `external-jwt` to point at your external issuer.
 
 ### Configure
 
 Edit `infra/deploy/prod/.env`:
 
 - `VB_KB_HOST`
+- `VB_KC_HOST`
 - `VB_KB_REPO_PATH`
+- `TRAEFIK_ACME_EMAIL`
+- `DOCS_BASIC_AUTH_USERS`
+- Keycloak bootstrap values (`KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`)
 - `KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS`
 - exactly one of `KB_MCP_EXTERNAL_JWT_JWKS_URI` or `KB_MCP_EXTERNAL_JWT_PUBLIC_KEY`
 - optional `KB_MCP_EXTERNAL_JWT_ISSUER`, `KB_MCP_EXTERNAL_JWT_AUDIENCE`, and scope vars
-- `DOCS_BASIC_AUTH_USERS`
+
+Optional local overrides can live in `infra/deploy/prod/.env.local` (gitignored).
 
 ### Run
 
 ```bash
 cd infra/deploy/prod
-docker compose -f docker-compose.traefik.yml up -d --build
+docker compose --env-file .env up -d --build
 ```
 
-Optional local overrides can live in `infra/deploy/prod/.env.local` (gitignored).
+If using `.env.local` overrides:
+
+```bash
+cd infra/deploy/prod
+docker compose --env-file .env --env-file .env.local up -d --build
+```
 
 ## OAuth mode notes
 
@@ -102,7 +116,8 @@ Optional local overrides can live in `infra/deploy/prod/.env.local` (gitignored)
 For deployed host:
 
 1. Docs: `https://<host>/` prompts for docs auth.
-2. MCP metadata:
+2. Keycloak issuer metadata: `https://<keycloak-host>/realms/vb-kb/.well-known/openid-configuration`.
+3. MCP metadata:
    - in-memory mode: `/.well-known/oauth-authorization-server`
    - external-jwt mode: `/.well-known/oauth-protected-resource/mcp`
-3. MCP challenge: `curl -i https://<host>/mcp` returns `401` before bearer token.
+4. MCP challenge: `curl -i https://<host>/mcp` returns `401` before bearer token.
