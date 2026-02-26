@@ -48,6 +48,7 @@ services:
       - mcp-private
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=prod_edge"
       - "traefik.http.routers.vb-kb-keycloak.rule=Host(`${VB_KC_HOST}`)"
       - "traefik.http.routers.vb-kb-keycloak.entrypoints=websecure"
       - "traefik.http.routers.vb-kb-keycloak.tls=true"
@@ -122,6 +123,7 @@ services:
       - mcp-private
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=prod_edge"
       - "traefik.http.routers.vb-kb-mcp.rule=Host(`${VB_KB_HOST}`) && (PathPrefix(`/mcp`) || PathPrefix(`/authorize`) || PathPrefix(`/token`) || PathPrefix(`/register`) || PathPrefix(`/.well-known/oauth-authorization-server`) || PathPrefix(`/.well-known/oauth-protected-resource`))"
       - "traefik.http.routers.vb-kb-mcp.entrypoints=websecure"
       - "traefik.http.routers.vb-kb-mcp.tls=true"
@@ -150,6 +152,7 @@ services:
       - edge
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=prod_edge"
       - "traefik.http.routers.vb-kb-docs.rule=Host(`${VB_KB_HOST}`)"
       - "traefik.http.routers.vb-kb-docs.entrypoints=websecure"
       - "traefik.http.routers.vb-kb-docs.tls=true"

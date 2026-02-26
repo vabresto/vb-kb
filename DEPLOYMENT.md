@@ -87,6 +87,7 @@ Edit `infra/deploy/prod/.env`:
 - `DOCS_BASIC_AUTH_USERS`
 - Keycloak bootstrap values (`KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`)
 - Keycloak realm/client values (`KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`)
+- `KC_HOSTNAME` as host only (for example `auth.example.com`, no `https://` prefix)
 - `KB_MCP_EXTERNAL_AUTHORIZATION_SERVERS`
 - exactly one of `KB_MCP_EXTERNAL_JWT_JWKS_URI` or `KB_MCP_EXTERNAL_JWT_PUBLIC_KEY`
 - optional `KB_MCP_EXTERNAL_JWT_ISSUER`, `KB_MCP_EXTERNAL_JWT_AUDIENCE`, and scope vars
