@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shlex
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -15,7 +16,7 @@ from kb.enrichment_adapters import (
     SnapshotRequest,
     SourceAdapter,
 )
-from kb.enrichment_config import EnrichmentConfig, SupportedSource
+from kb.enrichment_config import DEFAULT_LINKEDIN_FETCH_COMMAND, EnrichmentConfig, SupportedSource
 from kb.enrichment_linkedin_adapter import (
     LinkedInExtractionError,
     LinkedInFetchCommandResult,
@@ -42,7 +43,7 @@ def _storage_state(*, expires: float) -> dict[str, Any]:
 
 
 def _save_ready_session(tmp_path: Path, config: EnrichmentConfig) -> None:
-    now = datetime(2026, 2, 28, 16, 0, tzinfo=UTC)
+    now = datetime(2030, 2, 28, 16, 0, tzinfo=UTC)
     save_session_state(
         SupportedSource.linkedin,
         _storage_state(expires=now.timestamp() + 3600),
@@ -152,6 +153,33 @@ def test_linkedin_adapter_fetch_bootstraps_when_session_missing(tmp_path: Path) 
     assert observed["argv"] == ["linkedin-fetch"]
     assert observed["extract_source"] == "linkedin.com"
     assert observed["extract_slug"] == "founder"
+    assert observed["cwd"] == tmp_path.resolve()
+
+
+def test_linkedin_adapter_uses_config_default_fetch_command(tmp_path: Path) -> None:
+    config = EnrichmentConfig()
+    _save_ready_session(tmp_path, config)
+    observed: dict[str, Any] = {}
+
+    def fetch_runner(argv: list[str], _env: dict[str, str], cwd: Path) -> LinkedInFetchCommandResult:
+        observed["argv"] = argv
+        observed["cwd"] = cwd
+        payload = {
+            "source_url": "https://www.linkedin.com/in/founder/",
+            "facts": [{"attribute": "headline", "value": "Founder", "confidence": "high"}],
+        }
+        return LinkedInFetchCommandResult(returncode=0, stdout=json.dumps(payload))
+
+    adapter = LinkedInSourceAdapter(
+        config=config,
+        project_root=tmp_path,
+        fetch_runner=fetch_runner,
+        environ={},
+    )
+
+    fetch_result = adapter.fetch(_fetch_request(entity_slug="founder"))
+    assert fetch_result.source_url == "https://www.linkedin.com/in/founder/"
+    assert observed["argv"] == shlex.split(DEFAULT_LINKEDIN_FETCH_COMMAND)
     assert observed["cwd"] == tmp_path.resolve()
 
 

@@ -3,8 +3,10 @@ from __future__ import annotations
 import pytest
 
 from kb.enrichment_config import (
+    DEFAULT_LINKEDIN_FETCH_COMMAND,
     DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND,
     DEFAULT_RUN_REPORT_PATH,
+    DEFAULT_SKOOL_FETCH_COMMAND,
     DEFAULT_SKOOL_BOOTSTRAP_COMMAND,
     EnrichmentConfig,
     SecretProvider,
@@ -29,9 +31,11 @@ def test_default_enrichment_config_includes_supported_sources_and_artifacts() ->
     assert linkedin.session_state_path.startswith(".build/")
     assert linkedin.evidence_path.startswith(".build/")
     assert linkedin.bootstrap_command == DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND
+    assert linkedin.fetch_command == DEFAULT_LINKEDIN_FETCH_COMMAND
     assert skool.session_state_path.startswith(".build/")
     assert skool.evidence_path.startswith(".build/")
     assert skool.bootstrap_command == DEFAULT_SKOOL_BOOTSTRAP_COMMAND
+    assert skool.fetch_command == DEFAULT_SKOOL_FETCH_COMMAND
     assert "linkedin.com" in linkedin.session_state_path
     assert "skool.com" in skool.session_state_path
 
@@ -90,10 +94,12 @@ def test_load_enrichment_config_from_env_overrides_defaults() -> None:
             "KB_ENRICHMENT_LINKEDIN_SESSION_PATH": ".build/enrichment/sessions/linkedin.com/custom.json",
             "KB_ENRICHMENT_LINKEDIN_EVIDENCE_PATH": ".build/enrichment/source-evidence/linkedin.com/custom",
             "KB_ENRICHMENT_LINKEDIN_BOOTSTRAP_COMMAND": "scripts/bootstrap-linkedin.sh",
+            "KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND": "scripts/fetch-linkedin.sh",
             "KB_ENRICHMENT_LINKEDIN_HEADLESS_OVERRIDE": "true",
             "KB_ENRICHMENT_SKOOL_SESSION_PATH": ".build/enrichment/sessions/skool.com/custom.json",
             "KB_ENRICHMENT_SKOOL_EVIDENCE_PATH": ".build/enrichment/source-evidence/skool.com/custom",
             "KB_ENRICHMENT_SKOOL_BOOTSTRAP_COMMAND": "scripts/bootstrap-skool.sh",
+            "KB_ENRICHMENT_SKOOL_FETCH_COMMAND": "scripts/fetch-skool.sh",
         }
     )
 
@@ -107,9 +113,11 @@ def test_load_enrichment_config_from_env_overrides_defaults() -> None:
     skool = config.sources[SupportedSource.skool]
     assert linkedin.session_state_path.endswith("custom.json")
     assert linkedin.bootstrap_command == "scripts/bootstrap-linkedin.sh"
+    assert linkedin.fetch_command == "scripts/fetch-linkedin.sh"
     assert linkedin.headless_override is True
     assert skool.session_state_path.endswith("custom.json")
     assert skool.bootstrap_command == "scripts/bootstrap-skool.sh"
+    assert skool.fetch_command == "scripts/fetch-skool.sh"
 
 
 def test_confidence_policy_requires_monotonic_thresholds() -> None:

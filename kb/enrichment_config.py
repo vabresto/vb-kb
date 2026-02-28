@@ -19,6 +19,12 @@ DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND = (
 DEFAULT_SKOOL_BOOTSTRAP_COMMAND = (
     "uv run --with playwright python -m kb.enrichment_playwright_bootstrap --source skool.com"
 )
+DEFAULT_LINKEDIN_FETCH_COMMAND = (
+    "uv run --with playwright python -m kb.enrichment_playwright_fetch --source linkedin.com"
+)
+DEFAULT_SKOOL_FETCH_COMMAND = (
+    "uv run --with playwright python -m kb.enrichment_playwright_fetch --source skool.com"
+)
 
 
 class SupportedSource(str, Enum):
@@ -104,6 +110,7 @@ class SourceSettings(KBBaseModel):
     session_state_path: str
     evidence_path: str
     bootstrap_command: str | None = None
+    fetch_command: str | None = None
     headless_override: bool | None = None
     username_env_var: str | None = None
     password_env_var: str | None = None
@@ -121,6 +128,7 @@ class SourceSettings(KBBaseModel):
         "username_secret_ref",
         "password_secret_ref",
         "bootstrap_command",
+        "fetch_command",
     )
     @classmethod
     def normalize_optional_tokens(cls, value: str | None) -> str | None:
@@ -133,6 +141,7 @@ def default_source_settings() -> dict[SupportedSource, SourceSettings]:
             session_state_path=f"{DEFAULT_SESSION_ROOT}/linkedin.com/storage-state.json",
             evidence_path=f"{DEFAULT_SOURCE_EVIDENCE_ROOT}/linkedin.com",
             bootstrap_command=DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND,
+            fetch_command=DEFAULT_LINKEDIN_FETCH_COMMAND,
             username_env_var="KB_ENRICH_LINKEDIN_USERNAME",
             password_env_var="KB_ENRICH_LINKEDIN_PASSWORD",
             username_secret_ref="linkedin.username",
@@ -142,6 +151,7 @@ def default_source_settings() -> dict[SupportedSource, SourceSettings]:
             session_state_path=f"{DEFAULT_SESSION_ROOT}/skool.com/storage-state.json",
             evidence_path=f"{DEFAULT_SOURCE_EVIDENCE_ROOT}/skool.com",
             bootstrap_command=DEFAULT_SKOOL_BOOTSTRAP_COMMAND,
+            fetch_command=DEFAULT_SKOOL_FETCH_COMMAND,
             username_env_var="KB_ENRICH_SKOOL_USERNAME",
             password_env_var="KB_ENRICH_SKOOL_PASSWORD",
             username_secret_ref="skool.username",
@@ -211,6 +221,7 @@ def load_enrichment_config_from_env(
             "session_state_path": "KB_ENRICHMENT_LINKEDIN_SESSION_PATH",
             "evidence_path": "KB_ENRICHMENT_LINKEDIN_EVIDENCE_PATH",
             "bootstrap_command": "KB_ENRICHMENT_LINKEDIN_BOOTSTRAP_COMMAND",
+            "fetch_command": "KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND",
             "username_env_var": "KB_ENRICHMENT_LINKEDIN_USERNAME_ENV",
             "password_env_var": "KB_ENRICHMENT_LINKEDIN_PASSWORD_ENV",
             "username_secret_ref": "KB_ENRICHMENT_LINKEDIN_USERNAME_SECRET",
@@ -220,6 +231,7 @@ def load_enrichment_config_from_env(
             "session_state_path": "KB_ENRICHMENT_SKOOL_SESSION_PATH",
             "evidence_path": "KB_ENRICHMENT_SKOOL_EVIDENCE_PATH",
             "bootstrap_command": "KB_ENRICHMENT_SKOOL_BOOTSTRAP_COMMAND",
+            "fetch_command": "KB_ENRICHMENT_SKOOL_FETCH_COMMAND",
             "username_env_var": "KB_ENRICHMENT_SKOOL_USERNAME_ENV",
             "password_env_var": "KB_ENRICHMENT_SKOOL_PASSWORD_ENV",
             "username_secret_ref": "KB_ENRICHMENT_SKOOL_USERNAME_SECRET",

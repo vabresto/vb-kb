@@ -80,9 +80,10 @@ class LinkedInSourceAdapter(SourceAdapter):
         self._fetch_runner = fetch_runner or _default_fetch_runner
         self._bootstrap_login_runner = bootstrap_login_runner or bootstrap_session_login
         self._environ = dict(os.environ if environ is None else environ)
+        default_fetch_command = _normalize_optional_token(self._config.sources[self.source].fetch_command)
         self._fetch_command = _normalize_optional_token(fetch_command) or _normalize_optional_token(
             self._environ.get(LINKEDIN_FETCH_COMMAND_ENV_VAR)
-        )
+        ) or default_fetch_command
 
     def authenticate(self, request: AuthenticationRequest) -> AuthenticationResult:
         auth_config = self._config_with_session_path(request.session_state_path)
@@ -128,7 +129,10 @@ class LinkedInSourceAdapter(SourceAdapter):
         if fetch_command is None:
             raise LinkedInExtractionError(
                 reason="fetch command not configured",
-                details=f"set '{LINKEDIN_FETCH_COMMAND_ENV_VAR}' or pass fetch_command explicitly",
+                details=(
+                    f"set '{LINKEDIN_FETCH_COMMAND_ENV_VAR}', set source fetch_command in EnrichmentConfig, "
+                    "or pass fetch_command explicitly"
+                ),
             )
 
         argv = shlex.split(fetch_command)
