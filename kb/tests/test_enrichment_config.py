@@ -3,7 +3,9 @@ from __future__ import annotations
 import pytest
 
 from kb.enrichment_config import (
+    DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND,
     DEFAULT_RUN_REPORT_PATH,
+    DEFAULT_SKOOL_BOOTSTRAP_COMMAND,
     EnrichmentConfig,
     SecretProvider,
     SupportedSource,
@@ -26,8 +28,10 @@ def test_default_enrichment_config_includes_supported_sources_and_artifacts() ->
 
     assert linkedin.session_state_path.startswith(".build/")
     assert linkedin.evidence_path.startswith(".build/")
+    assert linkedin.bootstrap_command == DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND
     assert skool.session_state_path.startswith(".build/")
     assert skool.evidence_path.startswith(".build/")
+    assert skool.bootstrap_command == DEFAULT_SKOOL_BOOTSTRAP_COMMAND
     assert "linkedin.com" in linkedin.session_state_path
     assert "skool.com" in skool.session_state_path
 

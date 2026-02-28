@@ -235,3 +235,25 @@ There are still stories with `passes: false` (`US-005` through `US-013`).
   - Useful context (e.g., "the evaluation panel is in component X")
     - `LinkedInSourceAdapter` supports dependency injection for `fetch_runner` and `bootstrap_login_runner`, which keeps adapter tests deterministic without browser runtime.
 ---
+
+## Codex Output - Iteration 1 (2026-02-28 15:45:12)
+Implemented `US-005` on branch `ralph/playwright-kb-enrichment` and committed all changes.
+
+Commit:
+- `54fbf24`
+- `feat: [US-005] - [Implement LinkedIn adapter extraction]`
+
+What was implemented:
+- Added LinkedIn adapter implementation with typed auth/fetch/normalize/snapshot flow, session preflight, bootstrap fallback, command-driven extraction, challenge detection, and typed extraction errors in [kb/enrichment_linkedin_adapter.py](/root/ws/vb-kb2/kb/enrichment_linkedin_adapter.py)
+- Added focused adapter tests (protocol conformance, bootstrap fallback, normalized facts, anti-bot error, unsupported flow error) in [kb/tests/test_enrichment_linkedin_adapter.py](/root/ws/vb-kb2/kb/tests/test_enrichment_linkedin_adapter.py)
+- Updated reusable agent guidance in [agents.md](/root/ws/vb-kb2/agents.md)
+- Updated enrichment layout docs in [README.md](/root/ws/vb-kb2/README.md)
+- Marked `US-005` as passing in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended required progress entry and updated Codebase Patterns in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_linkedin_adapter.py` (`5 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, `pytest`, `mkdocs build`; `66 passed`)
+
+There are still stories with `passes: false` (`US-006` through `US-013`).
+---

@@ -39,6 +39,7 @@ Python files for authenticated enrichment are organized by concern:
 - `kb/enrichment_adapters.py`: shared source-adapter contract and typed extraction/auth errors.
 - `kb/enrichment_sessions.py`: session storageState read/write/import/export and missing/expired diagnostics.
 - `kb/enrichment_bootstrap.py`: source bootstrap command runner for login/session creation with MFA/anti-bot challenge mapping.
+- `kb/enrichment_playwright_bootstrap.py`: default Playwright bootstrap implementation used when no `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` override is set.
 - `kb/enrichment_linkedin_adapter.py`: LinkedIn adapter implementation with session preflight/bootstrap fallback, fetch normalization, and snapshot persistence.
 - `kb/cli.py`: user-facing command wiring (`kb bootstrap-session ...`).
 
@@ -54,11 +55,16 @@ Related tests:
 Related runnable workflows:
 
 - `just enrichment-bootstrap <source>`
-- `just enrichment-bootstrap-headful <source> <export_path>`
+- `just enrichment-bootstrap <source> "--headful"`
+- `just enrichment-bootstrap <source> "--export-path <path>"`
+- `just enrichment-bootstrap <source> "--bootstrap-command '<command>' --pretty"`
+- `just enrichment-bootstrap <source> "<any kb bootstrap-session flags>" <project_root>`
+- `just enrichment-bootstrap-headful <source> "--export-path <path>"` (convenience alias)
 
 Bootstrap command contract:
 
 - Bootstrap scripts should emit JSON as either raw Playwright `storageState` (`cookies` + `origins`) or `{ "storage_state": ... }`.
+- If `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` is unset, default commands run `kb.enrichment_playwright_bootstrap` via `uv --with playwright`.
 
 ## Validate data
 

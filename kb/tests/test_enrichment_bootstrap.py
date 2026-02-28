@@ -86,6 +86,7 @@ def test_bootstrap_session_login_persists_session_and_exports_when_requested(tmp
 
 def test_bootstrap_session_login_requires_configured_command(tmp_path: Path) -> None:
     config = EnrichmentConfig()
+    config.sources[SupportedSource.skool].bootstrap_command = None
 
     with pytest.raises(BootstrapScriptNotConfiguredError) as exc:
         bootstrap_session_login(

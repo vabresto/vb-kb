@@ -13,6 +13,12 @@ DEFAULT_ENRICHMENT_ROOT = ".build/enrichment"
 DEFAULT_RUN_REPORT_PATH = f"{DEFAULT_ENRICHMENT_ROOT}/reports/latest-run.json"
 DEFAULT_SESSION_ROOT = f"{DEFAULT_ENRICHMENT_ROOT}/sessions"
 DEFAULT_SOURCE_EVIDENCE_ROOT = f"{DEFAULT_ENRICHMENT_ROOT}/source-evidence"
+DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND = (
+    "uv run --with playwright python -m kb.enrichment_playwright_bootstrap --source linkedin.com"
+)
+DEFAULT_SKOOL_BOOTSTRAP_COMMAND = (
+    "uv run --with playwright python -m kb.enrichment_playwright_bootstrap --source skool.com"
+)
 
 
 class SupportedSource(str, Enum):
@@ -126,6 +132,7 @@ def default_source_settings() -> dict[SupportedSource, SourceSettings]:
         SupportedSource.linkedin: SourceSettings(
             session_state_path=f"{DEFAULT_SESSION_ROOT}/linkedin.com/storage-state.json",
             evidence_path=f"{DEFAULT_SOURCE_EVIDENCE_ROOT}/linkedin.com",
+            bootstrap_command=DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND,
             username_env_var="KB_ENRICH_LINKEDIN_USERNAME",
             password_env_var="KB_ENRICH_LINKEDIN_PASSWORD",
             username_secret_ref="linkedin.username",
@@ -134,6 +141,7 @@ def default_source_settings() -> dict[SupportedSource, SourceSettings]:
         SupportedSource.skool: SourceSettings(
             session_state_path=f"{DEFAULT_SESSION_ROOT}/skool.com/storage-state.json",
             evidence_path=f"{DEFAULT_SOURCE_EVIDENCE_ROOT}/skool.com",
+            bootstrap_command=DEFAULT_SKOOL_BOOTSTRAP_COMMAND,
             username_env_var="KB_ENRICH_SKOOL_USERNAME",
             password_env_var="KB_ENRICH_SKOOL_PASSWORD",
             username_secret_ref="skool.username",

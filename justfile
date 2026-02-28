@@ -58,12 +58,13 @@ ralph max_iterations="10":
   ./scripts/ralph/ralph.sh {{max_iterations}}
 
 # Bootstrap source login and persist Playwright storageState session.
-enrichment-bootstrap source:
-  uv run kb bootstrap-session {{source}}
+# Exposes full `kb bootstrap-session` flag surface via just.
+enrichment-bootstrap source args="" project_root=".":
+  uv run kb bootstrap-session "{{source}}" --project-root "{{project_root}}" {{args}}
 
-# Bootstrap source login locally in headful mode and export transfer JSON.
-enrichment-bootstrap-headful source export_path:
-  uv run kb bootstrap-session {{source}} --headful --export-path {{export_path}}
+# Convenience alias for local headful runs.
+enrichment-bootstrap-headful source args="" project_root=".":
+  uv run kb bootstrap-session "{{source}}" --project-root "{{project_root}}" --headful {{args}}
 
 # Derive canonical employment edges from person JSONL rows.
 derive-edges:
