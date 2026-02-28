@@ -83,6 +83,7 @@ Bootstrap command contract:
 - If `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` is unset, default commands run `kb.enrichment_playwright_bootstrap` via `uv --with playwright`.
 - If `KB_ENRICHMENT_*_FETCH_COMMAND` is unset, default commands run `kb.enrichment_playwright_fetch` via `uv --with playwright`.
 - Default Playwright fetch scrolls profile pages before capture; LinkedIn extraction records `experience` facts and Skool extraction records scrolled `profile_entry` facts.
+- If a slug-based direct profile URL does not resolve to a real profile page, default fetch retries with search-driven profile discovery (LinkedIn people search + fallback web search; Skool search + fallback web search) and then re-extracts from the best candidate profile URL.
 - Playwright actions use randomized waits by default to reduce bot-like timing patterns.
   - Disable per command with `kb bootstrap-session --no-random-waits` or `kb enrich-entity --no-random-waits`.
   - Env override for command runners: `KB_ENRICHMENT_ACTION_RANDOM_WAITS=false`.

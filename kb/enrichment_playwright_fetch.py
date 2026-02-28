@@ -9,7 +9,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, quote_plus, unquote, urljoin, urlparse, urlunparse
 
 from kb.enrichment_config import SupportedSource
 from kb.enrichment_playwright_timing import RandomWaitSettings, parse_random_wait_settings, wait_random_delay
@@ -71,6 +71,36 @@ _SKOOL_IGNORED_PREFIXES = (
     "see less",
     "view profile",
 )
+_MISSING_PROFILE_TEXT_HINTS: dict[SupportedSource, tuple[str, ...]] = {
+    SupportedSource.linkedin: (
+        "profile not found",
+        "page not found",
+        "this profile is not available",
+        "this profile is unavailable",
+        "an exact match was not found",
+        "we couldn't find a match",
+        "no results found",
+    ),
+    SupportedSource.skool: (
+        "page not found",
+        "this page is unavailable",
+        "this content isn't available",
+        "no users found",
+        "couldn't find",
+        "not available",
+        "404",
+    ),
+}
+_SEARCH_URL_TEMPLATES: dict[SupportedSource, tuple[str, ...]] = {
+    SupportedSource.linkedin: (
+        "https://www.linkedin.com/search/results/people/?keywords={query}",
+        "https://duckduckgo.com/?q=site%3Alinkedin.com%2Fin+{query}",
+    ),
+    SupportedSource.skool: (
+        "https://www.skool.com/search?q={query}",
+        "https://duckduckgo.com/?q=site%3Askool.com+%40{query}",
+    ),
+}
 
 
 def _normalize_optional_text(value: object) -> str | None:
@@ -412,6 +442,183 @@ def _unsupported_reason(*, source: SupportedSource, url: str, title: str | None,
     return None
 
 
+def _is_profile_url(*, source: SupportedSource, url: str) -> bool:
+    parsed = urlparse(url.strip())
+    host = parsed.netloc.lower()
+    path = parsed.path.lower()
+    if source == SupportedSource.linkedin:
+        return "linkedin.com" in host and path.startswith("/in/")
+    return "skool.com" in host and path.startswith("/@")
+
+
+def _profile_resolution_reason(*, source: SupportedSource, url: str, title: str | None, html: str) -> str | None:
+    normalized_url = _normalize_optional_text(url) or ""
+    parsed = urlparse(normalized_url.lower())
+    host = parsed.netloc
+    visible_text = _visible_text_from_html(html[:12000])
+    title_text = _normalize_optional_text(title) or ""
+    text_signal = f"{title_text.lower()} {visible_text}".strip()
+
+    if any(hint in text_signal for hint in _MISSING_PROFILE_TEXT_HINTS[source]):
+        return f"{source.value} profile not found"
+
+    source_token = source.value.lower().split(".", 1)[0]
+    if source_token in host and not _is_profile_url(source=source, url=normalized_url):
+        return f"did not land on a {source.value} profile page"
+    return None
+
+
+def _search_query_from_slug(entity_slug: str) -> str:
+    tokens = re.findall(r"[a-z0-9]+", entity_slug.lower())
+    if not tokens:
+        return entity_slug
+    return " ".join(tokens)
+
+
+def _unwrap_search_redirect_url(url: str) -> str:
+    parsed = urlparse(url)
+    host = parsed.netloc.lower()
+    if "duckduckgo.com" not in host:
+        return url
+    query = parse_qs(parsed.query)
+    for key in ("uddg", "u", "url"):
+        values = query.get(key)
+        if not values:
+            continue
+        target = _normalize_optional_text(values[0])
+        if target is not None:
+            return unquote(target)
+    return url
+
+
+def _canonical_profile_url(source: SupportedSource, url: str, *, base_url: str | None = None) -> str | None:
+    candidate = _unwrap_search_redirect_url(url)
+    resolved = urljoin(base_url or "", candidate)
+    parsed = urlparse(resolved)
+    scheme = parsed.scheme.lower()
+    if scheme not in {"http", "https"}:
+        return None
+    host = parsed.netloc.lower()
+    path = parsed.path or "/"
+    if source == SupportedSource.linkedin:
+        if "linkedin.com" not in host or not path.lower().startswith("/in/"):
+            return None
+        if not path.endswith("/"):
+            path = f"{path}/"
+    else:
+        if "skool.com" not in host or not path.lower().startswith("/@"):
+            return None
+        path = path.rstrip("/") or "/"
+    return urlunparse(("https", host, path, "", "", ""))
+
+
+def _score_profile_candidate(*, source: SupportedSource, url: str, entity_slug: str) -> int:
+    parsed = urlparse(url.lower())
+    path = parsed.path
+    tokens = re.findall(r"[a-z0-9]+", entity_slug.lower())
+    slug_with_hyphens = "-".join(tokens)
+
+    score = 0
+    if source == SupportedSource.linkedin and path.startswith("/in/"):
+        score += 60
+    if source == SupportedSource.skool and path.startswith("/@"):
+        score += 60
+    if slug_with_hyphens and slug_with_hyphens in path:
+        score += 120
+    for token in tokens:
+        if token in path:
+            score += 12
+    score -= min(len(path), 160) // 4
+    return score
+
+
+def _select_best_profile_candidate(
+    *,
+    source: SupportedSource,
+    entity_slug: str,
+    candidates: list[str],
+) -> str | None:
+    normalized_candidates: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        normalized = _canonical_profile_url(source, candidate)
+        if normalized is None or normalized in seen:
+            continue
+        seen.add(normalized)
+        normalized_candidates.append(normalized)
+    if not normalized_candidates:
+        return None
+    ranked = sorted(
+        normalized_candidates,
+        key=lambda candidate: (_score_profile_candidate(source=source, url=candidate, entity_slug=entity_slug), candidate),
+        reverse=True,
+    )
+    return ranked[0]
+
+
+def _collect_profile_candidates_from_page(page: Any, *, source: SupportedSource) -> list[str]:
+    candidates: list[str] = []
+    seen: set[str] = set()
+    try:
+        locator = page.locator("a[href]")
+        count = min(locator.count(), 320)
+    except Exception:
+        return candidates
+
+    for index in range(count):
+        try:
+            href = locator.nth(index).get_attribute("href", timeout=1_000)
+        except Exception:
+            continue
+        normalized_href = _normalize_optional_text(href)
+        if normalized_href is None:
+            continue
+        normalized_candidate = _canonical_profile_url(source, normalized_href, base_url=page.url)
+        if normalized_candidate is None or normalized_candidate in seen:
+            continue
+        seen.add(normalized_candidate)
+        candidates.append(normalized_candidate)
+    return candidates
+
+
+def _scroll_search_results(page: Any, wait_settings: RandomWaitSettings) -> None:
+    for _ in range(3):
+        try:
+            page.evaluate("() => window.scrollBy(0, Math.max(800, window.innerHeight))")
+            page.wait_for_timeout(250)
+            wait_random_delay(page, wait_settings, minimum_ms=70, maximum_ms=220)
+        except Exception:
+            break
+
+
+def _discover_profile_url(
+    *,
+    page: Any,
+    source: SupportedSource,
+    entity_slug: str,
+    wait_settings: RandomWaitSettings,
+) -> str | None:
+    query = quote_plus(_search_query_from_slug(entity_slug))
+    for template in _SEARCH_URL_TEMPLATES[source]:
+        search_url = template.format(query=query)
+        try:
+            page.goto(search_url, wait_until="domcontentloaded", timeout=60_000)
+            page.wait_for_timeout(900)
+            wait_random_delay(page, wait_settings)
+            _scroll_search_results(page, wait_settings)
+        except Exception:
+            continue
+        candidates = _collect_profile_candidates_from_page(page, source=source)
+        selected = _select_best_profile_candidate(
+            source=source,
+            entity_slug=entity_slug,
+            candidates=candidates,
+        )
+        if selected is not None:
+            return selected
+    return None
+
+
 def _scroll_profile(page: Any, wait_settings: RandomWaitSettings) -> None:
     last_height = 0
     stable_steps = 0
@@ -435,6 +642,38 @@ def _scroll_profile(page: Any, wait_settings: RandomWaitSettings) -> None:
     wait_random_delay(page, wait_settings, minimum_ms=100, maximum_ms=300)
 
 
+def _capture_profile_payload(
+    *,
+    page: Any,
+    source: SupportedSource,
+    url: str,
+    wait_settings: RandomWaitSettings,
+) -> dict[str, Any]:
+    page.goto(url, wait_until="domcontentloaded", timeout=60_000)
+    page.wait_for_timeout(1200)
+    wait_random_delay(page, wait_settings)
+    _scroll_profile(page, wait_settings)
+
+    source_url = _normalize_optional_text(page.url) or url
+    title = _normalize_optional_text(page.title())
+    description = _extract_meta_content(page, "description") or _extract_meta_content(page, "og:description")
+    experience_entries: list[str] = []
+    skool_entries: list[str] = []
+    if source == SupportedSource.linkedin:
+        experience_entries = _collect_linkedin_experience_entries(page)
+    else:
+        skool_entries = _collect_skool_profile_entries(page)
+    html = page.content()
+    return {
+        "source_url": source_url,
+        "title": title,
+        "description": description,
+        "experience_entries": experience_entries,
+        "skool_entries": skool_entries,
+        "html": html,
+    }
+
+
 def _run_fetch(source: SupportedSource) -> int:
     entity_slug = _require_extract_slug()
     cwd = Path.cwd()
@@ -449,22 +688,83 @@ def _run_fetch(source: SupportedSource) -> int:
         browser = playwright.chromium.launch(headless=headless)
         context = browser.new_context(storage_state=str(session_state_path))
         page = context.new_page()
-        page.goto(target_url, wait_until="domcontentloaded", timeout=60_000)
-        page.wait_for_timeout(1200)
-        wait_random_delay(page, wait_settings)
-        _scroll_profile(page, wait_settings)
-        source_url = _normalize_optional_text(page.url) or target_url
-        title = _normalize_optional_text(page.title())
-        description = _extract_meta_content(page, "description") or _extract_meta_content(
-            page, "og:description"
+        profile_payload = _capture_profile_payload(
+            page=page,
+            source=source,
+            url=target_url,
+            wait_settings=wait_settings,
         )
-        experience_entries: list[str] = []
-        skool_entries: list[str] = []
-        if source == SupportedSource.linkedin:
-            experience_entries = _collect_linkedin_experience_entries(page)
-        else:
-            skool_entries = _collect_skool_profile_entries(page)
-        html = page.content()
+        source_url = str(profile_payload["source_url"])
+        title = _normalize_optional_text(profile_payload.get("title"))
+        description = _normalize_optional_text(profile_payload.get("description"))
+        experience_entries = list(profile_payload.get("experience_entries") or [])
+        skool_entries = list(profile_payload.get("skool_entries") or [])
+        html = str(profile_payload["html"])
+
+        challenge_reason = _unsupported_reason(source=source, url=source_url, title=title, html=html)
+        if challenge_reason is not None:
+            browser.close()
+            payload = {
+                "status": "unsupported",
+                "reason": challenge_reason,
+                "source_url": source_url,
+                "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                "html": html,
+            }
+            print(json.dumps(payload))
+            return 0
+
+        resolution_reason = _profile_resolution_reason(source=source, url=source_url, title=title, html=html)
+        if resolution_reason is not None:
+            discovered_url = _discover_profile_url(
+                page=page,
+                source=source,
+                entity_slug=entity_slug,
+                wait_settings=wait_settings,
+            )
+            if discovered_url is not None:
+                profile_payload = _capture_profile_payload(
+                    page=page,
+                    source=source,
+                    url=discovered_url,
+                    wait_settings=wait_settings,
+                )
+                source_url = str(profile_payload["source_url"])
+                title = _normalize_optional_text(profile_payload.get("title"))
+                description = _normalize_optional_text(profile_payload.get("description"))
+                experience_entries = list(profile_payload.get("experience_entries") or [])
+                skool_entries = list(profile_payload.get("skool_entries") or [])
+                html = str(profile_payload["html"])
+                challenge_reason = _unsupported_reason(source=source, url=source_url, title=title, html=html)
+                if challenge_reason is not None:
+                    browser.close()
+                    payload = {
+                        "status": "unsupported",
+                        "reason": challenge_reason,
+                        "source_url": source_url,
+                        "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                        "html": html,
+                    }
+                    print(json.dumps(payload))
+                    return 0
+                resolution_reason = _profile_resolution_reason(
+                    source=source,
+                    url=source_url,
+                    title=title,
+                    html=html,
+                )
+            if resolution_reason is not None:
+                browser.close()
+                payload = {
+                    "status": "unsupported",
+                    "reason": resolution_reason,
+                    "source_url": source_url,
+                    "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                    "html": html,
+                }
+                print(json.dumps(payload))
+                return 0
+
         browser.close()
 
     reason = _unsupported_reason(source=source, url=source_url, title=title, html=html)

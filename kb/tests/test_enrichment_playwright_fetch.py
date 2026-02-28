@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from kb.enrichment_config import SupportedSource
 from kb.enrichment_playwright_fetch import (
+    _canonical_profile_url,
     _deduplicate_fact_rows,
     _extract_linkedin_facts,
     _extract_skool_facts,
+    _profile_resolution_reason,
     _resolve_source,
+    _search_query_from_slug,
+    _select_best_profile_candidate,
     _unsupported_reason,
+    _unwrap_search_redirect_url,
 )
 
 
@@ -147,3 +152,58 @@ def test_deduplicate_fact_rows_removes_exact_duplicates() -> None:
             "metadata": {"extractor": "playwright-default"},
         },
     ]
+
+
+def test_profile_resolution_reason_detects_non_profile_url() -> None:
+    reason = _profile_resolution_reason(
+        source=SupportedSource.linkedin,
+        url="https://www.linkedin.com/search/results/people/?keywords=jane",
+        title="People Search | LinkedIn",
+        html="<html><body>People results</body></html>",
+    )
+    assert reason == "did not land on a linkedin.com profile page"
+
+
+def test_profile_resolution_reason_detects_missing_profile_text() -> None:
+    reason = _profile_resolution_reason(
+        source=SupportedSource.skool,
+        url="https://www.skool.com/@missing-user",
+        title="Page not found | Skool",
+        html="<html><body>This page is unavailable</body></html>",
+    )
+    assert reason == "skool.com profile not found"
+
+
+def test_search_query_from_slug_normalizes_tokens() -> None:
+    assert _search_query_from_slug("jose-luis_avilez") == "jose luis avilez"
+
+
+def test_unwrap_search_redirect_url_decodes_duckduckgo_target() -> None:
+    wrapped = "https://duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.linkedin.com%2Fin%2Fjane-founder%2F"
+    assert _unwrap_search_redirect_url(wrapped) == "https://www.linkedin.com/in/jane-founder/"
+
+
+def test_canonical_profile_url_normalizes_source_specific_paths() -> None:
+    linkedin = _canonical_profile_url(
+        SupportedSource.linkedin,
+        "https://www.linkedin.com/in/Jane-Founder/?trk=abc",
+    )
+    skool = _canonical_profile_url(
+        SupportedSource.skool,
+        "https://www.skool.com/@jane-founder/?a=1",
+    )
+    assert linkedin == "https://www.linkedin.com/in/Jane-Founder/"
+    assert skool == "https://www.skool.com/@jane-founder"
+
+
+def test_select_best_profile_candidate_prefers_slug_match() -> None:
+    selected = _select_best_profile_candidate(
+        source=SupportedSource.linkedin,
+        entity_slug="jose-luis-avilez",
+        candidates=[
+            "https://www.linkedin.com/in/jose-luis/",
+            "https://www.linkedin.com/in/jose-luis-avilez-123456/",
+            "https://www.linkedin.com/in/jose/",
+        ],
+    )
+    assert selected == "https://www.linkedin.com/in/jose-luis-avilez-123456/"
