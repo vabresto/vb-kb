@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 import re
@@ -8,6 +9,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from kb.enrichment_config import SupportedSource
 
@@ -18,6 +20,35 @@ _PROFILE_URLS: dict[SupportedSource, str] = {
 _LINKEDIN_TITLE_SUFFIX_RE = re.compile(r"\s*\|\s*linkedin\s*$", re.IGNORECASE)
 _SKOOL_TITLE_SUFFIX_RE = re.compile(r"\s*\|\s*skool\s*$", re.IGNORECASE)
 _COMPANY_HINT_RE = re.compile(r"\bat\s+([^|,]+)", re.IGNORECASE)
+_HTML_SCRIPT_STYLE_RE = re.compile(r"<(script|style|noscript)\b[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+_WHITESPACE_RE = re.compile(r"\s+")
+_CAPTCHA_TEXT_HINTS = (
+    "verify you are human",
+    "confirm you are human",
+    "prove you're not a robot",
+    "prove you are not a robot",
+    "let us know you're not a robot",
+    "let us know you are not a robot",
+    "security verification",
+    "complete the security check",
+    "complete this security check",
+    "checking your browser before accessing",
+    "attention required",
+    "just a moment",
+)
+_CAPTCHA_URL_HINTS = (
+    "/checkpoint/challenge",
+    "/captcha",
+    "/cdn-cgi/challenge-platform",
+)
+_LINKEDIN_LOGIN_PATH_HINTS = (
+    "/login",
+    "/uas/login",
+    "/checkpoint/lg/login-submit",
+    "/authwall",
+)
+_SKOOL_LOGIN_PATH_HINTS = ("/login",)
 
 
 def _normalize_optional_text(value: object) -> str | None:
@@ -134,14 +165,47 @@ def _extract_skool_facts(*, title: str | None, description: str | None) -> list[
     return facts
 
 
+def _visible_text_from_html(html_content: str) -> str:
+    without_script = _HTML_SCRIPT_STYLE_RE.sub(" ", html_content)
+    without_tags = _HTML_TAG_RE.sub(" ", without_script)
+    unescaped = html.unescape(without_tags)
+    return _WHITESPACE_RE.sub(" ", unescaped).strip().lower()
+
+
+def _is_login_page(*, source: SupportedSource, normalized_url: str) -> bool:
+    parsed = urlparse(normalized_url)
+    host = parsed.netloc.lower()
+    path = parsed.path.lower()
+    if source == SupportedSource.linkedin:
+        if "linkedin.com" not in host:
+            return False
+        return any(path.startswith(prefix) for prefix in _LINKEDIN_LOGIN_PATH_HINTS)
+    if "skool.com" not in host:
+        return False
+    return any(path.startswith(prefix) for prefix in _SKOOL_LOGIN_PATH_HINTS)
+
+
+def _is_captcha_challenge(*, normalized_url: str, text_signal: str) -> bool:
+    if any(hint in normalized_url for hint in _CAPTCHA_URL_HINTS):
+        return True
+    if any(hint in text_signal for hint in _CAPTCHA_TEXT_HINTS):
+        return True
+    if "captcha" in text_signal and any(token in text_signal for token in ("verify", "human", "robot", "security")):
+        return True
+    return False
+
+
 def _unsupported_reason(*, source: SupportedSource, url: str, title: str | None, html: str) -> str | None:
-    lowered = f"{url} {title or ''} {html[:3000]}".lower()
-    if any(token in lowered for token in ("captcha", "verify you are human", "recaptcha", "hcaptcha")):
-        return "captcha challenge detected"
-    if source == SupportedSource.linkedin and "linkedin.com/login" in lowered:
-        return "authenticated linkedin session required"
-    if source == SupportedSource.skool and "skool.com/login" in lowered:
+    normalized_url = _normalize_optional_text(url) or ""
+    visible_text = _visible_text_from_html(html[:12000])
+    title_text = _normalize_optional_text(title) or ""
+    text_signal = f"{title_text.lower()} {visible_text}".strip()
+    if _is_login_page(source=source, normalized_url=normalized_url.lower()):
+        if source == SupportedSource.linkedin:
+            return "authenticated linkedin session required"
         return "authenticated skool session required"
+    if _is_captcha_challenge(normalized_url=normalized_url.lower(), text_signal=text_signal):
+        return "captcha challenge detected"
     return None
 
 

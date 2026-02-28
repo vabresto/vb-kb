@@ -54,6 +54,36 @@ def test_unsupported_reason_detects_login_and_captcha() -> None:
     )
 
 
+def test_unsupported_reason_does_not_flag_profile_with_captcha_script_only() -> None:
+    assert (
+        _unsupported_reason(
+            source=SupportedSource.linkedin,
+            url="https://www.linkedin.com/in/founder/",
+            title="Jane Founder - Founder - Future Labs | LinkedIn",
+            html=(
+                "<html><head>"
+                "<script src='https://www.google.com/recaptcha/api.js'></script>"
+                "</head><body>"
+                "<h1>Jane Founder</h1><p>Founder at Future Labs</p>"
+                "</body></html>"
+            ),
+        )
+        is None
+    )
+
+
+def test_unsupported_reason_prefers_login_reason_over_captcha_tokens() -> None:
+    assert (
+        _unsupported_reason(
+            source=SupportedSource.linkedin,
+            url="https://www.linkedin.com/login",
+            title="Sign in | LinkedIn",
+            html="<script>var x='captcha';</script><div>Sign in</div>",
+        )
+        == "authenticated linkedin session required"
+    )
+
+
 def test_resolve_source_prefers_argument_over_environment(monkeypatch) -> None:
     monkeypatch.setenv("KB_ENRICHMENT_EXTRACT_SOURCE", "skool.com")
     assert _resolve_source("linkedin.com") == SupportedSource.linkedin
