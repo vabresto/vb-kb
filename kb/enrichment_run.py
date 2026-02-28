@@ -297,6 +297,15 @@ class _SourceEntityArtifact(KBBaseModel):
     source_entity_ref: str
     source_entity_path: str
     facts_artifact_path: str
+    deduplicated: bool = False
+
+
+class _ExistingSourceEntityArtifact(KBBaseModel):
+    source_entity_ref: str
+    source_entity_path: str
+    facts_artifact_path: str
+    facts_signature: str
+    retrieved_at: datetime
 
 
 class _SourceLoggingError(KBBaseModel):
@@ -645,9 +654,15 @@ def _build_source_logging_phase(
                 error=str(exc) or exc.__class__.__name__,
             )
 
+    deduplicated_count = sum(1 for artifact in artifacts.values() if artifact.deduplicated)
+    persisted_count = len(artifacts) - deduplicated_count
     completed_at = _normalize_now()
     if errors:
-        message = f"logged {len(artifacts)} source record(s); {len(errors)} source record write(s) failed"
+        message = (
+            f"persisted {persisted_count} source record(s); "
+            f"reused {deduplicated_count} unchanged source artifact(s); "
+            f"{len(errors)} source record write(s) failed"
+        )
         return (
             PhaseState(
                 status=PhaseStatus.failed,
@@ -661,7 +676,10 @@ def _build_source_logging_phase(
     return (
         PhaseState(
             status=PhaseStatus.succeeded,
-            message=f"persisted {len(artifacts)} source record(s) with full fact logs",
+            message=(
+                f"persisted {persisted_count} source record(s) with full fact logs; "
+                f"reused {deduplicated_count} unchanged source artifact(s)"
+            ),
             started_at=started_at,
             completed_at=completed_at,
         ),
@@ -2136,6 +2154,24 @@ def _write_source_entity_record(
     run_id: str,
     project_root: Path,
 ) -> _SourceEntityArtifact:
+    sorted_facts = _serialize_normalized_facts(normalize_result=normalize_result)
+    facts_signature = _build_fact_signature(
+        source_url=fetch_result.source_url,
+        fact_rows=sorted_facts,
+    )
+    existing = _find_latest_source_entity_artifact(
+        source=source,
+        entity_slug=target.entity_slug,
+        project_root=project_root,
+    )
+    if existing is not None and existing.facts_signature == facts_signature:
+        return _SourceEntityArtifact(
+            source_entity_ref=existing.source_entity_ref,
+            source_entity_path=existing.source_entity_path,
+            facts_artifact_path=existing.facts_artifact_path,
+            deduplicated=True,
+        )
+
     source_slug = _build_source_entity_slug(
         source=source,
         entity_slug=target.entity_slug,
@@ -2155,7 +2191,6 @@ def _write_source_entity_record(
     if not gitkeep.exists():
         gitkeep.write_text("", encoding="utf-8")
 
-    sorted_facts = _serialize_normalized_facts(normalize_result=normalize_result)
     facts_payload = {
         "entity_ref": target.entity_ref,
         "entity_slug": target.entity_slug,
@@ -2239,7 +2274,135 @@ def _write_source_entity_record(
         source_entity_ref=source_ref,
         source_entity_path=source_entity_path,
         facts_artifact_path=facts_artifact_path,
+        deduplicated=False,
     )
+
+
+def _find_latest_source_entity_artifact(
+    *,
+    source: SupportedSource,
+    entity_slug: str,
+    project_root: Path,
+) -> _ExistingSourceEntityArtifact | None:
+    source_root = project_root / "data" / "source"
+    if not source_root.exists():
+        return None
+
+    latest: _ExistingSourceEntityArtifact | None = None
+    for facts_path in source_root.glob("*/source@*/facts.json"):
+        try:
+            payload = json.loads(facts_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        if payload.get("source") != source.value:
+            continue
+        if payload.get("entity_slug") != entity_slug:
+            continue
+
+        retrieved_at = _parse_iso_datetime(payload.get("retrieved_at"))
+        if retrieved_at is None:
+            continue
+        source_entity_path = facts_path.parent / "index.md"
+        if not source_entity_path.exists():
+            continue
+        source_entity_ref = _normalize_text(payload.get("source_ref"))
+        if source_entity_ref is None:
+            source_entity_ref = _entity_ref_from_source_index_path(
+                source_index_path=source_entity_path,
+                project_root=project_root,
+            )
+        if source_entity_ref is None:
+            continue
+        facts_signature = _build_fact_signature(
+            source_url=str(payload.get("source_url") or ""),
+            fact_rows=payload.get("facts"),
+        )
+        artifact = _ExistingSourceEntityArtifact(
+            source_entity_ref=source_entity_ref,
+            source_entity_path=source_entity_path.relative_to(project_root).as_posix(),
+            facts_artifact_path=facts_path.relative_to(project_root).as_posix(),
+            facts_signature=facts_signature,
+            retrieved_at=retrieved_at,
+        )
+        if latest is None or artifact.retrieved_at > latest.retrieved_at:
+            latest = artifact
+    return latest
+
+
+def _build_fact_signature(*, source_url: str, fact_rows: object) -> str:
+    normalized_source_url = _normalize_text(source_url) or ""
+    rows = fact_rows if isinstance(fact_rows, list) else []
+    normalized_rows: list[dict[str, object]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        attribute = _normalize_text(row.get("attribute"))
+        value = _normalize_text(row.get("value"))
+        confidence = _normalize_text(row.get("confidence"))
+        row_source_url = _normalize_text(row.get("source_url")) or normalized_source_url
+        metadata = row.get("metadata")
+        if (
+            attribute is None
+            or value is None
+            or confidence is None
+            or row_source_url is None
+        ):
+            continue
+        normalized_rows.append(
+            {
+                "attribute": attribute,
+                "confidence": confidence,
+                "metadata": dict(metadata) if isinstance(metadata, dict) else {},
+                "source_url": row_source_url,
+                "value": value,
+            }
+        )
+    normalized_rows.sort(
+        key=lambda row: (
+            str(row["attribute"]),
+            str(row["value"]),
+            str(row["confidence"]),
+            str(row["source_url"]),
+            json.dumps(row["metadata"], sort_keys=True, separators=(",", ":"), ensure_ascii=True),
+        )
+    )
+    signature_payload = {
+        "source_url": normalized_source_url,
+        "facts": normalized_rows,
+    }
+    return json.dumps(signature_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+
+
+def _entity_ref_from_source_index_path(*, source_index_path: Path, project_root: Path) -> str | None:
+    try:
+        relative = source_index_path.resolve().relative_to(project_root.resolve()).as_posix()
+    except ValueError:
+        return None
+    match = re.search(r"data/(?P<entity_ref>source/[a-z0-9]{2}/source@[a-z0-9][a-z0-9-]*)/index\.md$", relative)
+    if match is None:
+        return None
+    entity_ref = match.group("entity_ref")
+    try:
+        return validate_entity_rel_path(entity_ref)
+    except ValueError:
+        return None
+
+
+def _parse_iso_datetime(raw_value: object) -> datetime | None:
+    if not isinstance(raw_value, str) or not raw_value.strip():
+        return None
+    normalized = raw_value.strip()
+    if normalized.endswith("Z"):
+        normalized = normalized[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _serialize_normalized_facts(*, normalize_result: NormalizeResult) -> list[dict[str, object]]:
