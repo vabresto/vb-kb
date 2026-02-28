@@ -439,3 +439,177 @@ def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: 
     assert employment_rows[-1]["organization"] == "Legacy Labs"
     assert employment_rows[-1]["role"] == "Founder"
     assert employment_rows[-1]["source_path"] == "data/person/fo/person@founder-name/index.md"
+
+
+def _write_org_fixture(
+    project_root: Path,
+    *,
+    slug: str = "future-labs",
+    org_name: str = "Future Labs",
+    website: str = "https://legacy.example.com",
+    hq_location: str = "Toronto, ON",
+    thesis: str = "Legacy thesis",
+) -> Path:
+    shard = shard_for_slug(slug)
+    org_dir = project_root / "data" / "org" / shard / f"org@{slug}"
+    org_dir.mkdir(parents=True, exist_ok=True)
+    (org_dir / "edges").mkdir(parents=True, exist_ok=True)
+    (org_dir / "edges" / ".gitkeep").write_text("", encoding="utf-8")
+    (org_dir / "changelog.jsonl").write_text("", encoding="utf-8")
+    index_path = org_dir / "index.md"
+    index_path.write_text(
+        "\n".join(
+            [
+                "---",
+                f"org: {org_name}",
+                "alias: null",
+                f"website: {website}",
+                f"hq-location: {hq_location}",
+                "stages:",
+                "- growth-stage",
+                "check-size: null",
+                f"thesis: {thesis}",
+                "focus-sectors: []",
+                "portfolio-examples: []",
+                "created-at: 2026-02-20",
+                "updated-at: 2026-02-20",
+                "relationship-status: research",
+                "known-people:",
+                "- person: '[Founder Name](../../../person/fo/person@founder-name/index.md)'",
+                "  relationship: former",
+                "  relationship-details: Prior founder context.",
+                "  relationship-start-date: null",
+                "  relationship-end-date: null",
+                "  first-noted-at: 2026-02-20",
+                "  last-verified-at: 2026-02-20",
+                "intro-paths: []",
+                "last-updated-from-source: 2026-02-20",
+                "---",
+                "",
+                "# Future Labs",
+                "",
+                "## Snapshot",
+                "",
+                "- Why this org matters: [Founder Name](../../../person/fo/person@founder-name/index.md) built this.",
+                "",
+                "## Bio",
+                "",
+                "Future Labs is referenced alongside [Founder Name](../../../person/fo/person@founder-name/index.md).",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return index_path
+
+
+class _OrganizationFactsAdapter(_SuccessfulAdapter):
+    def normalize(self, request: NormalizeRequest) -> NormalizeResult:
+        return NormalizeResult(
+            facts=[
+                NormalizedFact(
+                    attribute="organization_name",
+                    value="Future Labs AI",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="website",
+                    value="https://future-labs.ai",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="hq_location",
+                    value="Waterloo, ON",
+                    confidence=ConfidenceLevel.low,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="about",
+                    value="Applied AI tooling for enterprise teams.",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="known_person",
+                    value="jane-founder",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={
+                        "adapter": self.source.value,
+                        "person_slug": "jane-founder",
+                        "person_name": "Jane Founder",
+                        "relationship": "current",
+                        "relationship_details": "Co-founder and CEO.",
+                    },
+                ),
+                NormalizedFact(
+                    attribute="known_person",
+                    value="missing-person",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={
+                        "adapter": self.source.value,
+                        "person_slug": "missing-person",
+                        "person_name": "Missing Person",
+                    },
+                ),
+            ]
+        )
+
+
+def test_run_enrichment_for_entity_maps_organization_with_confidence_gating(tmp_path: Path) -> None:
+    _write_person_fixture(tmp_path, slug="founder-name")
+    _write_person_fixture(tmp_path, slug="jane-founder", firm="Future Labs", role="Chief Executive Officer")
+    org_index_path = _write_org_fixture(tmp_path)
+    _, body_before = _read_frontmatter_and_body(org_index_path)
+
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _OrganizationFactsAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    report = run_enrichment_for_entity(
+        "data/org/fu/org@future-labs/index.md",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        run_id="enrich-org-mapping-run",
+    )
+
+    assert report.status == RunStatus.partial
+    assert report.phases.mapping.status == PhaseStatus.succeeded
+
+    frontmatter, body_after = _read_frontmatter_and_body(org_index_path)
+    assert frontmatter["org"] == "Future Labs AI"
+    assert frontmatter["website"] == "https://future-labs.ai"
+    assert frontmatter["hq-location"] == "Toronto, ON"
+    assert frontmatter["thesis"] == "Applied AI tooling for enterprise teams."
+    assert body_after.strip() == body_before.strip()
+
+    known_people = frontmatter["known-people"]
+    assert isinstance(known_people, list)
+    assert len(known_people) == 2
+
+    jane_entry = next(entry for entry in known_people if "jane-founder" in str(entry.get("person")))
+    assert jane_entry["person"] == "[Jane Founder](../../../person/ja/person@jane-founder/index.md)"
+    assert jane_entry["relationship"] == "current"
+    assert jane_entry["relationship-details"] == "Co-founder and CEO."
+    assert "relationship-start-date" in jane_entry
+    assert "relationship-end-date" in jane_entry
+    assert "first-noted-at" in jane_entry
+    assert "last-verified-at" in jane_entry

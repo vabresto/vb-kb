@@ -18,6 +18,7 @@
 - Source logging persists one canonical source entity per successful `(run_id, source, entity)` extraction under `data/source/<shard>/source@enrichment-.../`, with `index.md` plus a structured `facts.json`; keep `SourceExtractionState.source_entity_ref/source_entity_path/facts_artifact_path` in sync with those writes.
 - Person mapping (`US-009`) promotes only facts meeting `confidence_policy.minimum_promotion_level`; keep narrative body sections unchanged and write person updates through canonical `data/person/<shard>/person@<slug>/index.md` frontmatter fields (`firm`, `role`, `location`).
 - When enrichment updates the current person `firm`/`role`, archive the previous pair into `employment-history.jsonl` as the next `employment-###` row with `source_section: employment_history_table` to preserve current-role frontmatter semantics.
+- Organization mapping (`US-010`) should write through canonical `data/org/<shard>/org@<slug>/index.md`, update frontmatter fields (`org`, `website`, `hq-location`, `thesis`) only from confidence-qualified facts, and merge `known-people` entries by canonical person reference while preserving existing narrative body sections.
 
 ## Reference Integrity
 

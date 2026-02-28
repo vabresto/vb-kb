@@ -33,7 +33,9 @@ from kb.schemas import (
     SourceRecord,
     SourceType,
     normalize_path_token,
+    parse_partial_date,
     shard_for_slug,
+    validate_entity_rel_path,
 )
 
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -41,6 +43,7 @@ _ENTITY_PATH_SLUG_RE = re.compile(
     r"(?:^|/)(?:person|org|source)@(?P<slug>[a-z0-9][a-z0-9-]*)(?:/index\.md)?$"
 )
 _FRONTMATTER_BLOCK_RE = re.compile(r"\A---\n(?P<frontmatter>.*?)\n---\n?(?P<body>.*)\Z", re.DOTALL)
+_MARKDOWN_LINK_RE = re.compile(r"^\[(?P<label>[^\]]+)\]\((?P<target>[^)]+)\)$")
 _EMPLOYMENT_ID_RE = re.compile(r"^employment-(?P<index>\d{3})$")
 _ROLE_ATTRIBUTE_PRIORITY = {
     "current_role": 0,
@@ -55,6 +58,67 @@ _FIRM_ATTRIBUTE_PRIORITY = {
 }
 _LOCATION_ATTRIBUTE_PRIORITY = {
     "location": 0,
+}
+_ORG_NAME_ATTRIBUTE_PRIORITY = {
+    "organization_name": 0,
+    "org_name": 1,
+    "org": 2,
+    "company_name": 3,
+    "community": 4,
+    "name": 5,
+}
+_ORG_WEBSITE_ATTRIBUTE_PRIORITY = {
+    "website": 0,
+    "homepage": 1,
+}
+_ORG_HQ_LOCATION_ATTRIBUTE_PRIORITY = {
+    "hq_location": 0,
+    "headquarters": 1,
+    "location": 2,
+}
+_ORG_THESIS_ATTRIBUTE_PRIORITY = {
+    "about": 0,
+    "description": 1,
+    "summary": 2,
+    "headline": 3,
+}
+_ORG_KNOWN_PERSON_ATTRIBUTES = frozenset(
+    {
+        "known_person",
+        "known_people",
+        "person",
+        "founder",
+        "cofounder",
+        "co_founder",
+        "ceo",
+        "employee",
+        "team_member",
+        "advisor",
+        "investor",
+        "alumni",
+    }
+)
+_KNOWN_PEOPLE_RELATIONSHIPS = frozenset(
+    {
+        "current",
+        "former",
+        "advisor",
+        "investor",
+        "alumni",
+        "other",
+        "reported",
+    }
+)
+_RELATIONSHIP_DEFAULT_BY_ATTRIBUTE = {
+    "founder": "current",
+    "cofounder": "current",
+    "co_founder": "current",
+    "ceo": "current",
+    "employee": "current",
+    "team_member": "current",
+    "advisor": "advisor",
+    "investor": "investor",
+    "alumni": "alumni",
 }
 _CONFIDENCE_RANK = {
     ConfidenceLevel.low: 0,
@@ -191,6 +255,24 @@ class _PersonMappingResult(KBBaseModel):
     promoted_fact_count: int = 0
     frontmatter_fields_updated: list[str] = Field(default_factory=list)
     employment_rows_added: int = 0
+
+
+class _OrganizationMappingResult(KBBaseModel):
+    organization_index_path: str
+    promoted_fact_count: int = 0
+    frontmatter_fields_updated: list[str] = Field(default_factory=list)
+    known_people_entries_added: int = 0
+
+
+class _KnownPersonEntry(KBBaseModel):
+    person_ref: str
+    person_name: str
+    relationship: str
+    relationship_details: str | None = None
+    relationship_start_date: str | None = None
+    relationship_end_date: str | None = None
+    first_noted_at: str
+    last_verified_at: str
 
 
 def build_default_adapter_registry(
@@ -520,10 +602,47 @@ def _build_mapping_phase(
             completed_at=_normalize_now(),
         )
 
-    if _resolve_entity_kind(resolved_target) in {"org", "source"}:
+    entity_kind = _resolve_entity_kind(resolved_target)
+    if entity_kind == "source":
         return PhaseState(
             status=PhaseStatus.pending,
-            message="person mapping skipped for non-person target; org mapping remains pending (US-010)",
+            message="mapping skipped for source target",
+            started_at=started_at,
+            completed_at=_normalize_now(),
+        )
+
+    if entity_kind == "org":
+        try:
+            mapping = _map_organization_facts(
+                successful_extractions=successful_extractions,
+                source_artifacts=source_artifacts,
+                resolved_target=resolved_target,
+                config=config,
+                project_root=project_root,
+            )
+        except Exception as exc:
+            return PhaseState(
+                status=PhaseStatus.failed,
+                message=f"organization mapping failed: {exc}",
+                started_at=started_at,
+                completed_at=_normalize_now(),
+            )
+
+        if mapping.promoted_fact_count == 0:
+            message = (
+                "no organization facts met minimum confidence "
+                f"'{config.confidence_policy.minimum_promotion_level.value}' for promotion"
+            )
+        else:
+            message = (
+                f"promoted {mapping.promoted_fact_count} organization fact(s) into "
+                f"{mapping.organization_index_path}; "
+                f"frontmatter fields updated: {len(mapping.frontmatter_fields_updated)}; "
+                f"known-people entries added: {mapping.known_people_entries_added}"
+            )
+        return PhaseState(
+            status=PhaseStatus.succeeded,
+            message=message,
             started_at=started_at,
             completed_at=_normalize_now(),
         )
@@ -594,7 +713,7 @@ def _map_person_facts(
             f"canonical person index not found for slug '{resolved_target.entity_slug}' at '{person_index_rel}'"
         )
 
-    promoted_facts = _collect_promoted_person_facts(
+    promoted_facts = _collect_promoted_facts(
         successful_extractions=successful_extractions,
         source_artifacts=source_artifacts,
         minimum_level=config.confidence_policy.minimum_promotion_level,
@@ -607,7 +726,10 @@ def _map_person_facts(
             employment_rows_added=0,
         )
 
-    frontmatter, body = _read_markdown_document(person_index_path=person_index_path)
+    frontmatter, body = _read_markdown_document(
+        index_path=person_index_path,
+        entity_label="person",
+    )
     frontmatter_updated_fields: list[str] = []
     employment_rows_added = 0
 
@@ -678,7 +800,103 @@ def _canonical_person_index_path_for_slug(slug: str) -> str:
     return f"data/person/{shard}/person@{slug}/index.md"
 
 
-def _collect_promoted_person_facts(
+def _canonical_org_index_path_for_slug(slug: str) -> str:
+    shard = shard_for_slug(slug)
+    return f"data/org/{shard}/org@{slug}/index.md"
+
+
+def _map_organization_facts(
+    *,
+    successful_extractions: list[_SuccessfulExtraction],
+    source_artifacts: dict[SupportedSource, _SourceEntityArtifact],
+    resolved_target: EntityTarget,
+    config: EnrichmentConfig,
+    project_root: Path,
+) -> _OrganizationMappingResult:
+    organization_index_rel = _canonical_org_index_path_for_slug(resolved_target.entity_slug)
+    organization_index_path = project_root / organization_index_rel
+    if not organization_index_path.exists():
+        raise EnrichmentRunError(
+            "canonical organization index not found for slug "
+            f"'{resolved_target.entity_slug}' at '{organization_index_rel}'"
+        )
+
+    promoted_facts = _collect_promoted_facts(
+        successful_extractions=successful_extractions,
+        source_artifacts=source_artifacts,
+        minimum_level=config.confidence_policy.minimum_promotion_level,
+    )
+    if not promoted_facts:
+        return _OrganizationMappingResult(
+            organization_index_path=organization_index_rel,
+            promoted_fact_count=0,
+            frontmatter_fields_updated=[],
+            known_people_entries_added=0,
+        )
+
+    frontmatter, body = _read_markdown_document(
+        index_path=organization_index_path,
+        entity_label="organization",
+    )
+    frontmatter_updated_fields: list[str] = []
+
+    org_name_candidate = _select_best_promoted_fact(
+        promoted_facts=promoted_facts,
+        attribute_priority=_ORG_NAME_ATTRIBUTE_PRIORITY,
+    )
+    website_candidate = _select_best_promoted_fact(
+        promoted_facts=promoted_facts,
+        attribute_priority=_ORG_WEBSITE_ATTRIBUTE_PRIORITY,
+    )
+    hq_location_candidate = _select_best_promoted_fact(
+        promoted_facts=promoted_facts,
+        attribute_priority=_ORG_HQ_LOCATION_ATTRIBUTE_PRIORITY,
+    )
+    thesis_candidate = _select_best_promoted_fact(
+        promoted_facts=promoted_facts,
+        attribute_priority=_ORG_THESIS_ATTRIBUTE_PRIORITY,
+    )
+
+    if org_name_candidate is not None:
+        if _set_frontmatter_text(frontmatter, key="org", value=org_name_candidate.value):
+            frontmatter_updated_fields.append("org")
+    if website_candidate is not None:
+        if _set_frontmatter_text(frontmatter, key="website", value=website_candidate.value):
+            frontmatter_updated_fields.append("website")
+    if hq_location_candidate is not None:
+        if _set_frontmatter_text(frontmatter, key="hq-location", value=hq_location_candidate.value):
+            frontmatter_updated_fields.append("hq-location")
+    if thesis_candidate is not None:
+        if _set_frontmatter_text(frontmatter, key="thesis", value=thesis_candidate.value):
+            frontmatter_updated_fields.append("thesis")
+
+    known_people_entries_added = _merge_known_people_entries(
+        frontmatter=frontmatter,
+        promoted_facts=promoted_facts,
+        organization_index_path=organization_index_path,
+        project_root=project_root,
+    )
+    if known_people_entries_added > 0:
+        frontmatter_updated_fields.append("known-people")
+
+    if frontmatter_updated_fields:
+        latest_promoted_at = max(fact.retrieved_at for fact in promoted_facts).date().isoformat()
+        _set_frontmatter_text(frontmatter, key="updated-at", value=latest_promoted_at)
+        _set_frontmatter_text(frontmatter, key="last-updated-from-source", value=latest_promoted_at)
+        organization_index_path.write_text(
+            _render_markdown(frontmatter=frontmatter, body=body),
+            encoding="utf-8",
+        )
+
+    return _OrganizationMappingResult(
+        organization_index_path=organization_index_rel,
+        promoted_fact_count=len(promoted_facts),
+        frontmatter_fields_updated=frontmatter_updated_fields,
+        known_people_entries_added=known_people_entries_added,
+    )
+
+
+def _collect_promoted_facts(
     *,
     successful_extractions: list[_SuccessfulExtraction],
     source_artifacts: dict[SupportedSource, _SourceEntityArtifact],
@@ -745,11 +963,440 @@ def _select_best_promoted_fact(
     )
 
 
-def _read_markdown_document(*, person_index_path: Path) -> tuple[dict[str, Any], str]:
-    markdown = person_index_path.read_text(encoding="utf-8")
+def _merge_known_people_entries(
+    *,
+    frontmatter: dict[str, Any],
+    promoted_facts: list[_PromotedFact],
+    organization_index_path: Path,
+    project_root: Path,
+) -> int:
+    entries_by_ref = {
+        entry.person_ref: entry
+        for entry in _parse_existing_known_people_entries(
+            raw_known_people=frontmatter.get("known-people"),
+            organization_index_path=organization_index_path,
+            project_root=project_root,
+        )
+    }
+    added_count = 0
+    for fact in sorted(
+        promoted_facts,
+        key=lambda item: (
+            item.attribute,
+            item.value,
+            item.source.value,
+            item.retrieved_at,
+            item.source_url,
+        ),
+    ):
+        candidate = _known_person_entry_from_fact(
+            fact=fact,
+            organization_index_path=organization_index_path,
+            project_root=project_root,
+        )
+        if candidate is None:
+            continue
+        existing = entries_by_ref.get(candidate.person_ref)
+        if existing is None:
+            entries_by_ref[candidate.person_ref] = candidate
+            added_count += 1
+            continue
+        entries_by_ref[candidate.person_ref] = _merge_known_person_entry(existing=existing, candidate=candidate)
+
+    if not entries_by_ref:
+        if isinstance(frontmatter.get("known-people"), list):
+            frontmatter["known-people"] = []
+        return 0
+
+    ordered_entries = sorted(
+        entries_by_ref.values(),
+        key=lambda entry: (
+            entry.person_ref,
+            entry.relationship,
+            entry.first_noted_at,
+            entry.last_verified_at,
+        ),
+    )
+    frontmatter["known-people"] = [
+        _known_person_entry_to_frontmatter(
+            entry=entry,
+            organization_index_path=organization_index_path,
+            project_root=project_root,
+        )
+        for entry in ordered_entries
+    ]
+    return added_count
+
+
+def _parse_existing_known_people_entries(
+    *,
+    raw_known_people: object,
+    organization_index_path: Path,
+    project_root: Path,
+) -> list[_KnownPersonEntry]:
+    if not isinstance(raw_known_people, list):
+        return []
+
+    parsed: list[_KnownPersonEntry] = []
+    for raw_entry in raw_known_people:
+        if not isinstance(raw_entry, Mapping):
+            continue
+        person_value = _normalize_text(raw_entry.get("person"))
+        if person_value is None:
+            continue
+        person_ref = _resolve_person_ref_from_value(
+            person_value,
+            organization_index_path=organization_index_path,
+            project_root=project_root,
+        )
+        if person_ref is None:
+            continue
+        person_name = _extract_person_name_from_value(
+            value=person_value,
+            fallback_ref=person_ref,
+        )
+        relationship = _normalize_relationship(raw_entry.get("relationship"), fallback="other")
+        relationship_details = _normalize_text(raw_entry.get("relationship-details"))
+        relationship_start_date = _normalize_partial_date(raw_entry.get("relationship-start-date"))
+        relationship_end_date = _normalize_partial_date(raw_entry.get("relationship-end-date"))
+        first_noted_at = _normalize_partial_date(raw_entry.get("first-noted-at"))
+        last_verified_at = _normalize_partial_date(raw_entry.get("last-verified-at"))
+        if first_noted_at is None and last_verified_at is None:
+            default_date = _normalize_now().date().isoformat()
+            first_noted_at = default_date
+            last_verified_at = default_date
+        elif first_noted_at is None:
+            first_noted_at = last_verified_at
+        elif last_verified_at is None:
+            last_verified_at = first_noted_at
+        parsed.append(
+            _KnownPersonEntry(
+                person_ref=person_ref,
+                person_name=person_name,
+                relationship=relationship,
+                relationship_details=relationship_details,
+                relationship_start_date=relationship_start_date,
+                relationship_end_date=relationship_end_date,
+                first_noted_at=first_noted_at,
+                last_verified_at=last_verified_at,
+            )
+        )
+    return parsed
+
+
+def _known_person_entry_from_fact(
+    *,
+    fact: _PromotedFact,
+    organization_index_path: Path,
+    project_root: Path,
+) -> _KnownPersonEntry | None:
+    if fact.attribute not in _ORG_KNOWN_PERSON_ATTRIBUTES:
+        return None
+    person_ref = _resolve_person_ref_from_fact(
+        fact=fact,
+        organization_index_path=organization_index_path,
+        project_root=project_root,
+    )
+    if person_ref is None:
+        return None
+
+    person_index_path = project_root / "data" / person_ref / "index.md"
+    if not person_index_path.exists():
+        return None
+
+    person_name = _normalize_text(
+        _metadata_value(
+            fact.metadata,
+            "person_name",
+            "person-name",
+            "name",
+            "full_name",
+            "full-name",
+        )
+    )
+    if person_name is None:
+        person_name = _extract_person_name_from_value(
+            value=fact.value,
+            fallback_ref=person_ref,
+        )
+    relationship_details = _normalize_text(
+        _metadata_value(
+            fact.metadata,
+            "relationship_details",
+            "relationship-details",
+            "details",
+        )
+    )
+    relationship_start_date = _normalize_partial_date(
+        _metadata_value(
+            fact.metadata,
+            "relationship_start_date",
+            "relationship-start-date",
+        )
+    )
+    relationship_end_date = _normalize_partial_date(
+        _metadata_value(
+            fact.metadata,
+            "relationship_end_date",
+            "relationship-end-date",
+        )
+    )
+    first_noted_at = _normalize_partial_date(
+        _metadata_value(
+            fact.metadata,
+            "first_noted_at",
+            "first-noted-at",
+        )
+    ) or fact.retrieved_at.date().isoformat()
+    last_verified_at = _normalize_partial_date(
+        _metadata_value(
+            fact.metadata,
+            "last_verified_at",
+            "last-verified-at",
+        )
+    ) or fact.retrieved_at.date().isoformat()
+    relationship = _relationship_for_fact(fact)
+    return _KnownPersonEntry(
+        person_ref=person_ref,
+        person_name=person_name,
+        relationship=relationship,
+        relationship_details=relationship_details,
+        relationship_start_date=relationship_start_date,
+        relationship_end_date=relationship_end_date,
+        first_noted_at=first_noted_at,
+        last_verified_at=last_verified_at,
+    )
+
+
+def _resolve_person_ref_from_fact(
+    *,
+    fact: _PromotedFact,
+    organization_index_path: Path,
+    project_root: Path,
+) -> str | None:
+    metadata = fact.metadata
+    candidates = (
+        _metadata_value(
+            metadata,
+            "person_ref",
+            "person-ref",
+            "person_entity_ref",
+            "person-entity-ref",
+        ),
+        _metadata_value(
+            metadata,
+            "person_path",
+            "person-path",
+            "person_index_path",
+            "person-index-path",
+        ),
+        _metadata_value(metadata, "person_slug", "person-slug"),
+        fact.value,
+    )
+    for candidate in candidates:
+        person_ref = _resolve_person_ref_from_value(
+            candidate,
+            organization_index_path=organization_index_path,
+            project_root=project_root,
+        )
+        if person_ref is not None:
+            return person_ref
+    return None
+
+
+def _resolve_person_ref_from_value(
+    value: object,
+    *,
+    organization_index_path: Path,
+    project_root: Path,
+) -> str | None:
+    text = _normalize_text(value)
+    if text is None:
+        return None
+
+    link_match = _MARKDOWN_LINK_RE.match(text)
+    if link_match is not None:
+        return _resolve_person_ref_from_value(
+            link_match.group("target"),
+            organization_index_path=organization_index_path,
+            project_root=project_root,
+        )
+
+    if "://" in text:
+        return None
+
+    normalized = text.replace("\\", "/")
+    try:
+        entity_ref = validate_entity_rel_path(normalized)
+    except ValueError:
+        entity_ref = None
+    if entity_ref is not None and entity_ref.startswith("person/"):
+        return entity_ref
+
+    if normalized.startswith("data/person/") and normalized.endswith("/index.md"):
+        rel_ref = normalized[len("data/") : -len("/index.md")]
+        try:
+            entity_ref = validate_entity_rel_path(rel_ref)
+        except ValueError:
+            return None
+        if entity_ref.startswith("person/"):
+            return entity_ref
+        return None
+
+    if _SLUG_RE.fullmatch(normalized) is not None:
+        slug = normalized.lower()
+        return f"person/{shard_for_slug(slug)}/person@{slug}"
+
+    path_candidate = Path(normalized)
+    if path_candidate.is_absolute():
+        try:
+            relative = path_candidate.resolve().relative_to(project_root).as_posix()
+        except ValueError:
+            return None
+        return _resolve_person_ref_from_value(
+            relative,
+            organization_index_path=organization_index_path,
+            project_root=project_root,
+        )
+
+    if normalized.startswith("./") or normalized.startswith("../"):
+        resolved_path = (organization_index_path.parent / normalized).resolve()
+        try:
+            relative = resolved_path.relative_to(project_root).as_posix()
+        except ValueError:
+            return None
+        return _resolve_person_ref_from_value(
+            relative,
+            organization_index_path=organization_index_path,
+            project_root=project_root,
+        )
+    return None
+
+
+def _extract_person_name_from_value(*, value: object, fallback_ref: str) -> str:
+    text = _normalize_text(value)
+    if text is None:
+        return _person_name_from_ref(fallback_ref)
+    match = _MARKDOWN_LINK_RE.match(text)
+    if match is not None:
+        label = _normalize_text(match.group("label"))
+        if label is not None:
+            return label
+    if _SLUG_RE.fullmatch(text) is not None:
+        return _person_name_from_ref(fallback_ref)
+    if text.startswith("person/") or text.startswith("data/person/"):
+        return _person_name_from_ref(fallback_ref)
+    return text
+
+
+def _person_name_from_ref(person_ref: str) -> str:
+    _, _, tail = person_ref.partition("person@")
+    slug = tail.strip()
+    if not slug:
+        return "Unknown Person"
+    return " ".join(token.capitalize() for token in slug.split("-"))
+
+
+def _relationship_for_fact(fact: _PromotedFact) -> str:
+    explicit = _normalize_relationship(_metadata_value(fact.metadata, "relationship"), fallback=None)
+    if explicit is not None:
+        return explicit
+    return _RELATIONSHIP_DEFAULT_BY_ATTRIBUTE.get(fact.attribute, "other")
+
+
+def _normalize_relationship(value: object, *, fallback: str | None) -> str | None:
+    text = _normalize_text(value)
+    if text is None:
+        return fallback
+    normalized = text.lower().replace("-", "_").replace(" ", "_")
+    if normalized in _KNOWN_PEOPLE_RELATIONSHIPS:
+        return normalized
+    return fallback
+
+
+def _merge_known_person_entry(
+    *,
+    existing: _KnownPersonEntry,
+    candidate: _KnownPersonEntry,
+) -> _KnownPersonEntry:
+    return _KnownPersonEntry(
+        person_ref=existing.person_ref,
+        person_name=existing.person_name or candidate.person_name,
+        relationship=existing.relationship if existing.relationship != "other" else candidate.relationship,
+        relationship_details=existing.relationship_details or candidate.relationship_details,
+        relationship_start_date=existing.relationship_start_date or candidate.relationship_start_date,
+        relationship_end_date=existing.relationship_end_date or candidate.relationship_end_date,
+        first_noted_at=_min_partial_date(existing.first_noted_at, candidate.first_noted_at),
+        last_verified_at=_max_partial_date(existing.last_verified_at, candidate.last_verified_at),
+    )
+
+
+def _known_person_entry_to_frontmatter(
+    *,
+    entry: _KnownPersonEntry,
+    organization_index_path: Path,
+    project_root: Path,
+) -> dict[str, Any]:
+    person_index_path = project_root / "data" / entry.person_ref / "index.md"
+    person_link_target = _relative_link(
+        from_dir=organization_index_path.parent,
+        target_path=person_index_path,
+    )
+    return {
+        "person": f"[{entry.person_name}]({person_link_target})",
+        "relationship": entry.relationship,
+        "relationship-details": entry.relationship_details,
+        "relationship-start-date": entry.relationship_start_date,
+        "relationship-end-date": entry.relationship_end_date,
+        "first-noted-at": entry.first_noted_at,
+        "last-verified-at": entry.last_verified_at,
+    }
+
+
+def _metadata_value(metadata: Mapping[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in metadata:
+            return metadata[key]
+    return None
+
+
+def _normalize_partial_date(value: object) -> str | None:
+    text = _normalize_text(value)
+    if text is None:
+        return None
+    try:
+        return parse_partial_date(text)
+    except ValueError:
+        return None
+
+
+def _partial_date_sort_key(value: str) -> tuple[int, int, int]:
+    parts = [int(part) for part in value.split("-")]
+    year = parts[0]
+    month = parts[1] if len(parts) > 1 else 0
+    day = parts[2] if len(parts) > 2 else 0
+    return (year, month, day)
+
+
+def _min_partial_date(left: str, right: str) -> str:
+    if _partial_date_sort_key(left) <= _partial_date_sort_key(right):
+        return left
+    return right
+
+
+def _max_partial_date(left: str, right: str) -> str:
+    if _partial_date_sort_key(left) >= _partial_date_sort_key(right):
+        return left
+    return right
+
+
+def _read_markdown_document(*, index_path: Path, entity_label: str) -> tuple[dict[str, Any], str]:
+    markdown = index_path.read_text(encoding="utf-8")
     match = _FRONTMATTER_BLOCK_RE.match(markdown)
     if match is None:
-        raise EnrichmentRunError(f"person index is missing YAML frontmatter: {person_index_path.as_posix()}")
+        raise EnrichmentRunError(
+            f"{entity_label} index is missing YAML frontmatter: {index_path.as_posix()}"
+        )
     frontmatter_raw = yaml.safe_load(match.group("frontmatter"))
     if frontmatter_raw is None:
         frontmatter: dict[str, Any] = {}
@@ -757,7 +1404,7 @@ def _read_markdown_document(*, person_index_path: Path) -> tuple[dict[str, Any],
         frontmatter = dict(frontmatter_raw)
     else:
         raise EnrichmentRunError(
-            f"person index frontmatter must be a mapping: {person_index_path.as_posix()}"
+            f"{entity_label} index frontmatter must be a mapping: {index_path.as_posix()}"
         )
     return frontmatter, match.group("body") or ""
 

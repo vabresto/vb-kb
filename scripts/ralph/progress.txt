@@ -13,6 +13,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - `run_enrichment_for_entity(...)` should remain the canonical kickoff orchestrator: it accepts exactly one entity target, runs one or more selected sources in a single invocation, and always emits explicit phase-state keys (`extraction`, `source_logging`, `mapping`, `validation`, `reporting`) in `EnrichmentRunReport`.
 - Source logging should write deterministic source entities under `data/source/<shard>/source@enrichment-.../` with both canonical `index.md` and structured `facts.json`; preserve these paths on `SourceExtractionState` for downstream provenance/mapping phases.
 - Person mapping should only promote facts meeting `confidence_policy.minimum_promotion_level`; update person frontmatter (`firm`, `role`, `location`) without rewriting narrative sections, and archive replaced current role values into `employment-history.jsonl`.
+- Organization mapping should target canonical `data/org/<shard>/org@<slug>/index.md`, keep narrative body sections unchanged, and merge `known-people` entries using canonical person links with required relationship/date fields.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -442,4 +443,59 @@ There are still stories with `passes: false` (`US-009` to `US-013`).
     - Keep `employment-history.jsonl` row IDs and `source_row` values monotonic (`employment-###`, incrementing row numbers) to avoid schema/consistency drift.
   - Useful context (e.g., "the evaluation panel is in component X")
     - Current mapper handles person targets only; non-person targets continue to surface mapping as pending for `US-010` organization mapping.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:22:58)
+Implemented `US-009` on branch `ralph/playwright-kb-enrichment` and committed all changes.
+
+- Commit: `c3a540a`
+- Message: `feat: [US-009] - [Implement person mapping with confidence-gated promotion]`
+
+What I changed:
+- Added confidence-gated person mapping in [enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py):
+  - Promotes only facts at/above `minimum_promotion_level`
+  - Maps promoted person facts into canonical `data/person/<shard>/person@<slug>/index.md` frontmatter (`firm`, `role`, `location`)
+  - Preserves narrative body sections while updating frontmatter
+  - Archives replaced current role into `employment-history.jsonl` as the next `employment-###` row
+  - Marks run as failed if mapping fails
+- Expanded mapping tests in [test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py) for:
+  - Mapping phase success
+  - Confidence gating behavior
+  - Narrative-body preservation
+  - Employment-history archival behavior
+- Added reusable mapper patterns to [agents.md](/root/ws/vb-kb2/agents.md)
+- Set `US-009` to passing in [prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended the required progress entry and codebase pattern update in [progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_cli_enrich_entity.py kb/tests/test_enrichment_run.py`
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`)
+
+Remaining `passes: false` stories:
+- `US-010`, `US-011`, `US-012`, `US-013`
+---
+
+## [2026-02-28 16:29:52 UTC] - US-010
+- What was implemented
+  - Implemented organization mapping in `kb/enrichment_run.py` so org targets no longer stay pending; org runs now promote confidence-qualified facts into canonical `data/org/<shard>/org@<slug>/index.md` frontmatter.
+  - Added confidence-gated organization field mapping for `org`, `website`, `hq-location`, and `thesis`, including deterministic report messaging for promoted vs non-promoted outcomes.
+  - Added `known-people` merge logic that normalizes/merges entries by canonical person reference and writes required relationship/date fields with person file-path markdown links.
+  - Preserved organization narrative body sections during mapping writes (frontmatter-only edits), matching first-mention-link preservation expectations.
+  - Added organization mapping test coverage in `kb/tests/test_enrichment_run.py` for confidence gating, canonical org writes, `known-people` object structure, and body preservation.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Treat org enrichment writes as frontmatter updates only; preserving markdown body sections avoids regressing first-mention links already curated in narrative content.
+    - `known-people` entries should be merged by canonical person ref, then rendered as relative markdown links with required relationship/date keys for deterministic structure.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - A promoted `known_person` fact can still be non-actionable if the referenced person page is missing; skip unresolved refs to avoid writing broken links.
+    - Relationship/date metadata can arrive in mixed key styles (`snake_case` vs `kebab-case`); normalize both when mapping metadata into frontmatter.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - Mapping flow now branches by entity kind: person and organization targets are implemented, while source targets remain explicitly skipped.
 ---
