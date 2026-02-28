@@ -159,10 +159,10 @@ def _citation_key_from_source_ref(source_ref: str) -> str:
     return tail
 
 
-def test_resolve_entity_target_accepts_slug_and_canonical_path() -> None:
-    slug_target = resolve_entity_target("founder-name")
-    assert slug_target.entity_ref == "founder-name"
-    assert slug_target.entity_slug == "founder-name"
+def test_resolve_entity_target_accepts_typed_ref_and_canonical_path() -> None:
+    typed_target = resolve_entity_target("person@founder-name")
+    assert typed_target.entity_ref == "person@founder-name"
+    assert typed_target.entity_slug == "founder-name"
 
     path_target = resolve_entity_target("data/person/fo/person@founder-name/index.md")
     assert path_target.entity_ref == "data/person/fo/person@founder-name/index.md"
@@ -171,7 +171,7 @@ def test_resolve_entity_target_accepts_slug_and_canonical_path() -> None:
 
 def test_resolve_entity_target_rejects_invalid_value() -> None:
     with pytest.raises(EntityTargetResolutionError):
-        resolve_entity_target("Founder Name")
+        resolve_entity_target("founder-name")
 
 
 def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> None:
@@ -185,7 +185,7 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
     )
 
     report = run_enrichment_for_entity(
-        "founder-name",
+        "person@founder-name",
         selected_sources=[SupportedSource.linkedin, SupportedSource.skool],
         config=config,
         project_root=tmp_path,
@@ -355,7 +355,7 @@ def test_run_enrichment_for_entity_logs_all_confidence_levels(tmp_path: Path) ->
     )
 
     report = run_enrichment_for_entity(
-        "founder-name",
+        "person@founder-name",
         selected_sources=[SupportedSource.linkedin],
         config=config,
         project_root=tmp_path,
@@ -391,7 +391,7 @@ def test_run_enrichment_for_entity_never_prompts_after_kickoff(
     monkeypatch.setattr("builtins.input", _input_should_not_be_called)
 
     report = run_enrichment_for_entity(
-        "founder-name",
+        "person@founder-name",
         selected_sources=[SupportedSource.linkedin],
         config=config,
         project_root=tmp_path,
@@ -446,7 +446,7 @@ def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: 
     )
 
     report = run_enrichment_for_entity(
-        "founder-name",
+        "person@founder-name",
         selected_sources=[SupportedSource.linkedin],
         config=config,
         project_root=tmp_path,
@@ -496,7 +496,7 @@ def test_run_enrichment_for_entity_fails_when_promoted_fact_lacks_source_linkage
     )
 
     report = run_enrichment_for_entity(
-        "founder-name",
+        "person@founder-name",
         selected_sources=[SupportedSource.linkedin],
         config=config,
         project_root=tmp_path,
@@ -572,7 +572,7 @@ def test_run_enrichment_for_entity_retries_validation_once_after_auto_remediatio
     )
 
     report = run_enrichment_for_entity(
-        "founder-name",
+        "person@founder-name",
         selected_sources=[SupportedSource.linkedin],
         config=config,
         project_root=tmp_path,
@@ -645,7 +645,7 @@ def test_run_enrichment_for_entity_blocks_on_unresolved_validation_after_remedia
     )
 
     report = run_enrichment_for_entity(
-        "founder-name",
+        "person@founder-name",
         selected_sources=[SupportedSource.linkedin],
         config=config,
         project_root=tmp_path,

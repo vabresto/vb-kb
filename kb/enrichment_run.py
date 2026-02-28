@@ -41,6 +41,9 @@ from kb.schemas import (
 from kb.validate import collect_changed_paths, infer_data_root, run_validation
 
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+_ENTITY_REF_TOKEN_RE = re.compile(
+    r"^(?P<kind>person|org|source)@(?P<slug>[a-z0-9][a-z0-9-]*)$"
+)
 _ENTITY_PATH_SLUG_RE = re.compile(
     r"(?:^|/)(?:person|org|source)@(?P<slug>[a-z0-9][a-z0-9-]*)(?:/index\.md)?$"
 )
@@ -397,15 +400,20 @@ def resolve_entity_target(entity_target: str) -> EntityTarget:
             entity_slug=match.group("slug"),
         )
 
-    slug = raw_target.lower()
-    if _SLUG_RE.fullmatch(slug) is None:
+    token = raw_target.lower()
+    token_match = _ENTITY_REF_TOKEN_RE.fullmatch(token)
+    if token_match is None:
         raise EntityTargetResolutionError(
             entity_target=entity_target,
-            details="slug must match [a-z0-9][a-z0-9-]*",
+            details=(
+                "target must be '<kind>@<slug>' (for example 'person@founder-name') "
+                "or a canonical entity path containing one of "
+                "'person@<slug>', 'org@<slug>', or 'source@<slug>'"
+            ),
         )
     return EntityTarget(
-        entity_ref=slug,
-        entity_slug=slug,
+        entity_ref=token,
+        entity_slug=token_match.group("slug"),
     )
 
 
@@ -799,14 +807,15 @@ def _build_mapping_phase(
 
 def _resolve_entity_kind(target: EntityTarget) -> str | None:
     entity_ref = target.entity_ref.lower()
+    token_match = _ENTITY_REF_TOKEN_RE.fullmatch(entity_ref)
+    if token_match is not None:
+        return token_match.group("kind")
     if entity_ref.startswith("data/person/") or "/person@" in entity_ref:
         return "person"
     if entity_ref.startswith("data/org/") or "/org@" in entity_ref:
         return "org"
     if entity_ref.startswith("data/source/") or "/source@" in entity_ref:
         return "source"
-    if "/" not in entity_ref and entity_ref == target.entity_slug:
-        return "person"
     return None
 
 

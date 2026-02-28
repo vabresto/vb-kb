@@ -66,7 +66,7 @@ Related runnable workflows:
 - `just enrichment-bootstrap-headful <source> "--export-path <path>"` (convenience alias)
 - `just enrichment-session-export <source> <export_path>`
 - `just enrichment-session-import <source> <import_path>`
-- `just enrichment-run <entity> "--source linkedin.com --source skool.com --pretty"`
+- `just enrichment-run <entity-ref> "--source linkedin.com --source skool.com --pretty"`
 - `just test-enrichment`
 
 Bootstrap command contract:
@@ -76,7 +76,8 @@ Bootstrap command contract:
 
 ### Enrichment operation model (v1)
 
-- Kickoff is always manual: run `just enrichment-run <entity> ...` for exactly one slug/path target per invocation.
+- Kickoff is always manual: run `just enrichment-run <entity-ref> ...` for exactly one typed entity ref/path target per invocation.
+- Use typed entity refs (`person@<slug>`, `org@<slug>`, `source@<slug>`) instead of bare slugs.
 - After kickoff, execution is autonomous (no interactive approval prompts): extraction, source logging, mapping, validation/remediation, and run reporting complete in one command.
 
 ### Local secret manager and env fallback

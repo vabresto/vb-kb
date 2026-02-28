@@ -337,7 +337,7 @@ def build_parser() -> argparse.ArgumentParser:
     enrich_entity_parser.add_argument(
         "entity",
         help=(
-            "Single target entity slug (e.g. founder-name) or canonical path "
+            "Single target entity reference (e.g. person@founder-name) or canonical path "
             "(e.g. data/person/fo/person@founder-name/index.md)."
         ),
     )
