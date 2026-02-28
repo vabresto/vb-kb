@@ -433,6 +433,7 @@ def run_enrichment_for_entity(
     config: EnrichmentConfig,
     project_root: Path,
     adapter_registry: SourceAdapterRegistry | None = None,
+    environ: Mapping[str, str] | None = None,
     now: datetime | None = None,
     run_id: str | None = None,
 ) -> EnrichmentRunReport:
@@ -444,6 +445,7 @@ def run_enrichment_for_entity(
     registry = adapter_registry or build_default_adapter_registry(
         config=config,
         project_root=resolved_root,
+        environ=environ,
     )
 
     extraction_phase = ExtractionPhaseState(

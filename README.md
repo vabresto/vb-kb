@@ -41,6 +41,7 @@ Python files for authenticated enrichment are organized by concern:
 - `kb/enrichment_bootstrap.py`: source bootstrap command runner for login/session creation with MFA/anti-bot challenge mapping.
 - `kb/enrichment_playwright_bootstrap.py`: default Playwright bootstrap implementation used when no `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` override is set.
 - `kb/enrichment_playwright_fetch.py`: default Playwright extraction implementation used when no `KB_ENRICHMENT_*_FETCH_COMMAND` override is set.
+- `kb/enrichment_playwright_timing.py`: shared randomized wait settings/helpers used by Playwright bootstrap/fetch flows.
 - `kb/enrichment_linkedin_adapter.py`: LinkedIn adapter implementation with session preflight/bootstrap fallback, fetch normalization, and snapshot persistence.
 - `kb/enrichment_skool_adapter.py`: Skool adapter implementation with session preflight/bootstrap fallback, fetch normalization, and snapshot persistence.
 - `kb/cli.py`: user-facing command wiring (`kb bootstrap-session`, `kb export-session`, `kb import-session`, `kb enrich-entity`).
@@ -51,6 +52,9 @@ Related tests:
 - `kb/tests/test_enrichment_adapters.py`
 - `kb/tests/test_enrichment_sessions.py`
 - `kb/tests/test_enrichment_bootstrap.py`
+- `kb/tests/test_enrichment_playwright_timing.py`
+- `kb/tests/test_enrichment_playwright_bootstrap.py`
+- `kb/tests/test_enrichment_playwright_fetch.py`
 - `kb/tests/test_enrichment_linkedin_adapter.py`
 - `kb/tests/test_enrichment_skool_adapter.py`
 - `kb/tests/test_cli_bootstrap_session.py`
@@ -65,10 +69,12 @@ Related runnable workflows:
 - `just enrichment-bootstrap <source> "--bootstrap-command '<command>' --pretty"`
 - `just enrichment-bootstrap <source> "<any kb bootstrap-session flags>" <project_root>`
 - `just enrichment-bootstrap-headful <source> "--export-path <path>"` (convenience alias)
+- `just enrichment-bootstrap <source> "--no-random-waits --pretty"`
 - `just enrichment-session-export <source> <export_path>`
 - `just enrichment-session-import <source> <import_path>`
 - `just enrichment-run <entity-ref> "--source linkedin.com --source skool.com --pretty"`
 - `just enrichment-run <entity-ref> "--source linkedin.com --headful --pretty"`
+- `just enrichment-run <entity-ref> "--source linkedin.com --no-random-waits --pretty"`
 - `just test-enrichment`
 
 Bootstrap command contract:
@@ -77,6 +83,10 @@ Bootstrap command contract:
 - If `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` is unset, default commands run `kb.enrichment_playwright_bootstrap` via `uv --with playwright`.
 - If `KB_ENRICHMENT_*_FETCH_COMMAND` is unset, default commands run `kb.enrichment_playwright_fetch` via `uv --with playwright`.
 - Default Playwright fetch scrolls profile pages before capture; LinkedIn extraction records `experience` facts and Skool extraction records scrolled `profile_entry` facts.
+- Playwright actions use randomized waits by default to reduce bot-like timing patterns.
+  - Disable per command with `kb bootstrap-session --no-random-waits` or `kb enrich-entity --no-random-waits`.
+  - Env override for command runners: `KB_ENRICHMENT_ACTION_RANDOM_WAITS=false`.
+  - Optional wait range envs: `KB_ENRICHMENT_ACTION_RANDOM_WAIT_MIN_MS` and `KB_ENRICHMENT_ACTION_RANDOM_WAIT_MAX_MS`.
 - Source logging deduplicates unchanged extraction output by reusing the latest matching source artifact for the same source/entity.
 
 ### Enrichment operation model (v1)

@@ -79,6 +79,7 @@ def test_enrich_entity_parser_accepts_single_entity_with_multiple_sources() -> N
     assert args.entity == "person@founder-name"
     assert args.sources == ["linkedin.com", "skool.com"]
     assert args.headful is False
+    assert args.no_random_waits is False
 
 
 def test_enrich_entity_parser_accepts_headful_flag() -> None:
@@ -97,6 +98,22 @@ def test_enrich_entity_parser_accepts_headful_flag() -> None:
     assert args.entity == "person@founder-name"
     assert args.sources == ["linkedin.com"]
     assert args.headful is True
+    assert args.no_random_waits is False
+
+
+def test_enrich_entity_parser_accepts_no_random_waits_flag() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--no-random-waits",
+        ]
+    )
+
+    assert args.command == "enrich-entity"
+    assert args.entity == "person@founder-name"
+    assert args.no_random_waits is True
 
 
 def test_enrich_entity_parser_rejects_multiple_entity_arguments() -> None:
@@ -153,6 +170,54 @@ def test_run_enrich_entity_reports_structured_payload(
     assert payload["status"] == "partial"
     assert payload["phases"]["extraction"]["status"] == "succeeded"
     assert payload["phases"]["validation"]["status"] == "pending"
+
+
+def test_run_enrich_entity_no_random_waits_sets_env(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    observed: dict[str, object] = {}
+
+    def _run_stub(
+        entity_target: str,
+        *,
+        selected_sources,
+        config: EnrichmentConfig,
+        project_root: Path,
+        environ=None,
+    ) -> EnrichmentRunReport:
+        observed["entity_target"] = entity_target
+        observed["selected_sources"] = list(selected_sources or [])
+        observed["project_root"] = project_root
+        observed["random_waits"] = (environ or {}).get("KB_ENRICHMENT_ACTION_RANDOM_WAITS")
+        assert isinstance(config, EnrichmentConfig)
+        return _stub_report(sources=[SupportedSource.linkedin])
+
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr("kb.cli.run_enrichment_for_entity", _run_stub)
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--source",
+            "linkedin.com",
+            "--project-root",
+            str(tmp_path),
+            "--no-random-waits",
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 0
+    assert observed["entity_target"] == "person@founder-name"
+    assert observed["selected_sources"] == ["linkedin.com"]
+    assert observed["project_root"] == tmp_path.resolve()
+    assert observed["random_waits"] == "false"
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
 
 
 def test_run_enrich_entity_headful_forces_non_headless_sources(

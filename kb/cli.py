@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 from kb.enrichment_adapters import AuthenticationError
@@ -271,6 +272,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional command override for source bootstrap login.",
     )
     bootstrap_session_parser.add_argument(
+        "--no-random-waits",
+        action="store_true",
+        help="Disable randomized waits between browser actions.",
+    )
+    bootstrap_session_parser.add_argument(
         "--pretty",
         action="store_true",
         help="Pretty-print JSON output.",
@@ -365,6 +371,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path(__file__).resolve().parents[1],
         help="Repository root path.",
+    )
+    enrich_entity_parser.add_argument(
+        "--no-random-waits",
+        action="store_true",
+        help="Disable randomized waits between browser actions during extraction.",
     )
     enrich_entity_parser.add_argument(
         "--pretty",
@@ -522,6 +533,13 @@ def run_bootstrap_session(args: argparse.Namespace) -> int:
     export_path = args.export_path
     if export_path is None and args.headful:
         export_path = Path(f".build/enrichment/sessions/{source.value}/headful-export.json")
+    run_environ = None
+    if args.no_random_waits:
+        run_environ = dict(os.environ)
+        run_environ["KB_ENRICHMENT_ACTION_RANDOM_WAITS"] = "false"
+    bootstrap_kwargs: dict[str, object] = {}
+    if run_environ is not None:
+        bootstrap_kwargs["environ"] = run_environ
 
     try:
         result = bootstrap_session_login(
@@ -531,6 +549,7 @@ def run_bootstrap_session(args: argparse.Namespace) -> int:
             headless=headless,
             export_path=export_path,
             bootstrap_command=args.bootstrap_command,
+            **bootstrap_kwargs,
         )
     except AuthenticationError as exc:
         payload = {
@@ -638,6 +657,13 @@ def run_enrich_entity(args: argparse.Namespace) -> int:
     config = load_enrichment_config_from_env()
     if args.headful:
         config = _force_headful_sources(config)
+    run_environ = None
+    if args.no_random_waits:
+        run_environ = dict(os.environ)
+        run_environ["KB_ENRICHMENT_ACTION_RANDOM_WAITS"] = "false"
+    run_kwargs: dict[str, object] = {}
+    if run_environ is not None:
+        run_kwargs["environ"] = run_environ
 
     try:
         report = run_enrichment_for_entity(
@@ -645,6 +671,7 @@ def run_enrich_entity(args: argparse.Namespace) -> int:
             selected_sources=args.sources,
             config=config,
             project_root=project_root,
+            **run_kwargs,
         )
     except EnrichmentRunError as exc:
         payload = {

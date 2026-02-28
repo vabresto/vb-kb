@@ -12,6 +12,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from kb.enrichment_config import SupportedSource
+from kb.enrichment_playwright_timing import RandomWaitSettings, parse_random_wait_settings, wait_random_delay
 
 _PROFILE_URLS: dict[SupportedSource, str] = {
     SupportedSource.linkedin: "https://www.linkedin.com/in/{slug}/",
@@ -411,14 +412,15 @@ def _unsupported_reason(*, source: SupportedSource, url: str, title: str | None,
     return None
 
 
-def _scroll_profile(page: Any) -> None:
+def _scroll_profile(page: Any, wait_settings: RandomWaitSettings) -> None:
     last_height = 0
     stable_steps = 0
     max_steps = 40
     for _ in range(max_steps):
         try:
             page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
-            page.wait_for_timeout(500)
+            page.wait_for_timeout(350)
+            wait_random_delay(page, wait_settings, minimum_ms=80, maximum_ms=260)
             height = int(page.evaluate("() => document.body.scrollHeight"))
         except Exception:
             break
@@ -429,7 +431,8 @@ def _scroll_profile(page: Any) -> None:
         last_height = height
         if stable_steps >= 2:
             break
-    page.wait_for_timeout(700)
+    page.wait_for_timeout(500)
+    wait_random_delay(page, wait_settings, minimum_ms=100, maximum_ms=300)
 
 
 def _run_fetch(source: SupportedSource) -> int:
@@ -437,6 +440,7 @@ def _run_fetch(source: SupportedSource) -> int:
     cwd = Path.cwd()
     session_state_path = _require_session_path(cwd=cwd)
     headless = _parse_headless(os.environ.get("KB_ENRICHMENT_EXTRACT_HEADLESS"))
+    wait_settings = parse_random_wait_settings()
     target_url = _PROFILE_URLS[source].format(slug=entity_slug)
 
     from playwright.sync_api import sync_playwright
@@ -447,7 +451,8 @@ def _run_fetch(source: SupportedSource) -> int:
         page = context.new_page()
         page.goto(target_url, wait_until="domcontentloaded", timeout=60_000)
         page.wait_for_timeout(1200)
-        _scroll_profile(page)
+        wait_random_delay(page, wait_settings)
+        _scroll_profile(page, wait_settings)
         source_url = _normalize_optional_text(page.url) or target_url
         title = _normalize_optional_text(page.title())
         description = _extract_meta_content(page, "description") or _extract_meta_content(

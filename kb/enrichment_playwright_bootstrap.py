@@ -14,6 +14,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from kb.enrichment_config import SupportedSource
+from kb.enrichment_playwright_timing import RandomWaitSettings, parse_random_wait_settings, wait_random_delay
 
 _LOGIN_URLS: dict[SupportedSource, str] = {
     SupportedSource.linkedin: "https://www.linkedin.com/login",
@@ -128,11 +129,18 @@ def _click_first(page: Any, selectors: Sequence[str]) -> bool:
     return True
 
 
-def _attempt_linkedin_login(page: Any, username: str, password: str) -> None:
+def _attempt_linkedin_login(
+    page: Any,
+    username: str,
+    password: str,
+    wait_settings: RandomWaitSettings,
+) -> None:
     if not _fill_first(page, ("#username", "input[name='session_key']", "input[type='email']"), username):
         raise RuntimeError("unable to locate LinkedIn username/email input")
+    wait_random_delay(page, wait_settings)
     if not _fill_first(page, ("#password", "input[name='session_password']", "input[type='password']"), password):
         raise RuntimeError("unable to locate LinkedIn password input")
+    wait_random_delay(page, wait_settings)
     if not _click_first(
         page,
         (
@@ -142,24 +150,32 @@ def _attempt_linkedin_login(page: Any, username: str, password: str) -> None:
         ),
     ):
         raise RuntimeError("unable to locate LinkedIn sign-in button")
+    wait_random_delay(page, wait_settings)
 
 
 def _linkedin_totp_prompt_visible(page: Any) -> bool:
     return _first_visible_selector(page, _LINKEDIN_TOTP_INPUT_SELECTORS) is not None
 
 
-def _attempt_linkedin_totp(page: Any, totp_secret: str) -> None:
+def _attempt_linkedin_totp(page: Any, totp_secret: str, wait_settings: RandomWaitSettings) -> None:
     code = _generate_totp_code(secret=totp_secret)
     if not _fill_first(page, _LINKEDIN_TOTP_INPUT_SELECTORS, code):
         raise RuntimeError("unable to locate LinkedIn verification code input")
+    wait_random_delay(page, wait_settings)
     if not _click_first(page, _LINKEDIN_TOTP_SUBMIT_SELECTORS):
         page.keyboard.press("Enter")
+    wait_random_delay(page, wait_settings)
     page.wait_for_timeout(4_000)
     if _linkedin_totp_prompt_visible(page):
         raise RuntimeError("linkedin verification code was not accepted; check TOTP secret and system clock")
 
 
-def _attempt_skool_login(page: Any, username: str, password: str) -> None:
+def _attempt_skool_login(
+    page: Any,
+    username: str,
+    password: str,
+    wait_settings: RandomWaitSettings,
+) -> None:
     if not _fill_first(
         page,
         (
@@ -171,6 +187,7 @@ def _attempt_skool_login(page: Any, username: str, password: str) -> None:
         username,
     ):
         raise RuntimeError("unable to locate Skool username/email input")
+    wait_random_delay(page, wait_settings)
     if not _fill_first(
         page,
         (
@@ -181,6 +198,7 @@ def _attempt_skool_login(page: Any, username: str, password: str) -> None:
         password,
     ):
         raise RuntimeError("unable to locate Skool password input")
+    wait_random_delay(page, wait_settings)
     if not _click_first(
         page,
         (
@@ -190,6 +208,7 @@ def _attempt_skool_login(page: Any, username: str, password: str) -> None:
         ),
     ):
         raise RuntimeError("unable to locate Skool sign-in button")
+    wait_random_delay(page, wait_settings)
 
 
 def _has_source_cookie(cookies: list[dict[str, Any]], source: SupportedSource) -> bool:
@@ -232,6 +251,7 @@ def _run_bootstrap(source: SupportedSource) -> int:
     if source == SupportedSource.linkedin and not totp_secret:
         totp_secret = os.environ.get("KB_ENRICH_LINKEDIN_TOTP_SECRET")
     manual_wait_seconds = _manual_wait_seconds(os.environ.get("KB_ENRICHMENT_BOOTSTRAP_WAIT_SECONDS"))
+    wait_settings = parse_random_wait_settings()
 
     if headless and (not username or not password):
         print(
@@ -250,10 +270,11 @@ def _run_bootstrap(source: SupportedSource) -> int:
         context = browser.new_context()
         page = context.new_page()
         page.goto(_LOGIN_URLS[source], wait_until="domcontentloaded", timeout=60_000)
+        wait_random_delay(page, wait_settings)
 
         if username and password:
             if source == SupportedSource.linkedin:
-                _attempt_linkedin_login(page, username, password)
+                _attempt_linkedin_login(page, username, password, wait_settings)
                 page.wait_for_timeout(2_500)
                 if _linkedin_totp_prompt_visible(page):
                     if not totp_secret:
@@ -261,9 +282,9 @@ def _run_bootstrap(source: SupportedSource) -> int:
                             "linkedin verification code prompt detected but no TOTP secret is configured. "
                             "Set KB_ENRICH_LINKEDIN_TOTP_SECRET (or override via KB_ENRICHMENT_LINKEDIN_TOTP_ENV)."
                         )
-                    _attempt_linkedin_totp(page, totp_secret)
+                    _attempt_linkedin_totp(page, totp_secret, wait_settings)
             else:
-                _attempt_skool_login(page, username, password)
+                _attempt_skool_login(page, username, password, wait_settings)
             page.wait_for_timeout(6_000)
         else:
             print(

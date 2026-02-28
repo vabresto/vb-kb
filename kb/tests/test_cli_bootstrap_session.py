@@ -20,6 +20,7 @@ def test_bootstrap_session_parser_accepts_headful_export_flags() -> None:
             "exports/linkedin.json",
             "--bootstrap-command",
             "bootstrap-linkedin",
+            "--no-random-waits",
         ]
     )
 
@@ -28,6 +29,7 @@ def test_bootstrap_session_parser_accepts_headful_export_flags() -> None:
     assert args.headful is True
     assert args.export_path == Path("exports/linkedin.json")
     assert args.bootstrap_command == "bootstrap-linkedin"
+    assert args.no_random_waits is True
 
 
 def test_run_bootstrap_session_reports_success_payload(
@@ -89,3 +91,37 @@ def test_run_bootstrap_session_uses_default_headful_export_path(
     assert observed["export_path"] == Path(".build/enrichment/sessions/linkedin.com/headful-export.json")
     payload = json.loads(capsys.readouterr().out)
     assert payload["headless"] is False
+
+
+def test_run_bootstrap_session_no_random_waits_sets_env_var(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    observed: dict[str, object] = {}
+
+    def _bootstrap_stub(*_args, **kwargs) -> BootstrapSessionResult:
+        environ = kwargs.get("environ") or {}
+        observed["random_waits"] = environ.get("KB_ENRICHMENT_ACTION_RANDOM_WAITS")
+        return BootstrapSessionResult(
+            source=SupportedSource.linkedin,
+            headless=True,
+            bootstrap_command="bootstrap-linkedin",
+            session_state_path=str(tmp_path / ".build/enrichment/sessions/linkedin.com/storage-state.json"),
+            export_path=None,
+            expires_at=None,
+        )
+
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr("kb.cli.bootstrap_session_login", _bootstrap_stub)
+
+    parser = build_parser()
+    args = parser.parse_args(
+        ["bootstrap-session", "linkedin.com", "--project-root", str(tmp_path), "--no-random-waits"]
+    )
+    status_code = run_bootstrap_session(args)
+
+    assert status_code == 0
+    assert observed["random_waits"] == "false"
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
