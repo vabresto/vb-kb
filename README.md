@@ -42,7 +42,7 @@ Python files for authenticated enrichment are organized by concern:
 - `kb/enrichment_playwright_bootstrap.py`: default Playwright bootstrap implementation used when no `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` override is set.
 - `kb/enrichment_linkedin_adapter.py`: LinkedIn adapter implementation with session preflight/bootstrap fallback, fetch normalization, and snapshot persistence.
 - `kb/enrichment_skool_adapter.py`: Skool adapter implementation with session preflight/bootstrap fallback, fetch normalization, and snapshot persistence.
-- `kb/cli.py`: user-facing command wiring (`kb bootstrap-session ...`).
+- `kb/cli.py`: user-facing command wiring (`kb bootstrap-session`, `kb export-session`, `kb import-session`, `kb enrich-entity`).
 
 Related tests:
 
@@ -53,6 +53,8 @@ Related tests:
 - `kb/tests/test_enrichment_linkedin_adapter.py`
 - `kb/tests/test_enrichment_skool_adapter.py`
 - `kb/tests/test_cli_bootstrap_session.py`
+- `kb/tests/test_cli_enrich_entity.py`
+- `kb/tests/test_cli_session_transfer.py`
 
 Related runnable workflows:
 
@@ -62,11 +64,31 @@ Related runnable workflows:
 - `just enrichment-bootstrap <source> "--bootstrap-command '<command>' --pretty"`
 - `just enrichment-bootstrap <source> "<any kb bootstrap-session flags>" <project_root>`
 - `just enrichment-bootstrap-headful <source> "--export-path <path>"` (convenience alias)
+- `just enrichment-session-export <source> <export_path>`
+- `just enrichment-session-import <source> <import_path>`
+- `just enrichment-run <entity> "--source linkedin.com --source skool.com --pretty"`
+- `just test-enrichment`
 
 Bootstrap command contract:
 
 - Bootstrap scripts should emit JSON as either raw Playwright `storageState` (`cookies` + `origins`) or `{ "storage_state": ... }`.
 - If `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` is unset, default commands run `kb.enrichment_playwright_bootstrap` via `uv --with playwright`.
+
+### Enrichment operation model (v1)
+
+- Kickoff is always manual: run `just enrichment-run <entity> ...` for exactly one slug/path target per invocation.
+- After kickoff, execution is autonomous (no interactive approval prompts): extraction, source logging, mapping, validation/remediation, and run reporting complete in one command.
+
+### Local secret manager and env fallback
+
+- Secret policy is configured through `KB_ENRICHMENT_SECRET_PROVIDER` (`local` default, `env` optional) and `KB_ENRICHMENT_SECRET_ENV_FALLBACK` (`true` default).
+- Per-source secret references can be set with:
+  - `KB_ENRICHMENT_LINKEDIN_USERNAME_SECRET` / `KB_ENRICHMENT_LINKEDIN_PASSWORD_SECRET`
+  - `KB_ENRICHMENT_SKOOL_USERNAME_SECRET` / `KB_ENRICHMENT_SKOOL_PASSWORD_SECRET`
+- Env fallback credentials are provided through the source credential env vars:
+  - `KB_ENRICH_LINKEDIN_USERNAME` / `KB_ENRICH_LINKEDIN_PASSWORD`
+  - `KB_ENRICH_SKOOL_USERNAME` / `KB_ENRICH_SKOOL_PASSWORD`
+- Source env var names are also overrideable via `KB_ENRICHMENT_*_USERNAME_ENV` and `KB_ENRICHMENT_*_PASSWORD_ENV`.
 
 ## Validate data
 

@@ -66,6 +66,22 @@ enrichment-bootstrap source args="" project_root=".":
 enrichment-bootstrap-headful source args="" project_root=".":
   uv run kb bootstrap-session "{{source}}" --project-root "{{project_root}}" --headful {{args}}
 
+# Export an existing source session to transfer JSON.
+enrichment-session-export source export_path project_root=".":
+  uv run kb export-session "{{source}}" --project-root "{{project_root}}" --export-path "{{export_path}}"
+
+# Import source session transfer JSON into canonical storageState location.
+enrichment-session-import source import_path project_root=".":
+  uv run kb import-session "{{source}}" --project-root "{{project_root}}" --import-path "{{import_path}}"
+
+# Kick off one-entity enrichment run (autonomous execution after kickoff).
+enrichment-run entity args="" project_root=".":
+  uv run kb enrich-entity "{{entity}}" --project-root "{{project_root}}" {{args}}
+
+# Run enrichment-focused tests (sessions/bootstrap/adapters/run/CLI).
+test-enrichment:
+  uv run --extra dev python -m pytest -q kb/tests/test_enrichment_*.py kb/tests/test_cli_bootstrap_session.py kb/tests/test_cli_enrich_entity.py kb/tests/test_cli_session_transfer.py
+
 # Derive canonical employment edges from person JSONL rows.
 derive-edges:
   uv run kb derive-employment-edges --data-root data

@@ -5,6 +5,7 @@
 - Any runnable workflow in this repo must be exposed in the root `justfile`.
 - When adding new scripts, integration suites, deploy commands, or maintenance tasks, add/update the corresponding `just` target in the same change.
 - Prefer documenting usage as `just <target>` instead of ad-hoc shell invocations.
+- When adding `kb` CLI subcommands, add matching `just` wrappers and parser/runner coverage in `kb/tests/test_cli_*.py`.
 
 ## Enrichment Sessions
 

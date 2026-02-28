@@ -8,6 +8,7 @@ from kb.enrichment_adapters import AuthenticationError
 from kb.enrichment_bootstrap import bootstrap_session_login
 from kb.enrichment_config import SupportedSource, load_enrichment_config_from_env
 from kb.enrichment_run import EnrichmentRunError, RunStatus, run_enrichment_for_entity
+from kb.enrichment_sessions import export_session_state_json, import_session_state_json
 from kb.edges import derive_citation_edges, derive_employment_edges, sync_edge_backlinks
 from kb.mcp_server import run_server as run_fastmcp_server
 from kb.semantic import (
@@ -275,6 +276,60 @@ def build_parser() -> argparse.ArgumentParser:
         help="Pretty-print JSON output.",
     )
 
+    export_session_parser = subparsers.add_parser(
+        "export-session",
+        help="Export persisted source session storageState to a transfer JSON payload.",
+    )
+    export_session_parser.add_argument(
+        "source",
+        choices=[source.value for source in SupportedSource],
+        help="Supported source to export (linkedin.com or skool.com).",
+    )
+    export_session_parser.add_argument(
+        "--export-path",
+        type=Path,
+        required=True,
+        help="Output path for exported transfer JSON payload.",
+    )
+    export_session_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Repository root path.",
+    )
+    export_session_parser.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Pretty-print JSON output.",
+    )
+
+    import_session_parser = subparsers.add_parser(
+        "import-session",
+        help="Import source session storageState from a transfer JSON payload.",
+    )
+    import_session_parser.add_argument(
+        "source",
+        choices=[source.value for source in SupportedSource],
+        help="Supported source to import (linkedin.com or skool.com).",
+    )
+    import_session_parser.add_argument(
+        "--import-path",
+        type=Path,
+        required=True,
+        help="Input path for transfer JSON payload.",
+    )
+    import_session_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Repository root path.",
+    )
+    import_session_parser.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Pretty-print JSON output.",
+    )
+
     enrich_entity_parser = subparsers.add_parser(
         "enrich-entity",
         help="Kick off a one-entity enrichment run with autonomous execution after kickoff.",
@@ -494,6 +549,82 @@ def run_bootstrap_session(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_export_session(args: argparse.Namespace) -> int:
+    project_root = args.project_root.resolve()
+    config = load_enrichment_config_from_env()
+    source = SupportedSource(args.source)
+
+    try:
+        export_path = export_session_state_json(
+            source,
+            args.export_path,
+            config=config,
+            project_root=project_root,
+        )
+    except AuthenticationError as exc:
+        payload = {
+            "ok": False,
+            "source": exc.source,
+            "error_type": exc.__class__.__name__,
+            "message": str(exc),
+            "details": exc.details,
+        }
+        if args.pretty:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(json.dumps(payload, sort_keys=True))
+        return 1
+
+    payload = {
+        "ok": True,
+        "source": source.value,
+        "export_path": str(export_path),
+    }
+    if args.pretty:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(json.dumps(payload, sort_keys=True))
+    return 0
+
+
+def run_import_session(args: argparse.Namespace) -> int:
+    project_root = args.project_root.resolve()
+    config = load_enrichment_config_from_env()
+    source = SupportedSource(args.source)
+
+    try:
+        session_state_path = import_session_state_json(
+            source,
+            args.import_path,
+            config=config,
+            project_root=project_root,
+        )
+    except AuthenticationError as exc:
+        payload = {
+            "ok": False,
+            "source": exc.source,
+            "error_type": exc.__class__.__name__,
+            "message": str(exc),
+            "details": exc.details,
+        }
+        if args.pretty:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(json.dumps(payload, sort_keys=True))
+        return 1
+
+    payload = {
+        "ok": True,
+        "source": source.value,
+        "session_state_path": str(session_state_path),
+    }
+    if args.pretty:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(json.dumps(payload, sort_keys=True))
+    return 0
+
+
 def run_enrich_entity(args: argparse.Namespace) -> int:
     project_root = args.project_root.resolve()
     config = load_enrichment_config_from_env()
@@ -548,6 +679,10 @@ def main() -> int:
         return run_semantic_search(args)
     if args.command == "bootstrap-session":
         return run_bootstrap_session(args)
+    if args.command == "export-session":
+        return run_export_session(args)
+    if args.command == "import-session":
+        return run_import_session(args)
     if args.command == "enrich-entity":
         return run_enrich_entity(args)
     parser.error(f"Unknown command: {args.command}")

@@ -16,6 +16,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Organization mapping should target canonical `data/org/<shard>/org@<slug>/index.md`, keep narrative body sections unchanged, and merge `known-people` entries using canonical person links with required relationship/date fields.
 - Promoted enrichment facts must carry source-entity provenance (`source_entity_ref`, `source_entity_path`, citation key) before mapping writes; mapping should fail fast when linkage is missing and should upsert a managed `## Enrichment Provenance` markdown section with source-entity links + `[^citation-key]` tokens.
 - Validation gating should call `run_validation(..., scope_label="changed")` after mapping/source writes; if it fails, run one remediation pass (`derive-employment-edges`, `derive-citation-edges`, `sync-edge-backlinks`), rerun validation once, and escalate as `blocked` with failing check codes + affected paths when unresolved.
+- Enrichment operator flows should be surfaced both as `kb` CLI subcommands and root `just` targets, with parser/runner coverage in `kb/tests/test_cli_*.py`.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -603,4 +604,50 @@ There are still stories with `passes: false` (`US-012`, `US-013`).
     - When adding new run terminal states (like `blocked`), update CLI `ok`/exit-code logic and tests so automation surfaces treat blocked runs as failures.
   - Useful context (e.g., "the evaluation panel is in component X")
     - In non-git temp test roots, `collect_changed_paths(...)` returns an empty scope and validation is effectively a no-op unless tests monkeypatch validation helpers to simulate failures.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:44:34)
+Implemented `US-012` on branch `ralph/playwright-kb-enrichment` and committed all changes.
+
+- Commit: `d9cde08`
+- Message: `feat: [US-012] - [Add validation gating with auto-remediation and human escalation]`
+
+What changed:
+- Added validation gating + one-shot auto-remediation + blocked escalation in [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py)
+- Updated CLI blocked-run exit/`ok` behavior in [kb/cli.py](/root/ws/vb-kb2/kb/cli.py)
+- Added/updated validation-remediation tests in [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py)
+- Added CLI blocked-status test in [kb/tests/test_cli_enrich_entity.py](/root/ws/vb-kb2/kb/tests/test_cli_enrich_entity.py)
+- Added reusable pattern note in [agents.md](/root/ws/vb-kb2/agents.md)
+- Marked `US-012` as passing in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended progress entry + codebase pattern update in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py kb/tests/test_cli_enrich_entity.py` (`16 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; all passed)
+
+`US-013` remains with `passes: false`, so the project is not complete yet.
+---
+
+## [2026-02-28 16:48:19 UTC] - US-013
+- What was implemented
+  - Added `kb export-session` and `kb import-session` CLI commands with structured JSON success/error payloads and typed authentication-error handling.
+  - Added root `just` targets for session export/import (`enrichment-session-export`, `enrichment-session-import`), one-entity run kickoff (`enrichment-run`), and enrichment-focused checks (`test-enrichment`).
+  - Updated README enrichment docs with command coverage, v1 manual kickoff + autonomous execution behavior, and secret-provider/env-fallback configuration guidance.
+  - Added CLI session-transfer tests for parser coverage plus success/error runtime behavior.
+- Files changed
+  - `kb/cli.py`
+  - `kb/tests/test_cli_session_transfer.py`
+  - `justfile`
+  - `README.md`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - New enrichment operator capabilities should ship as both `kb` CLI subcommands and documented `just` wrappers so local execution stays discoverable and scriptable.
+    - Keep parser/command handler tests together in `kb/tests/test_cli_*.py` whenever CLI surfaces expand.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Adding a new CLI subcommand requires updates in three places: parser registration, `run_*` handler, and `main()` dispatch.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `test-enrichment` now provides a focused verification lane for enrichment sessions/bootstrap/adapters/orchestration CLI coverage without running unrelated suites.
 ---
