@@ -75,6 +75,7 @@ enrichment-session-import source import_path project_root=".":
   uv run kb import-session "{{source}}" --project-root "{{project_root}}" --import-path "{{import_path}}"
 
 # Kick off one-entity enrichment run (autonomous execution after kickoff).
+# Exposes full `kb enrich-entity` flag surface via args (including `--headful`).
 enrichment-run entity args="" project_root=".":
   uv run kb enrich-entity "{{entity}}" --project-root "{{project_root}}" {{args}}
 

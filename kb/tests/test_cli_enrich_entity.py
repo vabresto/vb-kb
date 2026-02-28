@@ -78,6 +78,25 @@ def test_enrich_entity_parser_accepts_single_entity_with_multiple_sources() -> N
     assert args.command == "enrich-entity"
     assert args.entity == "person@founder-name"
     assert args.sources == ["linkedin.com", "skool.com"]
+    assert args.headful is False
+
+
+def test_enrich_entity_parser_accepts_headful_flag() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--source",
+            "linkedin.com",
+            "--headful",
+        ]
+    )
+
+    assert args.command == "enrich-entity"
+    assert args.entity == "person@founder-name"
+    assert args.sources == ["linkedin.com"]
+    assert args.headful is True
 
 
 def test_enrich_entity_parser_rejects_multiple_entity_arguments() -> None:
@@ -134,6 +153,74 @@ def test_run_enrich_entity_reports_structured_payload(
     assert payload["status"] == "partial"
     assert payload["phases"]["extraction"]["status"] == "succeeded"
     assert payload["phases"]["validation"]["status"] == "pending"
+
+
+def test_run_enrich_entity_headful_forces_non_headless_sources(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    observed: dict[str, object] = {}
+    base_config = EnrichmentConfig.model_validate(
+        {
+            "headless_default": True,
+            "sources": {
+                SupportedSource.linkedin: {
+                    "session_state_path": ".build/enrichment/sessions/linkedin.com/storage-state.json",
+                    "evidence_path": ".build/enrichment/source-evidence/linkedin.com",
+                    "headless_override": True,
+                },
+                SupportedSource.skool: {
+                    "session_state_path": ".build/enrichment/sessions/skool.com/storage-state.json",
+                    "evidence_path": ".build/enrichment/source-evidence/skool.com",
+                    "headless_override": True,
+                },
+            },
+        }
+    )
+
+    def _run_stub(
+        entity_target: str,
+        *,
+        selected_sources,
+        config: EnrichmentConfig,
+        project_root: Path,
+    ) -> EnrichmentRunReport:
+        observed["entity_target"] = entity_target
+        observed["selected_sources"] = list(selected_sources or [])
+        observed["project_root"] = project_root
+        observed["headless_default"] = config.headless_default
+        observed["linkedin_headless"] = config.sources[SupportedSource.linkedin].headless_override
+        observed["skool_headless"] = config.sources[SupportedSource.skool].headless_override
+        return _stub_report(sources=[SupportedSource.linkedin])
+
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: base_config)
+    monkeypatch.setattr("kb.cli.run_enrichment_for_entity", _run_stub)
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--source",
+            "linkedin.com",
+            "--headful",
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 0
+    assert observed["entity_target"] == "person@founder-name"
+    assert observed["selected_sources"] == ["linkedin.com"]
+    assert observed["project_root"] == tmp_path.resolve()
+    assert observed["headless_default"] is False
+    assert observed["linkedin_headless"] is False
+    assert observed["skool_headless"] is False
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
 
 
 def test_run_enrich_entity_reports_resolution_error(tmp_path: Path, monkeypatch, capsys) -> None:

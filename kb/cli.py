@@ -6,7 +6,7 @@ from pathlib import Path
 
 from kb.enrichment_adapters import AuthenticationError
 from kb.enrichment_bootstrap import bootstrap_session_login
-from kb.enrichment_config import SupportedSource, load_enrichment_config_from_env
+from kb.enrichment_config import EnrichmentConfig, SupportedSource, load_enrichment_config_from_env
 from kb.enrichment_run import EnrichmentRunError, RunStatus, run_enrichment_for_entity
 from kb.enrichment_sessions import export_session_state_json, import_session_state_json
 from kb.edges import derive_citation_edges, derive_employment_edges, sync_edge_backlinks
@@ -353,6 +353,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     enrich_entity_parser.add_argument(
+        "--headful",
+        action="store_true",
+        help=(
+            "Run extraction in non-headless mode for this invocation by forcing "
+            "all selected sources to headless_override=false."
+        ),
+    )
+    enrich_entity_parser.add_argument(
         "--project-root",
         type=Path,
         default=Path(__file__).resolve().parents[1],
@@ -628,6 +636,8 @@ def run_import_session(args: argparse.Namespace) -> int:
 def run_enrich_entity(args: argparse.Namespace) -> int:
     project_root = args.project_root.resolve()
     config = load_enrichment_config_from_env()
+    if args.headful:
+        config = _force_headful_sources(config)
 
     try:
         report = run_enrichment_for_entity(
@@ -657,6 +667,14 @@ def run_enrich_entity(args: argparse.Namespace) -> int:
     else:
         print(json.dumps(payload, sort_keys=True))
     return 0 if report.status not in {RunStatus.failed, RunStatus.blocked} else 1
+
+
+def _force_headful_sources(config: EnrichmentConfig) -> EnrichmentConfig:
+    updated_sources = {
+        source: settings.model_copy(update={"headless_override": False})
+        for source, settings in config.sources.items()
+    }
+    return config.model_copy(update={"headless_default": False, "sources": updated_sources})
 
 
 def main() -> int:

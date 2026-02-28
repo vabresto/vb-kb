@@ -68,6 +68,7 @@ Related runnable workflows:
 - `just enrichment-session-export <source> <export_path>`
 - `just enrichment-session-import <source> <import_path>`
 - `just enrichment-run <entity-ref> "--source linkedin.com --source skool.com --pretty"`
+- `just enrichment-run <entity-ref> "--source linkedin.com --headful --pretty"`
 - `just test-enrichment`
 
 Bootstrap command contract:
