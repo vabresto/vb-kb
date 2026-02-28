@@ -13,6 +13,7 @@ PRD_FILE="$SCRIPT_DIR/prd.json"
 PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
 ARCHIVE_DIR="$SCRIPT_DIR/archive"
 LAST_BRANCH_FILE="$SCRIPT_DIR/.last-branch"
+LAST_OUTPUT_FILE="$SCRIPT_DIR/.last-codex-output.md"
 
 # Archive previous run if branch changed
 if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
@@ -63,7 +64,28 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "==============================================================="
 
   # Codex: run non-interactively with autonomous execution enabled.
-  OUTPUT=$(codex exec --full-auto --color never - < "$SCRIPT_DIR/CODEX.md" 2>&1 | tee /dev/stderr) || true
+  : > "$LAST_OUTPUT_FILE"
+  OUTPUT=$(codex exec --full-auto --color never --output-last-message "$LAST_OUTPUT_FILE" - < "$SCRIPT_DIR/CODEX.md" 2>&1 | tee /dev/stderr) || true
+
+  # Persist Codex's final assistant output in the progress log.
+  if [ -s "$LAST_OUTPUT_FILE" ]; then
+    {
+      echo ""
+      echo "## Codex Output - Iteration $i ($(date '+%Y-%m-%d %H:%M:%S'))"
+      cat "$LAST_OUTPUT_FILE"
+      echo ""
+      echo "---"
+    } >> "$PROGRESS_FILE"
+  else
+    {
+      echo ""
+      echo "## Codex Output - Iteration $i ($(date '+%Y-%m-%d %H:%M:%S'))"
+      echo "_No output-last-message captured; showing command output tail._"
+      printf '%s\n' "$OUTPUT" | tail -n 200
+      echo ""
+      echo "---"
+    } >> "$PROGRESS_FILE"
+  fi
   
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
