@@ -113,7 +113,7 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
 
     assert report.status == RunStatus.partial
     assert report.phases.extraction.status == PhaseStatus.succeeded
-    assert report.phases.source_logging.status == PhaseStatus.pending
+    assert report.phases.source_logging.status == PhaseStatus.succeeded
     assert report.phases.mapping.status == PhaseStatus.pending
     assert report.phases.validation.status == PhaseStatus.pending
     assert report.phases.reporting.status == PhaseStatus.succeeded
@@ -124,12 +124,36 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
     assert source_states[SupportedSource.skool].status == PhaseStatus.succeeded
     assert "enrich-test-run" in str(source_states[SupportedSource.linkedin].snapshot_path)
     assert "enrich-test-run" in str(source_states[SupportedSource.skool].snapshot_path)
+    assert source_states[SupportedSource.linkedin].source_entity_ref is not None
+    assert source_states[SupportedSource.linkedin].source_entity_path is not None
+    assert source_states[SupportedSource.linkedin].facts_artifact_path is not None
+    assert source_states[SupportedSource.skool].source_entity_ref is not None
+    assert source_states[SupportedSource.skool].source_entity_path is not None
+    assert source_states[SupportedSource.skool].facts_artifact_path is not None
+
+    for source in (SupportedSource.linkedin, SupportedSource.skool):
+        state = source_states[source]
+        assert state.source_entity_path is not None
+        assert state.facts_artifact_path is not None
+        source_index_path = tmp_path / state.source_entity_path
+        facts_artifact_path = tmp_path / state.facts_artifact_path
+        assert source_index_path.exists()
+        assert facts_artifact_path.exists()
+        facts_payload = json.loads(facts_artifact_path.read_text(encoding="utf-8"))
+        assert facts_payload["run_id"] == "enrich-test-run"
+        assert facts_payload["source"] == source.value
+        assert facts_payload["entity_slug"] == "founder-name"
+        assert facts_payload["snapshot"]["path"] == state.snapshot_path
+        assert facts_payload["facts"][0]["confidence"] == "medium"
+        source_markdown = source_index_path.read_text(encoding="utf-8")
+        assert "Structured facts artifact: [`facts.json`](facts.json)" in source_markdown
+        assert "## Extracted Facts" in source_markdown
 
     report_path = tmp_path / config.run_report_path
     assert report_path.exists()
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     assert payload["phases"]["extraction"]["status"] == "succeeded"
-    assert payload["phases"]["source_logging"]["status"] == "pending"
+    assert payload["phases"]["source_logging"]["status"] == "succeeded"
     assert payload["phases"]["mapping"]["status"] == "pending"
     assert payload["phases"]["validation"]["status"] == "pending"
     assert payload["phases"]["reporting"]["status"] == "succeeded"
@@ -155,7 +179,7 @@ def test_run_enrichment_for_entity_marks_failed_extraction_phase(tmp_path: Path)
 
     assert report.status == RunStatus.failed
     assert report.phases.extraction.status == PhaseStatus.failed
-    assert report.phases.source_logging.status == PhaseStatus.skipped
+    assert report.phases.source_logging.status == PhaseStatus.succeeded
     assert report.phases.mapping.status == PhaseStatus.skipped
     assert report.phases.validation.status == PhaseStatus.skipped
     assert report.phases.reporting.status == PhaseStatus.succeeded
@@ -164,6 +188,60 @@ def test_run_enrichment_for_entity_marks_failed_extraction_phase(tmp_path: Path)
     assert source_states[SupportedSource.linkedin].status == PhaseStatus.failed
     assert source_states[SupportedSource.linkedin].error_type == "SourceAdapterError"
     assert source_states[SupportedSource.skool].status == PhaseStatus.succeeded
+    assert source_states[SupportedSource.linkedin].source_entity_path is None
+    assert source_states[SupportedSource.skool].source_entity_path is not None
+    assert source_states[SupportedSource.skool].facts_artifact_path is not None
+
+    skool_facts_path = tmp_path / str(source_states[SupportedSource.skool].facts_artifact_path)
+    assert skool_facts_path.exists()
+
+
+class _MixedConfidenceAdapter(_SuccessfulAdapter):
+    def normalize(self, request: NormalizeRequest) -> NormalizeResult:
+        return NormalizeResult(
+            facts=[
+                NormalizedFact(
+                    attribute="headline",
+                    value="Low confidence headline",
+                    confidence=ConfidenceLevel.low,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "rank": "2"},
+                ),
+                NormalizedFact(
+                    attribute="about",
+                    value="High confidence summary",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "rank": "1"},
+                ),
+            ]
+        )
+
+
+def test_run_enrichment_for_entity_logs_all_confidence_levels(tmp_path: Path) -> None:
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _MixedConfidenceAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    report = run_enrichment_for_entity(
+        "founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        run_id="enrich-mixed-confidence-run",
+    )
+
+    source_state = report.phases.extraction.sources[0]
+    assert source_state.status == PhaseStatus.succeeded
+    assert source_state.facts_artifact_path is not None
+    facts_payload = json.loads((tmp_path / source_state.facts_artifact_path).read_text(encoding="utf-8"))
+    assert [fact["confidence"] for fact in facts_payload["facts"]] == ["high", "low"]
 
 
 def test_run_enrichment_for_entity_never_prompts_after_kickoff(

@@ -15,6 +15,7 @@
 - Command-backed source adapters should use source-specific fetch command env vars (`KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND`, `KB_ENRICHMENT_SKOOL_FETCH_COMMAND`) while emitting the shared `KB_ENRICHMENT_EXTRACT_*` runtime env contract.
 - `kb enrich-entity <entity>` is intentionally single-target kickoff: pass one slug/path positional and repeat `--source` when you need multiple adapters in one run.
 - Keep orchestration output in the shared `EnrichmentRunReport` schema (`extraction`, `source_logging`, `mapping`, `validation`, `reporting`) and persist it to `EnrichmentConfig.run_report_path` for deterministic run auditing.
+- Source logging persists one canonical source entity per successful `(run_id, source, entity)` extraction under `data/source/<shard>/source@enrichment-.../`, with `index.md` plus a structured `facts.json`; keep `SourceExtractionState.source_entity_ref/source_entity_path/facts_artifact_path` in sync with those writes.
 
 ## Reference Integrity
 

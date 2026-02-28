@@ -11,6 +11,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Adapter response models enforce relative path tokens for `used_session_state_path` and `snapshot_path`; keep absolute paths internal for filesystem I/O and return relative config/output paths in typed results.
 - Command-backed adapters should keep per-source fetch command env vars but reuse shared `KB_ENRICHMENT_EXTRACT_*` runtime env keys so source adapters stay interchangeable.
 - `run_enrichment_for_entity(...)` should remain the canonical kickoff orchestrator: it accepts exactly one entity target, runs one or more selected sources in a single invocation, and always emits explicit phase-state keys (`extraction`, `source_logging`, `mapping`, `validation`, `reporting`) in `EnrichmentRunReport`.
+- Source logging should write deterministic source entities under `data/source/<shard>/source@enrichment-.../` with both canonical `index.md` and structured `facts.json`; preserve these paths on `SourceExtractionState` for downstream provenance/mapping phases.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -339,4 +340,52 @@ There are still stories with `passes: false` (`US-007` onward).
     - For unfinished downstream phases, use explicit `pending`/`skipped` phase states instead of omitting phases from output.
   - Useful context (e.g., "the evaluation panel is in component X")
     - `kb enrich-entity` writes its structured report to `EnrichmentConfig.run_report_path` (default `.build/enrichment/reports/latest-run.json`), which makes each kickoff auditable even before mapping/validation stories land.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:07:08)
+Implemented `US-007` on `ralph/playwright-kb-enrichment` and committed all changes.
+
+Commit:
+- `73578df`
+- `feat: [US-007] - [Add manual kickoff command and autonomous orchestrator]`
+
+Key changes:
+- Added one-entity enrichment kickoff/orchestrator with structured phase-state reporting in [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py).
+- Added CLI command `kb enrich-entity <entity>` (single target, repeated `--source` support, structured JSON output) in [kb/cli.py](/root/ws/vb-kb2/kb/cli.py).
+- Added orchestration tests in [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py).
+- Added CLI tests in [kb/tests/test_cli_enrich_entity.py](/root/ws/vb-kb2/kb/tests/test_cli_enrich_entity.py).
+- Added reusable orchestration guidance in [agents.md](/root/ws/vb-kb2/agents.md).
+
+Tracking updates:
+- Set `US-007` to `"passes": true` in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json).
+- Appended required progress entry and updated `Codebase Patterns` in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt).
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py kb/tests/test_cli_enrich_entity.py` (`9 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; `80 passed`)
+
+There are still stories with `passes: false` (`US-008` through `US-013`).
+---
+## [2026-02-28 16:13:17 UTC] - US-008
+- What was implemented
+  - Implemented source-logging persistence in `run_enrichment_for_entity(...)` so successful extractions now write canonical source entities under `data/source/...` instead of leaving the phase pending.
+  - Added deterministic source-entity writes per `(run_id, source, entity)` including canonical `index.md`, `edges/.gitkeep`, and a structured `facts.json` artifact containing all normalized facts with confidence tags.
+  - Source records now link snapshot artifacts and the structured facts artifact from markdown body content; when snapshot content is HTML, `html-capture-path` is populated in frontmatter.
+  - Extended extraction state reporting with `source_entity_ref`, `source_entity_path`, and `facts_artifact_path`; source logging now runs for successful sources even when other sources fail extraction.
+  - Added/updated orchestration tests to verify source logging success states, generated artifact content, and retention of low-confidence facts.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Use deterministic enrichment-source slugs (`enrichment-<source>-<entity>-<run-id>`) so source entity paths are stable and auditable across reruns.
+    - Keep full extracted facts in `facts.json` (sorted with stable keys) and treat `index.md` as the human-readable citation entrypoint.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - `SourceRecord` frontmatter is strict (`extra="forbid"`), so arbitrary metadata must live in body content or sidecar artifacts like `facts.json`.
+    - Source frontmatter date fields (`retrieved-at`) must be partial-date format (`YYYY-MM-DD`), not full timestamps.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - Source logging phase now succeeds when at least one source is logged, even if another source failed extraction; mapping/validation phases remain skipped when extraction is not fully successful.
 ---
