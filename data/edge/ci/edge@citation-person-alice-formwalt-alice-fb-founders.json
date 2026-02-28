@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/al/person@alice-formwalt",
   "id": "citation-person-alice-formwalt-alice-fb-founders",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^alice-fb-founders] in person/al/person@alice-formwalt",
   "relation": "cites",
   "sources": [
     "source/al/source@alice-fb-founders"
   ],
+  "strength": null,
   "to": "source/al/source@alice-fb-founders",
   "valid_from": null,
   "valid_to": null

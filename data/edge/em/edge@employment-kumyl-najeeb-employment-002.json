@@ -1,15 +1,16 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ku/person@kumyl-najeeb",
   "id": "employment-kumyl-najeeb-employment-002",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Contract Software Engineer | Period: 2020 - 2021 (documented) | Details: Listed in work-history sections on ZoomInfo and RocketReach mirrors.",
   "relation": "works_at",
   "sources": [
     "source/ku/source@kumyl-zoominfo",
     "source/ku/source@kumyl-rocketreach"
   ],
+  "strength": null,
   "to": "org/hy/org@hypotenuse-labs",
   "valid_from": null,
   "valid_to": null

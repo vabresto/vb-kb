@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/al/person@alice-formwalt",
   "id": "employment-alice-formwalt-employment-001",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Founder (Exploration Stage) | Period: Current | Details: Exploring a startup concept to make high-quality board game materials available in smaller batches for easier prototyping.",
   "relation": "works_at",
   "sources": [
     "source/al/source@alice-followup"
   ],
+  "strength": null,
   "to": "org/bo/org@board-game-prototyping-project",
   "valid_from": null,
   "valid_to": null

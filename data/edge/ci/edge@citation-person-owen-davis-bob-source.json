@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ow/person@owen-davis",
   "id": "citation-person-owen-davis-bob-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^bob-source] in person/ow/person@owen-davis",
   "relation": "cites",
   "sources": [
     "source/bo/source@bob-source"
   ],
+  "strength": null,
   "to": "source/bo/source@bob-source",
   "valid_from": null,
   "valid_to": null

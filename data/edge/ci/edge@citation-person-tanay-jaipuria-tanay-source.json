@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ta/person@tanay-jaipuria",
   "id": "citation-person-tanay-jaipuria-tanay-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^tanay-source] in person/ta/person@tanay-jaipuria",
   "relation": "cites",
   "sources": [
     "source/ta/source@tanay-source"
   ],
+  "strength": null,
   "to": "source/ta/source@tanay-source",
   "valid_from": null,
   "valid_to": null

@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/aa/person@aaron-paul",
   "id": "citation-person-aaron-paul-aaron-photo-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^aaron-photo-source] in person/aa/person@aaron-paul",
   "relation": "cites",
   "sources": [
     "source/aa/source@aaron-photo-source"
   ],
+  "strength": null,
   "to": "source/aa/source@aaron-photo-source",
   "valid_from": null,
   "valid_to": null

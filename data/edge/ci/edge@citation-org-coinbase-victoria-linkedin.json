@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/co/org@coinbase",
   "id": "citation-org-coinbase-victoria-linkedin",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^victoria-linkedin] in org/co/org@coinbase",
   "relation": "cites",
   "sources": [
     "source/vi/source@victoria-linkedin"
   ],
+  "strength": null,
   "to": "source/vi/source@victoria-linkedin",
   "valid_from": null,
   "valid_to": null

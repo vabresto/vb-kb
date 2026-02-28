@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/co/org@console",
   "id": "citation-org-console-console-techcrunch",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^console-techcrunch] in org/co/org@console",
   "relation": "cites",
   "sources": [
     "source/co/source@console-techcrunch"
   ],
+  "strength": null,
   "to": "source/co/source@console-techcrunch",
   "valid_from": null,
   "valid_to": null

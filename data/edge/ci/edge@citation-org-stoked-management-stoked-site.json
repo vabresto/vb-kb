@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/st/org@stoked-management",
   "id": "citation-org-stoked-management-stoked-site",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^stoked-site] in org/st/org@stoked-management",
   "relation": "cites",
   "sources": [
     "source/st/source@stoked-site"
   ],
+  "strength": null,
   "to": "source/st/source@stoked-site",
   "valid_from": null,
   "valid_to": null

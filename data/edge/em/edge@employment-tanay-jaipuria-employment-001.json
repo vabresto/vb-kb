@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ta/person@tanay-jaipuria",
   "id": "employment-tanay-jaipuria-employment-001",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Partner | Period: Current | Details: Extracted from frontmatter firm/role.",
   "relation": "works_at",
   "sources": [
     "source/fr/source@frontmatter"
   ],
+  "strength": null,
   "to": "org/wi/org@wing-venture-capital",
   "valid_from": null,
   "valid_to": null

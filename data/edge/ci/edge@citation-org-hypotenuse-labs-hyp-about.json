@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/hy/org@hypotenuse-labs",
   "id": "citation-org-hypotenuse-labs-hyp-about",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^hyp-about] in org/hy/org@hypotenuse-labs",
   "relation": "cites",
   "sources": [
     "source/hy/source@hyp-about"
   ],
+  "strength": null,
   "to": "source/hy/source@hyp-about",
   "valid_from": null,
   "valid_to": null

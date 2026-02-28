@@ -1,9 +1,9 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ol/person@oliver-noteware",
   "id": "employment-oliver-noteware-employment-002",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: CEO and Director | Period: 2019-2023 (documented) | Details: SEC Form D filings list him as Executive Officer and Director, with relationship clarification of \"CEO and Director.\"",
   "relation": "works_at",
   "sources": [
@@ -11,6 +11,7 @@
     "source/ss/source@ssvr-sec-2022",
     "source/ss/source@ssvr-sec-2023"
   ],
+  "strength": null,
   "to": "org/st/org@street-smarts-vr",
   "valid_from": null,
   "valid_to": null

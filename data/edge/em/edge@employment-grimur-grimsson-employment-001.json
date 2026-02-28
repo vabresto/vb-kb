@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/gr/person@grimur-grimsson",
   "id": "employment-grimur-grimsson-employment-001",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Video Producer | Period: 2021 (documented) | Details: Speaker profile describes him as a video producer on Webflow's Education team.",
   "relation": "works_at",
   "sources": [
     "source/we/source@webflow-grimur-source"
   ],
+  "strength": null,
   "to": "org/we/org@webflow",
   "valid_from": null,
   "valid_to": null

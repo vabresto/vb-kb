@@ -1,15 +1,16 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-24",
+  "first_noted_at": "2026-02-28",
   "from": "person/be/person@benjamin-siu",
   "id": "employment-benjamin-siu-employment-001",
-  "last_verified_at": "2026-02-24",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Business Analyst / Data Source Developer | Period: Jun 2017 - Apr 2025 | Details: Full-time, Greater New York City Area.",
   "relation": "works_at",
   "sources": [
     "source/be/source@benjamin-linkedin",
     "source/be/source@benjamin-cience"
   ],
+  "strength": null,
   "to": "org/mo/org@morgan-stanley",
   "valid_from": null,
   "valid_to": null

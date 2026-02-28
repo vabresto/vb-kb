@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/un/org@university-of-waterloo",
   "id": "citation-org-university-of-waterloo-kumyl-zoominfo",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^kumyl-zoominfo] in org/un/org@university-of-waterloo",
   "relation": "cites",
   "sources": [
     "source/ku/source@kumyl-zoominfo"
   ],
+  "strength": null,
   "to": "source/ku/source@kumyl-zoominfo",
   "valid_from": null,
   "valid_to": null

@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/vi/person@victor-brestoiu",
   "id": "employment-victor-brestoiu-employment-001",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Engineering Manager, Realtime Technology | Period: Jan 2026 - Present | Details: Internal current-role update.",
   "relation": "works_at",
   "sources": [
     "source/in/source@internal-confidential-info"
   ],
+  "strength": null,
   "to": "org/gt/org@gts",
   "valid_from": null,
   "valid_to": null

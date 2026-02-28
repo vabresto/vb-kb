@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/th/org@the-table",
   "id": "citation-org-the-table-thetable-trailer",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^thetable-trailer] in org/th/org@the-table",
   "relation": "cites",
   "sources": [
     "source/th/source@thetable-trailer"
   ],
+  "strength": null,
   "to": "source/th/source@thetable-trailer",
   "valid_from": null,
   "valid_to": null

@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/he/person@henri-stern",
   "id": "citation-person-henri-stern-asta-photo-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^asta-photo-source] in person/he/person@henri-stern",
   "relation": "cites",
   "sources": [
     "source/as/source@asta-photo-source"
   ],
+  "strength": null,
   "to": "source/as/source@asta-photo-source",
   "valid_from": null,
   "valid_to": null

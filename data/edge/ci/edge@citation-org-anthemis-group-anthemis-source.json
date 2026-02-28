@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/an/org@anthemis-group",
   "id": "citation-org-anthemis-group-anthemis-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^anthemis-source] in org/an/org@anthemis-group",
   "relation": "cites",
   "sources": [
     "source/an/source@anthemis-source"
   ],
+  "strength": null,
   "to": "source/an/source@anthemis-source",
   "valid_from": null,
   "valid_to": null

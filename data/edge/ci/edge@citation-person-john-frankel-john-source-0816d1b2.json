@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/jo/person@john-frankel",
   "id": "citation-person-john-frankel-john-source-0816d1b2",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^john-source-0816d1b2] in person/jo/person@john-frankel",
   "relation": "cites",
   "sources": [
     "source/jo/source@john-source-0816d1b2"
   ],
+  "strength": null,
   "to": "source/jo/source@john-source-0816d1b2",
   "valid_from": null,
   "valid_to": null

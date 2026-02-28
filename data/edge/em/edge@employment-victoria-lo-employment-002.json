@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/vi/person@victoria-lo",
   "id": "employment-victoria-lo-employment-002",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Senior Software Engineer | Period: Aug 2022 - Dec 2023 | Details: Prior full-time role.",
   "relation": "works_at",
   "sources": [
     "source/vi/source@victoria-linkedin"
   ],
+  "strength": null,
   "to": "org/av/org@ava-labs",
   "valid_from": null,
   "valid_to": null

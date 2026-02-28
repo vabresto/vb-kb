@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "person/jo/person@jose-luis-avilez",
+  "id": "citation-person-jose-luis-avilez-enrichment-linkedin-com-jose-luis-avilez-enrich-20260228t173047z-a58b19fd",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^enrichment-linkedin-com-jose-luis-avilez-enrich-20260228t173047z-a58b19fd] in person/jo/person@jose-luis-avilez",
+  "relation": "cites",
+  "sources": [
+    "source/en/source@enrichment-linkedin-com-jose-luis-avilez-enrich-20260228t173047z-a58b19fd"
+  ],
+  "strength": null,
+  "to": "source/en/source@enrichment-linkedin-com-jose-luis-avilez-enrich-20260228t173047z-a58b19fd",
+  "valid_from": null,
+  "valid_to": null
+}

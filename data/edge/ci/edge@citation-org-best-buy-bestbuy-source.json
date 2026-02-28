@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/be/org@best-buy",
   "id": "citation-org-best-buy-bestbuy-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^bestbuy-source] in org/be/org@best-buy",
   "relation": "cites",
   "sources": [
     "source/be/source@bestbuy-source"
   ],
+  "strength": null,
   "to": "source/be/source@bestbuy-source",
   "valid_from": null,
   "valid_to": null

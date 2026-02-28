@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ma/person@matthew-brannon",
   "id": "employment-matthew-brannon-employment-002",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: VP of Education & Community | Period: Mar 2022 - Sep 2023 | Details: Led education/community programs and launched a $10M community grants program.",
   "relation": "works_at",
   "sources": [
     "source/ma/source@matthew-linkedin"
   ],
+  "strength": null,
   "to": "org/we/org@webflow",
   "valid_from": null,
   "valid_to": null

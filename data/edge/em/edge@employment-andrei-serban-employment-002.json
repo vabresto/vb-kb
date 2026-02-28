@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/an/person@andrei-serban",
   "id": "employment-andrei-serban-employment-002",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Product lead, apps and integrations team | Period: 2023 - 2024 (documented) | Details: TechCrunch describes his role and path into Rippling after acquisition of his startup.",
   "relation": "works_at",
   "sources": [
     "source/co/source@console-techcrunch"
   ],
+  "strength": null,
   "to": "org/ri/org@rippling",
   "valid_from": null,
   "valid_to": null

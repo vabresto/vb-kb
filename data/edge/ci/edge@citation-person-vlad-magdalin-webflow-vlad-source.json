@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/vl/person@vlad-magdalin",
   "id": "citation-person-vlad-magdalin-webflow-vlad-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^webflow-vlad-source] in person/vl/person@vlad-magdalin",
   "relation": "cites",
   "sources": [
     "source/we/source@webflow-vlad-source"
   ],
+  "strength": null,
   "to": "source/we/source@webflow-vlad-source",
   "valid_from": null,
   "valid_to": null

@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/da/person@david-ongchoco",
   "id": "citation-person-david-ongchoco-comma-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^comma-source] in person/da/person@david-ongchoco",
   "relation": "cites",
   "sources": [
     "source/co/source@comma-source"
   ],
+  "strength": null,
   "to": "source/co/source@comma-source",
   "valid_from": null,
   "valid_to": null

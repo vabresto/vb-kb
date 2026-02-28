@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/pr/org@privy",
   "id": "citation-org-privy-privy-careers",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^privy-careers] in org/pr/org@privy",
   "relation": "cites",
   "sources": [
     "source/pr/source@privy-careers"
   ],
+  "strength": null,
   "to": "source/pr/source@privy-careers",
   "valid_from": null,
   "valid_to": null

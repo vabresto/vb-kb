@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/co/org@contour-venture-partners",
   "id": "citation-org-contour-venture-partners-contour-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^contour-source] in org/co/org@contour-venture-partners",
   "relation": "cites",
   "sources": [
     "source/co/source@contour-source"
   ],
+  "strength": null,
   "to": "source/co/source@contour-source",
   "valid_from": null,
   "valid_to": null

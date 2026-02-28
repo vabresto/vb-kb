@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/vl/person@vlad-magdalin",
   "id": "employment-vlad-magdalin-employment-002",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: CEO and Co-founder | Period: 2021 (documented) | Details: Listed on No-Code Conf 2021 speakers page.",
   "relation": "works_at",
   "sources": [
     "source/we/source@webflow-ncc-speakers"
   ],
+  "strength": null,
   "to": "org/we/org@webflow",
   "valid_from": null,
   "valid_to": null

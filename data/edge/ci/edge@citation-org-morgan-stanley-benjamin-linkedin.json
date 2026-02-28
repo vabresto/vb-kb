@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "org/mo/org@morgan-stanley",
+  "id": "citation-org-morgan-stanley-benjamin-linkedin",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^benjamin-linkedin] in org/mo/org@morgan-stanley",
+  "relation": "cites",
+  "sources": [
+    "source/be/source@benjamin-linkedin"
+  ],
+  "strength": null,
+  "to": "source/be/source@benjamin-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

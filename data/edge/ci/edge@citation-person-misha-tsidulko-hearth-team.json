@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "person/mi/person@misha-tsidulko",
+  "id": "citation-person-misha-tsidulko-hearth-team",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^hearth-team] in person/mi/person@misha-tsidulko",
+  "relation": "cites",
+  "sources": [
+    "source/he/source@hearth-team"
+  ],
+  "strength": null,
+  "to": "source/he/source@hearth-team",
+  "valid_from": null,
+  "valid_to": null
+}

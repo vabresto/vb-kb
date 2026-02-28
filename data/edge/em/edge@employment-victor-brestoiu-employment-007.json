@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/vi/person@victor-brestoiu",
   "id": "employment-victor-brestoiu-employment-007",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Software Engineer Intern | Period: Jan 2018 - Apr 2018 | Details: 4-month internship in Vancouver, Canada Area.",
   "relation": "works_at",
   "sources": [
     "source/vi/source@victor-linkedin"
   ],
+  "strength": null,
   "to": "org/mi/org@microsoft",
   "valid_from": null,
   "valid_to": null

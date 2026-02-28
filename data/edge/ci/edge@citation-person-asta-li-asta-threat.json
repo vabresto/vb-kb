@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/as/person@asta-li",
   "id": "citation-person-asta-li-asta-threat",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^asta-threat] in person/as/person@asta-li",
   "relation": "cites",
   "sources": [
     "source/as/source@asta-threat"
   ],
+  "strength": null,
   "to": "source/as/source@asta-threat",
   "valid_from": null,
   "valid_to": null

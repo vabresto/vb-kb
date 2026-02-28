@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/he/person@hellen-xia",
   "id": "citation-person-hellen-xia-uw-svf-catalog",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^uw-svf-catalog] in person/he/person@hellen-xia",
   "relation": "cites",
   "sources": [
     "source/uw/source@uw-svf-catalog"
   ],
+  "strength": null,
   "to": "source/uw/source@uw-svf-catalog",
   "valid_from": null,
   "valid_to": null

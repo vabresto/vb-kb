@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/vi/person@victor-brestoiu",
   "id": "employment-victor-brestoiu-employment-006",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Technology Analyst | Period: Sep 2018 - Dec 2018 | Details: 4-month role in Greater New York City Area.",
   "relation": "works_at",
   "sources": [
     "source/vi/source@victor-linkedin"
   ],
+  "strength": null,
   "to": "org/mo/org@morgan-stanley",
   "valid_from": null,
   "valid_to": null

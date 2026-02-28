@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/me/org@meta",
   "id": "citation-org-meta-meta-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^meta-source] in org/me/org@meta",
   "relation": "cites",
   "sources": [
     "source/me/source@meta-source"
   ],
+  "strength": null,
   "to": "source/me/source@meta-source",
   "valid_from": null,
   "valid_to": null

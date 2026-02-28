@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ku/person@kumyl-najeeb",
   "id": "employment-kumyl-najeeb-employment-003",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Fractional CTO | Period: Reported (unverified) | Details: Reported association from user guidance; external public corroboration not yet confirmed in this pass.",
   "relation": "works_at",
   "sources": [
     "source/in/source@internal-note-2026-02-20-user-input"
   ],
+  "strength": null,
   "to": "org/6i/org@6ixs",
   "valid_from": null,
   "valid_to": null

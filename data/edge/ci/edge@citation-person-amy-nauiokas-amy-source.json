@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/am/person@amy-nauiokas",
   "id": "citation-person-amy-nauiokas-amy-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^amy-source] in person/am/person@amy-nauiokas",
   "relation": "cites",
   "sources": [
     "source/am/source@amy-source"
   ],
+  "strength": null,
   "to": "source/am/source@amy-source",
   "valid_from": null,
   "valid_to": null

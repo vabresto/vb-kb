@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ke/person@kelvin-yu",
   "id": "citation-person-kelvin-yu-kelvin-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^kelvin-source] in person/ke/person@kelvin-yu",
   "relation": "cites",
   "sources": [
     "source/ke/source@kelvin-source"
   ],
+  "strength": null,
   "to": "source/ke/source@kelvin-source",
   "valid_from": null,
   "valid_to": null

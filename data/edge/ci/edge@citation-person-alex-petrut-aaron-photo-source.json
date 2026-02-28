@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/al/person@alex-petrut",
   "id": "citation-person-alex-petrut-aaron-photo-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^aaron-photo-source] in person/al/person@alex-petrut",
   "relation": "cites",
   "sources": [
     "source/aa/source@aaron-photo-source"
   ],
+  "strength": null,
   "to": "source/aa/source@aaron-photo-source",
   "valid_from": null,
   "valid_to": null

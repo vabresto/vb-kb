@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/da/person@david-tisch",
   "id": "citation-person-david-tisch-frontmatter",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^frontmatter] in person/da/person@david-tisch",
   "relation": "cites",
   "sources": [
     "source/fr/source@frontmatter"
   ],
+  "strength": null,
   "to": "source/fr/source@frontmatter",
   "valid_from": null,
   "valid_to": null

@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/ff/org@ff-venture-capital",
   "id": "citation-org-ff-venture-capital-ffvc-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^ffvc-source] in org/ff/org@ff-venture-capital",
   "relation": "cites",
   "sources": [
     "source/ff/source@ffvc-source"
   ],
+  "strength": null,
   "to": "source/ff/source@ffvc-source",
   "valid_from": null,
   "valid_to": null

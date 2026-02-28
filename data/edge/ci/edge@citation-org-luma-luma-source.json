@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/lu/org@luma",
   "id": "citation-org-luma-luma-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^luma-source] in org/lu/org@luma",
   "relation": "cites",
   "sources": [
     "source/lu/source@luma-source"
   ],
+  "strength": null,
   "to": "source/lu/source@luma-source",
   "valid_from": null,
   "valid_to": null

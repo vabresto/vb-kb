@@ -1,15 +1,16 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/an/person@andrei-serban",
   "id": "employment-andrei-serban-employment-003",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Co-founder | Period: 2019 - 2023 (documented) | Details: [Y Combinator](../../../org/yc/org@y-combinator/index.md) lists him as founder; Rippling acquisition post names him as co-founder.",
   "relation": "works_at",
   "sources": [
     "source/yc/source@yc-fuzzbuzz",
     "source/ri/source@rippling-fuzzbuzz"
   ],
+  "strength": null,
   "to": "org/fu/org@fuzzbuzz",
   "valid_from": null,
   "valid_to": null

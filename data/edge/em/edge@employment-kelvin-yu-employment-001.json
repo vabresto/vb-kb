@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ke/person@kelvin-yu",
   "id": "employment-kelvin-yu-employment-001",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Quantitative Researcher | Period: Oct 2021 - Present | Details: Full-time role in New York City Metropolitan Area.",
   "relation": "works_at",
   "sources": [
     "source/ke/source@kelvin-source"
   ],
+  "strength": null,
   "to": "org/ci/org@citadel-securities",
   "valid_from": null,
   "valid_to": null

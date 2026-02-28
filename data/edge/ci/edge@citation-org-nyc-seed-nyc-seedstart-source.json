@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/ny/org@nyc-seed",
   "id": "citation-org-nyc-seed-nyc-seedstart-source",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^nyc-seedstart-source] in org/ny/org@nyc-seed",
   "relation": "cites",
   "sources": [
     "source/ny/source@nyc-seedstart-source"
   ],
+  "strength": null,
   "to": "source/ny/source@nyc-seedstart-source",
   "valid_from": null,
   "valid_to": null

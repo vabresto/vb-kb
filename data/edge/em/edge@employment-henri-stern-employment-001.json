@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/he/person@henri-stern",
   "id": "employment-henri-stern-employment-001",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Co-founder and CEO | Period: Current | Details: Listed on Privy's careers page as a founder and CEO.",
   "relation": "works_at",
   "sources": [
     "source/pr/source@privy-careers"
   ],
+  "strength": null,
   "to": "org/pr/org@privy",
   "valid_from": null,
   "valid_to": null

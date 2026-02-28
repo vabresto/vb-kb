@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ma/person@matthew-brannon",
   "id": "employment-matthew-brannon-employment-010",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Dishwasher, Cook, and Trainer | Period: 2004 - 2006 | Details: Restaurant operations role in Lake Mary, FL.",
   "relation": "works_at",
   "sources": [
     "source/ma/source@matthew-linkedin"
   ],
+  "strength": null,
   "to": "org/sa/org@san-francisco-oven",
   "valid_from": null,
   "valid_to": null

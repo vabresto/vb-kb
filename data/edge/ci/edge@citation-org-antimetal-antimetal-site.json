@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "org/an/org@antimetal",
+  "id": "citation-org-antimetal-antimetal-site",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^antimetal-site] in org/an/org@antimetal",
+  "relation": "cites",
+  "sources": [
+    "source/an/source@antimetal-site"
+  ],
+  "strength": null,
+  "to": "source/an/source@antimetal-site",
+  "valid_from": null,
+  "valid_to": null
+}

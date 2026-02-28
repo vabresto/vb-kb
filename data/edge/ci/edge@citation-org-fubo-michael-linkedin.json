@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/fu/org@fubo",
   "id": "citation-org-fubo-michael-linkedin",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^michael-linkedin] in org/fu/org@fubo",
   "relation": "cites",
   "sources": [
     "source/mi/source@michael-linkedin"
   ],
+  "strength": null,
   "to": "source/mi/source@michael-linkedin",
   "valid_from": null,
   "valid_to": null

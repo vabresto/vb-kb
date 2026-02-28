@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/ri/org@riot-games",
   "id": "citation-org-riot-games-riot-who-we-are",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^riot-who-we-are] in org/ri/org@riot-games",
   "relation": "cites",
   "sources": [
     "source/ri/source@riot-who-we-are"
   ],
+  "strength": null,
   "to": "source/ri/source@riot-who-we-are",
   "valid_from": null,
   "valid_to": null

@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ol/person@oliver-noteware",
   "id": "employment-oliver-noteware-employment-001",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Founder and CEO | Period: Current | Details: Company About page attributes the founder story and leadership role to Noteware.",
   "relation": "works_at",
   "sources": [
     "source/ss/source@ssvr-about"
   ],
+  "strength": null,
   "to": "org/st/org@street-smarts-vr",
   "valid_from": null,
   "valid_to": null

@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/mi/person@michael-cesario",
   "id": "employment-michael-cesario-employment-001",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Senior Software Engineer, Backend | Period: Sep 2025 - Present | Details: Full-time role in New York, NY (Hybrid).",
   "relation": "works_at",
   "sources": [
     "source/mi/source@michael-linkedin"
   ],
+  "strength": null,
   "to": "org/fu/org@fubo",
   "valid_from": null,
   "valid_to": null

@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/al/person@alice-formwalt",
   "id": "citation-person-alice-formwalt-ssvr-sec-2019",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^ssvr-sec-2019] in person/al/person@alice-formwalt",
   "relation": "cites",
   "sources": [
     "source/ss/source@ssvr-sec-2019"
   ],
+  "strength": null,
   "to": "source/ss/source@ssvr-sec-2019",
   "valid_from": null,
   "valid_to": null

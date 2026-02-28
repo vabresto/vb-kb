@@ -2,10 +2,10 @@
 person: Jose Luis Avilez
 alias: null
 firm: Squarepoint Capital
-role: Quantitative Researcher
+role: (1) Jose Luis Avilez
 location: New York, NY
 created-at: 2026-02-19
-updated-at: 2026-02-19
+updated-at: '2026-02-28'
 website: null
 email: null
 linkedin: null
@@ -23,6 +23,7 @@ focus-areas:
 looking-for: []
 ---
 
+
 # Jose Luis Avilez
 
 ## Snapshot
@@ -38,3 +39,12 @@ Jose Luis Avilez is listed as Quantitative Researcher at Squarepoint Capital in 
 ## Conversation Notes
 
 - [2026-02-19] Added baseline profile from provided summary.
+
+## Enrichment Provenance
+
+<!-- enrichment-provenance:start -->
+Promoted facts mapped by this enrichment run. Each citation key resolves to a KB source entity.
+
+- `headline` -> `(1) Jose Luis Avilez` via [source@enrichment-linkedin-com-jose-luis-avilez-enrich-20260228t173047z-a58b19fd](../../../source/en/source@enrichment-linkedin-com-jose-luis-avilez-enrich-20260228t173047z-a58b19fd/index.md) [^enrichment-linkedin-com-jose-luis-avilez-enrich-20260228t173047z-a58b19fd] (`linkedin.com`, retrieved `2026-02-28`)
+
+<!-- enrichment-provenance:end -->

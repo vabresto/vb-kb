@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/fr/org@freelance",
   "id": "citation-org-freelance-freelance-linkedin",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^freelance-linkedin] in org/fr/org@freelance",
   "relation": "cites",
   "sources": [
     "source/fr/source@freelance-linkedin"
   ],
+  "strength": null,
   "to": "source/fr/source@freelance-linkedin",
   "valid_from": null,
   "valid_to": null

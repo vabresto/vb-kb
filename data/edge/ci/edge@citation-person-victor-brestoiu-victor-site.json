@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/vi/person@victor-brestoiu",
   "id": "citation-person-victor-brestoiu-victor-site",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^victor-site] in person/vi/person@victor-brestoiu",
   "relation": "cites",
   "sources": [
     "source/vi/source@victor-site"
   ],
+  "strength": null,
   "to": "source/vi/source@victor-site",
   "valid_from": null,
   "valid_to": null

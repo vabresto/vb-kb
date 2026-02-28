@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "org/st/org@street-smarts-vr",
   "id": "citation-org-street-smarts-vr-ssvr-globenewswire",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^ssvr-globenewswire] in org/st/org@street-smarts-vr",
   "relation": "cites",
   "sources": [
     "source/ss/source@ssvr-globenewswire"
   ],
+  "strength": null,
   "to": "source/ss/source@ssvr-globenewswire",
   "valid_from": null,
   "valid_to": null

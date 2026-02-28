@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "person/sa/person@satwik-munshi",
+  "id": "citation-person-satwik-munshi-satwik-github",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^satwik-github] in person/sa/person@satwik-munshi",
+  "relation": "cites",
+  "sources": [
+    "source/sa/source@satwik-github"
+  ],
+  "strength": null,
+  "to": "source/sa/source@satwik-github",
+  "valid_from": null,
+  "valid_to": null
+}

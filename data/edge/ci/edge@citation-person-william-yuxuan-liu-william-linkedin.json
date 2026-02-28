@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/wi/person@william-yuxuan-liu",
   "id": "citation-person-william-yuxuan-liu-william-linkedin",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Derived citation edge from footnote [^william-linkedin] in person/wi/person@william-yuxuan-liu",
   "relation": "cites",
   "sources": [
     "source/wi/source@william-linkedin"
   ],
+  "strength": null,
   "to": "source/wi/source@william-linkedin",
   "valid_from": null,
   "valid_to": null

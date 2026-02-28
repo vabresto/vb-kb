@@ -1,14 +1,15 @@
 {
   "directed": true,
-  "first_noted_at": "2026-02-23",
+  "first_noted_at": "2026-02-28",
   "from": "person/ma/person@matthew-brannon",
   "id": "employment-matthew-brannon-employment-005",
-  "last_verified_at": "2026-02-23",
+  "last_verified_at": "2026-02-28",
   "notes": "Role: Head of Education | Period: Nov 2017 - Mar 2020 | Details: Built and launched Webflow University course platform.",
   "relation": "works_at",
   "sources": [
     "source/ma/source@matthew-linkedin"
   ],
+  "strength": null,
   "to": "org/we/org@webflow",
   "valid_from": null,
   "valid_to": null
