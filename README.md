@@ -76,6 +76,7 @@ Bootstrap command contract:
 - Bootstrap scripts should emit JSON as either raw Playwright `storageState` (`cookies` + `origins`) or `{ "storage_state": ... }`.
 - If `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` is unset, default commands run `kb.enrichment_playwright_bootstrap` via `uv --with playwright`.
 - If `KB_ENRICHMENT_*_FETCH_COMMAND` is unset, default commands run `kb.enrichment_playwright_fetch` via `uv --with playwright`.
+- Default Playwright fetch scrolls profile pages before capture; LinkedIn extraction records experience entries as structured `experience` facts.
 
 ### Enrichment operation model (v1)
 

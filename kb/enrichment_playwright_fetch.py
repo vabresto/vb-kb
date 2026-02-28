@@ -49,6 +49,15 @@ _LINKEDIN_LOGIN_PATH_HINTS = (
     "/authwall",
 )
 _SKOOL_LOGIN_PATH_HINTS = ("/login",)
+_LINKEDIN_EXPERIENCE_SELECTORS = (
+    "section[id*='experience'] li",
+    "section[data-section='experience'] li",
+    "main section:has(h2:has-text('Experience')) li",
+)
+_EXPERIENCE_IGNORED_PREFIXES = (
+    "show all",
+    "see all",
+)
 
 
 def _normalize_optional_text(value: object) -> str | None:
@@ -121,23 +130,116 @@ def _append_fact(
     attribute: str,
     value: str | None,
     confidence: str = "medium",
+    metadata: dict[str, Any] | None = None,
 ) -> None:
     normalized = _normalize_optional_text(value)
     if normalized is None:
         return
+    merged_metadata = {
+        "extractor": "playwright-default",
+    }
+    if metadata:
+        merged_metadata.update(metadata)
     facts.append(
         {
             "attribute": attribute,
             "value": normalized,
             "confidence": confidence,
-            "metadata": {
-                "extractor": "playwright-default",
-            },
+            "metadata": merged_metadata,
         }
     )
 
 
-def _extract_linkedin_facts(*, title: str | None, description: str | None) -> list[dict[str, Any]]:
+def _normalize_experience_entry(raw_value: str) -> str | None:
+    lines = [_normalize_optional_text(line) for line in raw_value.splitlines()]
+    cleaned = [line for line in lines if line is not None]
+    if not cleaned:
+        return None
+    candidate = " | ".join(cleaned[:4])
+    lowered = candidate.lower()
+    if any(lowered.startswith(prefix) for prefix in _EXPERIENCE_IGNORED_PREFIXES):
+        return None
+    return candidate
+
+
+def _collect_linkedin_experience_entries(page: Any) -> list[str]:
+    entries: list[str] = []
+    seen: set[str] = set()
+    for selector in _LINKEDIN_EXPERIENCE_SELECTORS:
+        try:
+            locator = page.locator(selector)
+            count = min(locator.count(), 80)
+        except Exception:
+            continue
+        for index in range(count):
+            try:
+                raw_text = locator.nth(index).inner_text(timeout=2_000)
+            except Exception:
+                continue
+            normalized = _normalize_experience_entry(raw_text)
+            if normalized is None or normalized in seen:
+                continue
+            seen.add(normalized)
+            entries.append(normalized)
+    return entries
+
+
+def _extract_role_company_from_experience(entry: str) -> tuple[str | None, str | None]:
+    parts = [_normalize_optional_text(part) for part in entry.split("|")]
+    cleaned = [part for part in parts if part is not None]
+    if not cleaned:
+        return None, None
+    role = cleaned[0]
+    company = None
+    if len(cleaned) > 1:
+        company = cleaned[1].split("·", 1)[0].strip()
+    return role, _normalize_optional_text(company)
+
+
+def _deduplicate_text_rows(values: list[str]) -> list[str]:
+    deduplicated: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        deduplicated.append(value)
+    return deduplicated
+
+
+def _deduplicate_fact_rows(facts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    deduplicated: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for fact in facts:
+        attribute = _normalize_optional_text(fact.get("attribute"))
+        value = _normalize_optional_text(fact.get("value"))
+        confidence = _normalize_optional_text(fact.get("confidence")) or "medium"
+        metadata = fact.get("metadata")
+        normalized_metadata = dict(metadata) if isinstance(metadata, dict) else {}
+        if attribute is None or value is None:
+            continue
+        metadata_blob = json.dumps(normalized_metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+        signature = (attribute, value, confidence, metadata_blob)
+        if signature in seen:
+            continue
+        seen.add(signature)
+        deduplicated.append(
+            {
+                "attribute": attribute,
+                "value": value,
+                "confidence": confidence,
+                "metadata": normalized_metadata,
+            }
+        )
+    return deduplicated
+
+
+def _extract_linkedin_facts(
+    *,
+    title: str | None,
+    description: str | None,
+    experience_entries: list[str] | None = None,
+) -> list[dict[str, Any]]:
     facts: list[dict[str, Any]] = []
     cleaned_title = _normalize_optional_text(_LINKEDIN_TITLE_SUFFIX_RE.sub("", title or ""))
     _append_fact(facts, attribute="headline", value=cleaned_title, confidence="medium")
@@ -151,6 +253,41 @@ def _extract_linkedin_facts(*, title: str | None, description: str | None) -> li
                 value=company_match.group(1),
                 confidence="low",
             )
+    experience_values = [_normalize_optional_text(entry) for entry in (experience_entries or [])]
+    normalized_experiences = _deduplicate_text_rows([entry for entry in experience_values if entry is not None])
+    for index, entry in enumerate(normalized_experiences):
+        _append_fact(
+            facts,
+            attribute="experience",
+            value=entry,
+            confidence="low",
+            metadata={
+                "source_section": "experience",
+                "ordinal": index + 1,
+            },
+        )
+    if normalized_experiences:
+        role, company = _extract_role_company_from_experience(normalized_experiences[0])
+        _append_fact(
+            facts,
+            attribute="current_role",
+            value=role,
+            confidence="low",
+            metadata={
+                "source_section": "experience",
+                "inferred": True,
+            },
+        )
+        _append_fact(
+            facts,
+            attribute="current_company",
+            value=company,
+            confidence="low",
+            metadata={
+                "source_section": "experience",
+                "inferred": True,
+            },
+        )
     return facts
 
 
@@ -209,6 +346,27 @@ def _unsupported_reason(*, source: SupportedSource, url: str, title: str | None,
     return None
 
 
+def _scroll_profile(page: Any) -> None:
+    last_height = 0
+    stable_steps = 0
+    max_steps = 40
+    for _ in range(max_steps):
+        try:
+            page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(500)
+            height = int(page.evaluate("() => document.body.scrollHeight"))
+        except Exception:
+            break
+        if height <= last_height:
+            stable_steps += 1
+        else:
+            stable_steps = 0
+        last_height = height
+        if stable_steps >= 2:
+            break
+    page.wait_for_timeout(700)
+
+
 def _run_fetch(source: SupportedSource) -> int:
     entity_slug = _require_extract_slug()
     cwd = Path.cwd()
@@ -223,12 +381,16 @@ def _run_fetch(source: SupportedSource) -> int:
         context = browser.new_context(storage_state=str(session_state_path))
         page = context.new_page()
         page.goto(target_url, wait_until="domcontentloaded", timeout=60_000)
-        page.wait_for_timeout(1800)
+        page.wait_for_timeout(1200)
+        _scroll_profile(page)
         source_url = _normalize_optional_text(page.url) or target_url
         title = _normalize_optional_text(page.title())
         description = _extract_meta_content(page, "description") or _extract_meta_content(
             page, "og:description"
         )
+        experience_entries: list[str] = []
+        if source == SupportedSource.linkedin:
+            experience_entries = _collect_linkedin_experience_entries(page)
         html = page.content()
         browser.close()
 
@@ -245,9 +407,14 @@ def _run_fetch(source: SupportedSource) -> int:
         return 0
 
     if source == SupportedSource.linkedin:
-        facts = _extract_linkedin_facts(title=title, description=description)
+        facts = _extract_linkedin_facts(
+            title=title,
+            description=description,
+            experience_entries=experience_entries,
+        )
     else:
         facts = _extract_skool_facts(title=title, description=description)
+    facts = _deduplicate_fact_rows(facts)
 
     if not facts:
         fallback = title or f"{source.value} profile for {entity_slug}"
