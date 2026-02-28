@@ -9,6 +9,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Treat malformed session payloads as auth failures by raising typed `AuthenticationError` subclasses before adapter fetch/normalize phases.
 - Session bootstrap commands should emit JSON storageState (`cookies` + `origins`) or `{ "storage_state": ... }`; `kb bootstrap-session` injects source/headless/session-path context via `KB_ENRICHMENT_BOOTSTRAP_*` env vars and maps challenge signals to typed MFA/anti-bot errors.
 - Adapter response models enforce relative path tokens for `used_session_state_path` and `snapshot_path`; keep absolute paths internal for filesystem I/O and return relative config/output paths in typed results.
+- Command-backed adapters should keep per-source fetch command env vars but reuse shared `KB_ENRICHMENT_EXTRACT_*` runtime env keys so source adapters stay interchangeable.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -256,4 +257,29 @@ Quality checks run (passed):
 - `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, `pytest`, `mkdocs build`; `66 passed`)
 
 There are still stories with `passes: false` (`US-006` through `US-013`).
+---
+
+## [2026-02-28 15:58:36 UTC] - US-006
+- What was implemented
+  - Added `kb/enrichment_skool_adapter.py` implementing `SkoolSourceAdapter` with typed authenticate/fetch/normalize/snapshot flows that conform to the shared `SourceAdapter` contract.
+  - Adapter now preflights session state and triggers bootstrap fallback when session artifacts are missing or expired before extraction.
+  - Added command-driven Skool fetch flow (`KB_ENRICHMENT_SKOOL_FETCH_COMMAND` / `fetch_command`) with challenge detection that raises typed `AntiBotChallengeError`/`MFAChallengeError`.
+  - Added normalization logic producing `NormalizedFact` records with source URL, retrieval timestamp, confidence metadata, plus snapshot persistence for html/json payloads.
+  - Added extraction error handling with typed `SkoolExtractionError` for malformed payloads and unsupported flows.
+- Files changed
+  - `kb/enrichment_skool_adapter.py`
+  - `kb/tests/test_enrichment_skool_adapter.py`
+  - `README.md`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Source-specific adapters should keep the same extraction runtime env contract (`KB_ENRICHMENT_EXTRACT_*`) while varying only source command env vars for deterministic orchestration.
+    - Adapter constructors should continue supporting injected `fetch_runner` and `bootstrap_login_runner` callables for deterministic tests without browser dependencies.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Skool blocked flows often surface as Cloudflare/captcha strings; map those signals to typed anti-bot errors before treating failures as generic extraction errors.
+    - Keep using `UV_CACHE_DIR=/tmp/uv-cache` when running `just check` in this environment.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `SkoolSourceAdapter` mirrors LinkedIn adapter behavior, so future adapter changes should keep both files aligned on auth preflight, challenge parsing, and path-token validation semantics.
 ---

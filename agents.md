@@ -12,6 +12,7 @@
 - For portable session transfer, use an envelope JSON with `source`, `exported_at`, `expires_at`, and `storage_state`; reject imports when `source` does not match the target adapter source.
 - `kb bootstrap-session` resolves per-source login commands from `SourceSettings.bootstrap_command` (or `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` env overrides), sets `KB_ENRICHMENT_BOOTSTRAP_*` context env vars for the command, and expects JSON output as raw storageState (`cookies` + `origins`) or `{ "storage_state": ... }`.
 - Adapter result path fields (`AuthenticationResult.used_session_state_path`, `SnapshotResult.snapshot_path`) must stay relative paths; resolve absolute filesystem paths only for local I/O and return the relative path token in typed models.
+- Command-backed source adapters should use source-specific fetch command env vars (`KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND`, `KB_ENRICHMENT_SKOOL_FETCH_COMMAND`) while emitting the shared `KB_ENRICHMENT_EXTRACT_*` runtime env contract.
 
 ## Reference Integrity
 

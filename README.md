@@ -41,6 +41,7 @@ Python files for authenticated enrichment are organized by concern:
 - `kb/enrichment_bootstrap.py`: source bootstrap command runner for login/session creation with MFA/anti-bot challenge mapping.
 - `kb/enrichment_playwright_bootstrap.py`: default Playwright bootstrap implementation used when no `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` override is set.
 - `kb/enrichment_linkedin_adapter.py`: LinkedIn adapter implementation with session preflight/bootstrap fallback, fetch normalization, and snapshot persistence.
+- `kb/enrichment_skool_adapter.py`: Skool adapter implementation with session preflight/bootstrap fallback, fetch normalization, and snapshot persistence.
 - `kb/cli.py`: user-facing command wiring (`kb bootstrap-session ...`).
 
 Related tests:
@@ -50,6 +51,7 @@ Related tests:
 - `kb/tests/test_enrichment_sessions.py`
 - `kb/tests/test_enrichment_bootstrap.py`
 - `kb/tests/test_enrichment_linkedin_adapter.py`
+- `kb/tests/test_enrichment_skool_adapter.py`
 - `kb/tests/test_cli_bootstrap_session.py`
 
 Related runnable workflows:
