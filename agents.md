@@ -13,6 +13,8 @@
 - `kb bootstrap-session` resolves per-source login commands from `SourceSettings.bootstrap_command` (or `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` env overrides), sets `KB_ENRICHMENT_BOOTSTRAP_*` context env vars for the command, and expects JSON output as raw storageState (`cookies` + `origins`) or `{ "storage_state": ... }`.
 - Adapter result path fields (`AuthenticationResult.used_session_state_path`, `SnapshotResult.snapshot_path`) must stay relative paths; resolve absolute filesystem paths only for local I/O and return the relative path token in typed models.
 - Command-backed source adapters should use source-specific fetch command env vars (`KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND`, `KB_ENRICHMENT_SKOOL_FETCH_COMMAND`) while emitting the shared `KB_ENRICHMENT_EXTRACT_*` runtime env contract.
+- `kb enrich-entity <entity>` is intentionally single-target kickoff: pass one slug/path positional and repeat `--source` when you need multiple adapters in one run.
+- Keep orchestration output in the shared `EnrichmentRunReport` schema (`extraction`, `source_logging`, `mapping`, `validation`, `reporting`) and persist it to `EnrichmentConfig.run_report_path` for deterministic run auditing.
 
 ## Reference Integrity
 

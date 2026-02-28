@@ -10,6 +10,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Session bootstrap commands should emit JSON storageState (`cookies` + `origins`) or `{ "storage_state": ... }`; `kb bootstrap-session` injects source/headless/session-path context via `KB_ENRICHMENT_BOOTSTRAP_*` env vars and maps challenge signals to typed MFA/anti-bot errors.
 - Adapter response models enforce relative path tokens for `used_session_state_path` and `snapshot_path`; keep absolute paths internal for filesystem I/O and return relative config/output paths in typed results.
 - Command-backed adapters should keep per-source fetch command env vars but reuse shared `KB_ENRICHMENT_EXTRACT_*` runtime env keys so source adapters stay interchangeable.
+- `run_enrichment_for_entity(...)` should remain the canonical kickoff orchestrator: it accepts exactly one entity target, runs one or more selected sources in a single invocation, and always emits explicit phase-state keys (`extraction`, `source_logging`, `mapping`, `validation`, `reporting`) in `EnrichmentRunReport`.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -282,4 +283,60 @@ There are still stories with `passes: false` (`US-006` through `US-013`).
     - Keep using `UV_CACHE_DIR=/tmp/uv-cache` when running `just check` in this environment.
   - Useful context (e.g., "the evaluation panel is in component X")
     - `SkoolSourceAdapter` mirrors LinkedIn adapter behavior, so future adapter changes should keep both files aligned on auth preflight, challenge parsing, and path-token validation semantics.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 15:59:56)
+Implemented `US-006` on `ralph/playwright-kb-enrichment` and committed all changes.
+
+Changed files:
+- [kb/enrichment_skool_adapter.py](/root/ws/vb-kb2/kb/enrichment_skool_adapter.py)
+- [kb/tests/test_enrichment_skool_adapter.py](/root/ws/vb-kb2/kb/tests/test_enrichment_skool_adapter.py)
+- [README.md](/root/ws/vb-kb2/README.md)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+- [scripts/ralph/.last-codex-output.md](/root/ws/vb-kb2/scripts/ralph/.last-codex-output.md)
+
+What I completed:
+- Added `SkoolSourceAdapter` with typed `authenticate`/`fetch`/`normalize`/`snapshot` flow.
+- Added session preflight + bootstrap fallback for missing/expired sessions.
+- Added command-driven Skool extraction via `KB_ENRICHMENT_SKOOL_FETCH_COMMAND`.
+- Added typed anti-bot/MFA challenge mapping and `SkoolExtractionError`.
+- Added focused Skool adapter tests (protocol, bootstrap fallback, normalization metadata, anti-bot, unsupported flow, session-path override).
+- Marked `US-006` as `passes: true` in PRD.
+- Appended the required progress entry and updated Codebase Patterns.
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_skool_adapter.py` (`5 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, `pytest`, `mkdocs build`; `71 passed`)
+
+Commit:
+- `35a00dc`
+- `feat: [US-006] - [Implement Skool adapter extraction]`
+
+There are still stories with `passes: false` (`US-007` onward).
+---
+## [2026-02-28 16:06:00 UTC] - US-007
+- What was implemented
+  - Added `kb/enrichment_run.py` with a manual kickoff orchestrator (`run_enrichment_for_entity`) that resolves a single entity slug/path, runs selected adapters in one invocation, executes extraction (`fetch`/`normalize`/`snapshot`), and persists a structured run report.
+  - Added typed run reporting models (`EnrichmentRunReport`, `RunPhaseStates`, `ExtractionPhaseState`) so output always includes explicit phase states for `extraction`, `source_logging`, `mapping`, `validation`, and `reporting`.
+  - Added `kb enrich-entity <entity>` CLI workflow with repeated `--source` support for multi-source runs and JSON success/failure payloads.
+  - Added focused tests for orchestrator phase-state behavior, single-target enforcement, CLI wiring, and autonomous no-prompt execution expectations.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/cli.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `kb/tests/test_cli_enrich_entity.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Keep run output contract centralized in `EnrichmentRunReport`; later stories should advance phase statuses in-place rather than introducing ad-hoc report keys.
+    - Multi-source kickoff should be modeled as repeated `--source` flags while keeping a single positional entity target for deterministic one-entity runs.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Snapshot output paths passed through adapter models must remain relative path tokens (absolute paths fail model validation).
+    - For unfinished downstream phases, use explicit `pending`/`skipped` phase states instead of omitting phases from output.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `kb enrich-entity` writes its structured report to `EnrichmentConfig.run_report_path` (default `.build/enrichment/reports/latest-run.json`), which makes each kickoff auditable even before mapping/validation stories land.
 ---
