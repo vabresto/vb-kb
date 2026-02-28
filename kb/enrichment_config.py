@@ -97,6 +97,7 @@ class SecretProviderPolicy(KBBaseModel):
 class SourceSettings(KBBaseModel):
     session_state_path: str
     evidence_path: str
+    bootstrap_command: str | None = None
     headless_override: bool | None = None
     username_env_var: str | None = None
     password_env_var: str | None = None
@@ -113,6 +114,7 @@ class SourceSettings(KBBaseModel):
         "password_env_var",
         "username_secret_ref",
         "password_secret_ref",
+        "bootstrap_command",
     )
     @classmethod
     def normalize_optional_tokens(cls, value: str | None) -> str | None:
@@ -200,6 +202,7 @@ def load_enrichment_config_from_env(
         SupportedSource.linkedin: {
             "session_state_path": "KB_ENRICHMENT_LINKEDIN_SESSION_PATH",
             "evidence_path": "KB_ENRICHMENT_LINKEDIN_EVIDENCE_PATH",
+            "bootstrap_command": "KB_ENRICHMENT_LINKEDIN_BOOTSTRAP_COMMAND",
             "username_env_var": "KB_ENRICHMENT_LINKEDIN_USERNAME_ENV",
             "password_env_var": "KB_ENRICHMENT_LINKEDIN_PASSWORD_ENV",
             "username_secret_ref": "KB_ENRICHMENT_LINKEDIN_USERNAME_SECRET",
@@ -208,6 +211,7 @@ def load_enrichment_config_from_env(
         SupportedSource.skool: {
             "session_state_path": "KB_ENRICHMENT_SKOOL_SESSION_PATH",
             "evidence_path": "KB_ENRICHMENT_SKOOL_EVIDENCE_PATH",
+            "bootstrap_command": "KB_ENRICHMENT_SKOOL_BOOTSTRAP_COMMAND",
             "username_env_var": "KB_ENRICHMENT_SKOOL_USERNAME_ENV",
             "password_env_var": "KB_ENRICHMENT_SKOOL_PASSWORD_ENV",
             "username_secret_ref": "KB_ENRICHMENT_SKOOL_USERNAME_SECRET",

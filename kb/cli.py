@@ -4,6 +4,9 @@ import argparse
 import json
 from pathlib import Path
 
+from kb.enrichment_adapters import AuthenticationError
+from kb.enrichment_bootstrap import bootstrap_session_login
+from kb.enrichment_config import SupportedSource, load_enrichment_config_from_env
 from kb.edges import derive_citation_edges, derive_employment_edges, sync_edge_backlinks
 from kb.mcp_server import run_server as run_fastmcp_server
 from kb.semantic import (
@@ -231,6 +234,46 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Model cache directory (default: {DEFAULT_MODEL_CACHE_PATH}).",
     )
 
+    bootstrap_session_parser = subparsers.add_parser(
+        "bootstrap-session",
+        help="Bootstrap and persist authenticated source session storageState.",
+    )
+    bootstrap_session_parser.add_argument(
+        "source",
+        choices=[source.value for source in SupportedSource],
+        help="Supported source to bootstrap (linkedin.com or skool.com).",
+    )
+    bootstrap_session_parser.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Repository root path.",
+    )
+    bootstrap_session_parser.add_argument(
+        "--headful",
+        action="store_true",
+        help="Run local non-headless bootstrap mode.",
+    )
+    bootstrap_session_parser.add_argument(
+        "--export-path",
+        type=Path,
+        default=None,
+        help=(
+            "Optional export path for portable session JSON transfer payload. "
+            "Defaults to a .build path when --headful is used."
+        ),
+    )
+    bootstrap_session_parser.add_argument(
+        "--bootstrap-command",
+        default=None,
+        help="Optional command override for source bootstrap login.",
+    )
+    bootstrap_session_parser.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Pretty-print JSON output.",
+    )
+
     return parser
 
 
@@ -373,6 +416,49 @@ def run_semantic_search(args: argparse.Namespace) -> int:
     return 0 if result["ok"] else 1
 
 
+def run_bootstrap_session(args: argparse.Namespace) -> int:
+    project_root = args.project_root.resolve()
+    config = load_enrichment_config_from_env()
+    source = SupportedSource(args.source)
+    headless = not args.headful
+    export_path = args.export_path
+    if export_path is None and args.headful:
+        export_path = Path(f".build/enrichment/sessions/{source.value}/headful-export.json")
+
+    try:
+        result = bootstrap_session_login(
+            source,
+            config=config,
+            project_root=project_root,
+            headless=headless,
+            export_path=export_path,
+            bootstrap_command=args.bootstrap_command,
+        )
+    except AuthenticationError as exc:
+        payload = {
+            "ok": False,
+            "source": exc.source,
+            "error_type": exc.__class__.__name__,
+            "message": str(exc),
+            "details": exc.details,
+        }
+        if args.pretty:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(json.dumps(payload, sort_keys=True))
+        return 1
+
+    payload = {
+        "ok": True,
+        **result.model_dump(mode="json"),
+    }
+    if args.pretty:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(json.dumps(payload, sort_keys=True))
+    return 0
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -391,6 +477,8 @@ def main() -> int:
         return run_semantic_index(args)
     if args.command == "semantic-search":
         return run_semantic_search(args)
+    if args.command == "bootstrap-session":
+        return run_bootstrap_session(args)
     parser.error(f"Unknown command: {args.command}")
     return 2
 

@@ -85,9 +85,11 @@ def test_load_enrichment_config_from_env_overrides_defaults() -> None:
             "KB_ENRICHMENT_SECRET_ENV_FALLBACK": "true",
             "KB_ENRICHMENT_LINKEDIN_SESSION_PATH": ".build/enrichment/sessions/linkedin.com/custom.json",
             "KB_ENRICHMENT_LINKEDIN_EVIDENCE_PATH": ".build/enrichment/source-evidence/linkedin.com/custom",
+            "KB_ENRICHMENT_LINKEDIN_BOOTSTRAP_COMMAND": "scripts/bootstrap-linkedin.sh",
             "KB_ENRICHMENT_LINKEDIN_HEADLESS_OVERRIDE": "true",
             "KB_ENRICHMENT_SKOOL_SESSION_PATH": ".build/enrichment/sessions/skool.com/custom.json",
             "KB_ENRICHMENT_SKOOL_EVIDENCE_PATH": ".build/enrichment/source-evidence/skool.com/custom",
+            "KB_ENRICHMENT_SKOOL_BOOTSTRAP_COMMAND": "scripts/bootstrap-skool.sh",
         }
     )
 
@@ -100,8 +102,10 @@ def test_load_enrichment_config_from_env_overrides_defaults() -> None:
     linkedin = config.sources[SupportedSource.linkedin]
     skool = config.sources[SupportedSource.skool]
     assert linkedin.session_state_path.endswith("custom.json")
+    assert linkedin.bootstrap_command == "scripts/bootstrap-linkedin.sh"
     assert linkedin.headless_override is True
     assert skool.session_state_path.endswith("custom.json")
+    assert skool.bootstrap_command == "scripts/bootstrap-skool.sh"
 
 
 def test_confidence_policy_requires_monotonic_thresholds() -> None:
