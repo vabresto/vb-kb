@@ -16,6 +16,8 @@
 - `kb enrich-entity <entity>` is intentionally single-target kickoff: pass one slug/path positional and repeat `--source` when you need multiple adapters in one run.
 - Keep orchestration output in the shared `EnrichmentRunReport` schema (`extraction`, `source_logging`, `mapping`, `validation`, `reporting`) and persist it to `EnrichmentConfig.run_report_path` for deterministic run auditing.
 - Source logging persists one canonical source entity per successful `(run_id, source, entity)` extraction under `data/source/<shard>/source@enrichment-.../`, with `index.md` plus a structured `facts.json`; keep `SourceExtractionState.source_entity_ref/source_entity_path/facts_artifact_path` in sync with those writes.
+- Person mapping (`US-009`) promotes only facts meeting `confidence_policy.minimum_promotion_level`; keep narrative body sections unchanged and write person updates through canonical `data/person/<shard>/person@<slug>/index.md` frontmatter fields (`firm`, `role`, `location`).
+- When enrichment updates the current person `firm`/`role`, archive the previous pair into `employment-history.jsonl` as the next `employment-###` row with `source_section: employment_history_table` to preserve current-role frontmatter semantics.
 
 ## Reference Integrity
 

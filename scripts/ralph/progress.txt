@@ -12,6 +12,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Command-backed adapters should keep per-source fetch command env vars but reuse shared `KB_ENRICHMENT_EXTRACT_*` runtime env keys so source adapters stay interchangeable.
 - `run_enrichment_for_entity(...)` should remain the canonical kickoff orchestrator: it accepts exactly one entity target, runs one or more selected sources in a single invocation, and always emits explicit phase-state keys (`extraction`, `source_logging`, `mapping`, `validation`, `reporting`) in `EnrichmentRunReport`.
 - Source logging should write deterministic source entities under `data/source/<shard>/source@enrichment-.../` with both canonical `index.md` and structured `facts.json`; preserve these paths on `SourceExtractionState` for downstream provenance/mapping phases.
+- Person mapping should only promote facts meeting `confidence_policy.minimum_promotion_level`; update person frontmatter (`firm`, `role`, `location`) without rewriting narrative sections, and archive replaced current role values into `employment-history.jsonl`.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -388,4 +389,57 @@ There are still stories with `passes: false` (`US-008` through `US-013`).
     - Source frontmatter date fields (`retrieved-at`) must be partial-date format (`YYYY-MM-DD`), not full timestamps.
   - Useful context (e.g., "the evaluation panel is in component X")
     - Source logging phase now succeeds when at least one source is logged, even if another source failed extraction; mapping/validation phases remain skipped when extraction is not fully successful.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:14:28)
+Implemented `US-008` on branch `ralph/playwright-kb-enrichment` and committed it.
+
+- Commit: `f87470d`
+- Message: `feat: [US-008] - [Persist source entities with snapshots and full fact logs]`
+
+Changed files:
+- [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py)
+- [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+What was implemented:
+- Source logging phase now persists canonical source entities under `data/source/<shard>/source@enrichment-.../`.
+- Each successful source writes deterministic `index.md` + `facts.json` (all extracted facts including low-confidence) and links snapshot artifacts.
+- Extraction state now carries source artifact provenance fields (`source_entity_ref`, `source_entity_path`, `facts_artifact_path`).
+- Source logging runs for successful sources even when another source fails extraction.
+
+Quality checks passed:
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py` (`6 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; all passed)
+
+Tracking updates completed:
+- Set `US-008` to `"passes": true` in PRD.
+- Appended the required progress entry and updated Codebase Patterns.
+
+There are still stories with `passes: false` (`US-009` to `US-013`).
+---
+## [2026-02-28 16:21:45 UTC] - US-009
+- What was implemented
+  - Implemented person-mapping execution in `run_enrichment_for_entity(...)`: when extraction succeeds, mapping now runs against canonical `data/person/<shard>/person@<slug>/index.md` instead of returning a placeholder pending phase.
+  - Added confidence-gated promotion for person facts using `confidence_policy.minimum_promotion_level` (default `medium`) and deterministic field selection for mapped frontmatter fields (`firm`, `role`, `location`).
+  - Added canonical person write behavior that updates frontmatter while preserving narrative markdown body sections, then archives replaced current-role values into `employment-history.jsonl` as the next `employment-###` row.
+  - Added robust JSONL/frontmatter parsing and error handling for mapping writes plus updated run-status handling so mapping failures produce a failed run status.
+  - Expanded enrichment run tests to cover mapping phase success, confidence gating, preserved narrative body behavior, and prior-role archival to employment history.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Treat person mapping as frontmatter + structured JSONL updates: keep `index.md` narrative sections stable, and express historical role changes through appended `employment-history.jsonl` rows.
+    - Use canonical person paths derived from slug + shard (`data/person/<shard>/person@<slug>/index.md`) for deterministic mapping targets even when kickoff input is just a slug.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Re-rendering frontmatter can normalize blank lines around body content; compare normalized/stripped body content in tests when verifying first-mention narrative preservation.
+    - Keep `employment-history.jsonl` row IDs and `source_row` values monotonic (`employment-###`, incrementing row numbers) to avoid schema/consistency drift.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - Current mapper handles person targets only; non-person targets continue to surface mapping as pending for `US-010` organization mapping.
 ---

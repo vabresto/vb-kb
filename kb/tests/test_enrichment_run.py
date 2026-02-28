@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+import yaml
 
 from kb.enrichment_adapters import (
     AuthenticationRequest,
@@ -28,6 +30,10 @@ from kb.enrichment_run import (
     resolve_entity_target,
     run_enrichment_for_entity,
 )
+from kb.schemas import shard_for_slug
+
+
+_FRONTMATTER_BLOCK_RE = re.compile(r"\A---\n(?P<frontmatter>.*?)\n---\n?(?P<body>.*)\Z", re.DOTALL)
 
 
 class _SuccessfulAdapter(SourceAdapter):
@@ -77,6 +83,76 @@ class _FailingAdapter(_SuccessfulAdapter):
         raise SourceAdapterError(source=self.source, message="simulated extraction failure")
 
 
+def _write_person_fixture(
+    project_root: Path,
+    *,
+    slug: str = "founder-name",
+    firm: str = "Legacy Labs",
+    role: str = "Founder",
+    location: str = "Kitchener, ON",
+) -> Path:
+    shard = shard_for_slug(slug)
+    person_dir = project_root / "data" / "person" / shard / f"person@{slug}"
+    person_dir.mkdir(parents=True, exist_ok=True)
+    (person_dir / "edges").mkdir(parents=True, exist_ok=True)
+    (person_dir / "edges" / ".gitkeep").write_text("", encoding="utf-8")
+    (person_dir / "changelog.jsonl").write_text("", encoding="utf-8")
+    (person_dir / "looking-for.jsonl").write_text("", encoding="utf-8")
+    (person_dir / "employment-history.jsonl").write_text(
+        json.dumps(
+            {
+                "id": "employment-001",
+                "period": "2020 - 2024",
+                "organization": "Prior Co",
+                "role": "Engineer",
+                "notes": "Seeded historical row.",
+                "source_path": f"data/person/{shard}/person@{slug}/index.md",
+                "source_section": "employment_history_table",
+                "source_row": 1,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    index_path = person_dir / "index.md"
+    index_path.write_text(
+        "\n".join(
+            [
+                "---",
+                "person: Founder Name",
+                f"firm: {firm}",
+                f"role: {role}",
+                f"location: {location}",
+                "updated-at: 2026-02-20",
+                "---",
+                "",
+                "# Founder Name",
+                "",
+                "## Snapshot",
+                "",
+                "- Why they matter: Works with [Legacy Labs](../../../org/le/org@legacy-labs/index.md).",
+                "",
+                "## Bio",
+                "",
+                "Founder profile references [Legacy Labs](../../../org/le/org@legacy-labs/index.md).",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return index_path
+
+
+def _read_frontmatter_and_body(index_path: Path) -> tuple[dict[str, object], str]:
+    markdown = index_path.read_text(encoding="utf-8")
+    match = _FRONTMATTER_BLOCK_RE.match(markdown)
+    assert match is not None
+    payload = yaml.safe_load(match.group("frontmatter"))
+    assert isinstance(payload, dict)
+    return payload, match.group("body")
+
+
 def test_resolve_entity_target_accepts_slug_and_canonical_path() -> None:
     slug_target = resolve_entity_target("founder-name")
     assert slug_target.entity_ref == "founder-name"
@@ -93,6 +169,7 @@ def test_resolve_entity_target_rejects_invalid_value() -> None:
 
 
 def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> None:
+    person_index_path = _write_person_fixture(tmp_path)
     config = EnrichmentConfig()
     registry = SourceAdapterRegistry(
         adapters=(
@@ -114,7 +191,7 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
     assert report.status == RunStatus.partial
     assert report.phases.extraction.status == PhaseStatus.succeeded
     assert report.phases.source_logging.status == PhaseStatus.succeeded
-    assert report.phases.mapping.status == PhaseStatus.pending
+    assert report.phases.mapping.status == PhaseStatus.succeeded
     assert report.phases.validation.status == PhaseStatus.pending
     assert report.phases.reporting.status == PhaseStatus.succeeded
     assert report.facts_extracted_total == 2
@@ -154,12 +231,27 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     assert payload["phases"]["extraction"]["status"] == "succeeded"
     assert payload["phases"]["source_logging"]["status"] == "succeeded"
-    assert payload["phases"]["mapping"]["status"] == "pending"
+    assert payload["phases"]["mapping"]["status"] == "succeeded"
     assert payload["phases"]["validation"]["status"] == "pending"
     assert payload["phases"]["reporting"]["status"] == "succeeded"
 
+    frontmatter, _ = _read_frontmatter_and_body(person_index_path)
+    assert frontmatter["firm"] == "Legacy Labs"
+    assert frontmatter["role"] in {"linkedin.com headline", "skool.com headline"}
+
+    employment_rows = [
+        json.loads(line)
+        for line in (person_index_path.parent / "employment-history.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(employment_rows) == 2
+    assert employment_rows[-1]["organization"] == "Legacy Labs"
+    assert employment_rows[-1]["role"] == "Founder"
+    assert employment_rows[-1]["source_section"] == "employment_history_table"
+
 
 def test_run_enrichment_for_entity_marks_failed_extraction_phase(tmp_path: Path) -> None:
+    _write_person_fixture(tmp_path)
     config = EnrichmentConfig()
     registry = SourceAdapterRegistry(
         adapters=(
@@ -221,6 +313,7 @@ class _MixedConfidenceAdapter(_SuccessfulAdapter):
 
 
 def test_run_enrichment_for_entity_logs_all_confidence_levels(tmp_path: Path) -> None:
+    person_index_path = _write_person_fixture(tmp_path)
     config = EnrichmentConfig()
     registry = SourceAdapterRegistry(
         adapters=(
@@ -239,15 +332,19 @@ def test_run_enrichment_for_entity_logs_all_confidence_levels(tmp_path: Path) ->
 
     source_state = report.phases.extraction.sources[0]
     assert source_state.status == PhaseStatus.succeeded
+    assert report.phases.mapping.status == PhaseStatus.succeeded
     assert source_state.facts_artifact_path is not None
     facts_payload = json.loads((tmp_path / source_state.facts_artifact_path).read_text(encoding="utf-8"))
     assert [fact["confidence"] for fact in facts_payload["facts"]] == ["high", "low"]
+    frontmatter, _ = _read_frontmatter_and_body(person_index_path)
+    assert frontmatter["role"] == "Founder"
 
 
 def test_run_enrichment_for_entity_never_prompts_after_kickoff(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    _write_person_fixture(tmp_path)
     config = EnrichmentConfig()
     registry = SourceAdapterRegistry(
         adapters=(
@@ -271,3 +368,74 @@ def test_run_enrichment_for_entity_never_prompts_after_kickoff(
 
     assert report.status == RunStatus.partial
     assert report.selected_sources == [SupportedSource.linkedin]
+
+
+class _PersonFactsAdapter(_SuccessfulAdapter):
+    def normalize(self, request: NormalizeRequest) -> NormalizeResult:
+        return NormalizeResult(
+            facts=[
+                NormalizedFact(
+                    attribute="current_company",
+                    value="Future Labs",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="current_role",
+                    value="Chief Executive Officer",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="location",
+                    value="Low Confidence Location",
+                    confidence=ConfidenceLevel.low,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+            ]
+        )
+
+
+def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: Path) -> None:
+    person_index_path = _write_person_fixture(tmp_path)
+    _, body_before = _read_frontmatter_and_body(person_index_path)
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _PersonFactsAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    report = run_enrichment_for_entity(
+        "founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        run_id="enrich-person-mapping-run",
+    )
+
+    assert report.status == RunStatus.partial
+    assert report.phases.mapping.status == PhaseStatus.succeeded
+
+    frontmatter, body_after = _read_frontmatter_and_body(person_index_path)
+    assert frontmatter["firm"] == "Future Labs"
+    assert frontmatter["role"] == "Chief Executive Officer"
+    assert frontmatter["location"] == "Kitchener, ON"
+    assert body_after.strip() == body_before.strip()
+
+    employment_rows = [
+        json.loads(line)
+        for line in (person_index_path.parent / "employment-history.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(employment_rows) == 2
+    assert employment_rows[-1]["organization"] == "Legacy Labs"
+    assert employment_rows[-1]["role"] == "Founder"
+    assert employment_rows[-1]["source_path"] == "data/person/fo/person@founder-name/index.md"

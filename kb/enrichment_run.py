@@ -7,14 +7,16 @@ from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 import yaml
 
 from kb.enrichment_adapters import (
     FetchRequest,
     FetchResult,
+    NormalizedFact,
     NormalizeResult,
     NormalizeRequest,
     SnapshotResult,
@@ -22,15 +24,43 @@ from kb.enrichment_adapters import (
     SourceAdapterError,
     SourceAdapterRegistry,
 )
-from kb.enrichment_config import EnrichmentConfig, SupportedSource
+from kb.enrichment_config import ConfidenceLevel, EnrichmentConfig, SupportedSource
 from kb.enrichment_linkedin_adapter import LinkedInSourceAdapter
 from kb.enrichment_skool_adapter import SkoolSourceAdapter
-from kb.schemas import KBBaseModel, SourceRecord, SourceType, normalize_path_token, shard_for_slug
+from kb.schemas import (
+    EmploymentHistoryRow,
+    KBBaseModel,
+    SourceRecord,
+    SourceType,
+    normalize_path_token,
+    shard_for_slug,
+)
 
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 _ENTITY_PATH_SLUG_RE = re.compile(
     r"(?:^|/)(?:person|org|source)@(?P<slug>[a-z0-9][a-z0-9-]*)(?:/index\.md)?$"
 )
+_FRONTMATTER_BLOCK_RE = re.compile(r"\A---\n(?P<frontmatter>.*?)\n---\n?(?P<body>.*)\Z", re.DOTALL)
+_EMPLOYMENT_ID_RE = re.compile(r"^employment-(?P<index>\d{3})$")
+_ROLE_ATTRIBUTE_PRIORITY = {
+    "current_role": 0,
+    "role": 1,
+    "headline": 2,
+}
+_FIRM_ATTRIBUTE_PRIORITY = {
+    "current_company": 0,
+    "current_organization": 1,
+    "company": 2,
+    "organization": 3,
+}
+_LOCATION_ATTRIBUTE_PRIORITY = {
+    "location": 0,
+}
+_CONFIDENCE_RANK = {
+    ConfidenceLevel.low: 0,
+    ConfidenceLevel.medium: 1,
+    ConfidenceLevel.high: 2,
+}
 
 
 class RunStatus(str, Enum):
@@ -143,6 +173,24 @@ class _SourceEntityArtifact(KBBaseModel):
 class _SourceLoggingError(KBBaseModel):
     error_type: str
     error: str
+
+
+class _PromotedFact(KBBaseModel):
+    source: SupportedSource
+    source_entity_ref: str | None = None
+    attribute: str
+    value: str
+    confidence: ConfidenceLevel
+    source_url: str
+    retrieved_at: datetime
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class _PersonMappingResult(KBBaseModel):
+    person_index_path: str
+    promoted_fact_count: int = 0
+    frontmatter_fields_updated: list[str] = Field(default_factory=list)
+    employment_rows_added: int = 0
 
 
 def build_default_adapter_registry(
@@ -331,7 +379,15 @@ def run_enrichment_for_entity(
         state.source_logging_error_type = error.error_type
         state.source_logging_error = error.error
 
-    mapping_phase = _build_mapping_phase(extraction_failed)
+    mapping_phase = _build_mapping_phase(
+        extraction_failed=extraction_failed,
+        successful_extractions=successful_extractions,
+        source_artifacts=source_artifacts,
+        resolved_target=resolved_target,
+        config=config,
+        run_id=resolved_run_id,
+        project_root=resolved_root,
+    )
     validation_phase = _build_validation_phase(extraction_failed)
     reporting_phase = PhaseState(
         status=PhaseStatus.succeeded,
@@ -341,7 +397,11 @@ def run_enrichment_for_entity(
     )
     completed_at = _normalize_now()
 
-    if extraction_failed:
+    if (
+        extraction_failed
+        or mapping_phase.status == PhaseStatus.failed
+        or validation_phase.status == PhaseStatus.failed
+    ):
         run_status = RunStatus.failed
     elif (
         source_logging_phase.status == PhaseStatus.succeeded
@@ -441,16 +501,379 @@ def _build_source_logging_phase(
     )
 
 
-def _build_mapping_phase(extraction_failed: bool) -> PhaseState:
+def _build_mapping_phase(
+    *,
+    extraction_failed: bool,
+    successful_extractions: list[_SuccessfulExtraction],
+    source_artifacts: dict[SupportedSource, _SourceEntityArtifact],
+    resolved_target: EntityTarget,
+    config: EnrichmentConfig,
+    run_id: str,
+    project_root: Path,
+) -> PhaseState:
+    started_at = _normalize_now()
     if extraction_failed:
         return PhaseState(
             status=PhaseStatus.skipped,
             message="skipped because extraction phase failed",
+            started_at=started_at,
+            completed_at=_normalize_now(),
         )
+
+    if _resolve_entity_kind(resolved_target) in {"org", "source"}:
+        return PhaseState(
+            status=PhaseStatus.pending,
+            message="person mapping skipped for non-person target; org mapping remains pending (US-010)",
+            started_at=started_at,
+            completed_at=_normalize_now(),
+        )
+
+    try:
+        mapping = _map_person_facts(
+            successful_extractions=successful_extractions,
+            source_artifacts=source_artifacts,
+            resolved_target=resolved_target,
+            config=config,
+            run_id=run_id,
+            project_root=project_root,
+        )
+    except Exception as exc:
+        return PhaseState(
+            status=PhaseStatus.failed,
+            message=f"person mapping failed: {exc}",
+            started_at=started_at,
+            completed_at=_normalize_now(),
+        )
+
+    if mapping.promoted_fact_count == 0:
+        message = (
+            "no person facts met minimum confidence "
+            f"'{config.confidence_policy.minimum_promotion_level.value}' for promotion"
+        )
+    else:
+        message = (
+            f"promoted {mapping.promoted_fact_count} person fact(s) into {mapping.person_index_path}; "
+            f"frontmatter fields updated: {len(mapping.frontmatter_fields_updated)}; "
+            f"employment rows appended: {mapping.employment_rows_added}"
+        )
+
     return PhaseState(
-        status=PhaseStatus.pending,
-        message="pending implementation for person/org mapping (US-009/US-010)",
+        status=PhaseStatus.succeeded,
+        message=message,
+        started_at=started_at,
+        completed_at=_normalize_now(),
     )
+
+
+def _resolve_entity_kind(target: EntityTarget) -> str | None:
+    entity_ref = target.entity_ref.lower()
+    if entity_ref.startswith("data/person/") or "/person@" in entity_ref:
+        return "person"
+    if entity_ref.startswith("data/org/") or "/org@" in entity_ref:
+        return "org"
+    if entity_ref.startswith("data/source/") or "/source@" in entity_ref:
+        return "source"
+    if "/" not in entity_ref and entity_ref == target.entity_slug:
+        return "person"
+    return None
+
+
+def _map_person_facts(
+    *,
+    successful_extractions: list[_SuccessfulExtraction],
+    source_artifacts: dict[SupportedSource, _SourceEntityArtifact],
+    resolved_target: EntityTarget,
+    config: EnrichmentConfig,
+    run_id: str,
+    project_root: Path,
+) -> _PersonMappingResult:
+    person_index_rel = _canonical_person_index_path_for_slug(resolved_target.entity_slug)
+    person_index_path = project_root / person_index_rel
+    if not person_index_path.exists():
+        raise EnrichmentRunError(
+            f"canonical person index not found for slug '{resolved_target.entity_slug}' at '{person_index_rel}'"
+        )
+
+    promoted_facts = _collect_promoted_person_facts(
+        successful_extractions=successful_extractions,
+        source_artifacts=source_artifacts,
+        minimum_level=config.confidence_policy.minimum_promotion_level,
+    )
+    if not promoted_facts:
+        return _PersonMappingResult(
+            person_index_path=person_index_rel,
+            promoted_fact_count=0,
+            frontmatter_fields_updated=[],
+            employment_rows_added=0,
+        )
+
+    frontmatter, body = _read_markdown_document(person_index_path=person_index_path)
+    frontmatter_updated_fields: list[str] = []
+    employment_rows_added = 0
+
+    existing_firm = _normalize_text(frontmatter.get("firm"))
+    existing_role = _normalize_text(frontmatter.get("role"))
+
+    firm_candidate = _select_best_promoted_fact(
+        promoted_facts=promoted_facts,
+        attribute_priority=_FIRM_ATTRIBUTE_PRIORITY,
+    )
+    role_candidate = _select_best_promoted_fact(
+        promoted_facts=promoted_facts,
+        attribute_priority=_ROLE_ATTRIBUTE_PRIORITY,
+    )
+    location_candidate = _select_best_promoted_fact(
+        promoted_facts=promoted_facts,
+        attribute_priority=_LOCATION_ATTRIBUTE_PRIORITY,
+    )
+
+    current_candidates_used: list[_PromotedFact] = []
+    if firm_candidate is not None:
+        if _set_frontmatter_text(frontmatter, key="firm", value=firm_candidate.value):
+            frontmatter_updated_fields.append("firm")
+            current_candidates_used.append(firm_candidate)
+    if role_candidate is not None:
+        if _set_frontmatter_text(frontmatter, key="role", value=role_candidate.value):
+            frontmatter_updated_fields.append("role")
+            current_candidates_used.append(role_candidate)
+    if location_candidate is not None:
+        if _set_frontmatter_text(frontmatter, key="location", value=location_candidate.value):
+            frontmatter_updated_fields.append("location")
+
+    if frontmatter_updated_fields:
+        latest_promoted_at = max(fact.retrieved_at for fact in promoted_facts)
+        _set_frontmatter_text(
+            frontmatter,
+            key="updated-at",
+            value=latest_promoted_at.date().isoformat(),
+        )
+
+    if current_candidates_used and existing_firm and existing_role:
+        archived_on = max(candidate.retrieved_at for candidate in current_candidates_used).date().isoformat()
+        employment_rows_added += _append_prior_current_role(
+            person_index_rel=person_index_rel,
+            person_index_path=person_index_path,
+            prior_firm=existing_firm,
+            prior_role=existing_role,
+            archived_on=archived_on,
+            run_id=run_id,
+        )
+
+    if frontmatter_updated_fields:
+        person_index_path.write_text(
+            _render_markdown(frontmatter=frontmatter, body=body),
+            encoding="utf-8",
+        )
+
+    return _PersonMappingResult(
+        person_index_path=person_index_rel,
+        promoted_fact_count=len(promoted_facts),
+        frontmatter_fields_updated=frontmatter_updated_fields,
+        employment_rows_added=employment_rows_added,
+    )
+
+
+def _canonical_person_index_path_for_slug(slug: str) -> str:
+    shard = shard_for_slug(slug)
+    return f"data/person/{shard}/person@{slug}/index.md"
+
+
+def _collect_promoted_person_facts(
+    *,
+    successful_extractions: list[_SuccessfulExtraction],
+    source_artifacts: dict[SupportedSource, _SourceEntityArtifact],
+    minimum_level: ConfidenceLevel,
+) -> list[_PromotedFact]:
+    promoted: list[_PromotedFact] = []
+    for extraction in sorted(successful_extractions, key=lambda item: item.source.value):
+        source_artifact = source_artifacts.get(extraction.source)
+        source_entity_ref = source_artifact.source_entity_ref if source_artifact is not None else None
+        for fact in extraction.normalize_result.facts:
+            if not _confidence_meets_threshold(fact.confidence, minimum_level):
+                continue
+            promoted.append(
+                _to_promoted_fact(
+                    source=extraction.source,
+                    source_entity_ref=source_entity_ref,
+                    fact=fact,
+                )
+            )
+    return promoted
+
+
+def _to_promoted_fact(
+    *,
+    source: SupportedSource,
+    source_entity_ref: str | None,
+    fact: NormalizedFact,
+) -> _PromotedFact:
+    return _PromotedFact(
+        source=source,
+        source_entity_ref=source_entity_ref,
+        attribute=fact.attribute.strip().lower(),
+        value=fact.value.strip(),
+        confidence=fact.confidence,
+        source_url=fact.source_url,
+        retrieved_at=_normalize_now(fact.retrieved_at),
+        metadata=dict(fact.metadata),
+    )
+
+
+def _confidence_meets_threshold(level: ConfidenceLevel, minimum_level: ConfidenceLevel) -> bool:
+    return _CONFIDENCE_RANK[level] >= _CONFIDENCE_RANK[minimum_level]
+
+
+def _select_best_promoted_fact(
+    *,
+    promoted_facts: list[_PromotedFact],
+    attribute_priority: dict[str, int],
+) -> _PromotedFact | None:
+    candidates = [fact for fact in promoted_facts if fact.attribute in attribute_priority and fact.value]
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda fact: (
+            _CONFIDENCE_RANK[fact.confidence],
+            fact.retrieved_at,
+            -attribute_priority[fact.attribute],
+            fact.source.value,
+            fact.value,
+            fact.source_url,
+            fact.source_entity_ref or "",
+        ),
+    )
+
+
+def _read_markdown_document(*, person_index_path: Path) -> tuple[dict[str, Any], str]:
+    markdown = person_index_path.read_text(encoding="utf-8")
+    match = _FRONTMATTER_BLOCK_RE.match(markdown)
+    if match is None:
+        raise EnrichmentRunError(f"person index is missing YAML frontmatter: {person_index_path.as_posix()}")
+    frontmatter_raw = yaml.safe_load(match.group("frontmatter"))
+    if frontmatter_raw is None:
+        frontmatter: dict[str, Any] = {}
+    elif isinstance(frontmatter_raw, dict):
+        frontmatter = dict(frontmatter_raw)
+    else:
+        raise EnrichmentRunError(
+            f"person index frontmatter must be a mapping: {person_index_path.as_posix()}"
+        )
+    return frontmatter, match.group("body") or ""
+
+
+def _normalize_text(value: object) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        text = value.strip()
+    else:
+        text = str(value).strip()
+    return text or None
+
+
+def _set_frontmatter_text(frontmatter: dict[str, Any], *, key: str, value: str) -> bool:
+    normalized = _normalize_text(value)
+    if normalized is None:
+        return False
+    current = _normalize_text(frontmatter.get(key))
+    if current == normalized:
+        return False
+    frontmatter[key] = normalized
+    return True
+
+
+def _append_prior_current_role(
+    *,
+    person_index_rel: str,
+    person_index_path: Path,
+    prior_firm: str,
+    prior_role: str,
+    archived_on: str,
+    run_id: str,
+) -> int:
+    employment_path = person_index_path.parent / "employment-history.jsonl"
+    existing_rows = _load_employment_history_rows(path=employment_path)
+    next_row = EmploymentHistoryRow(
+        id=_next_employment_row_id(existing_rows),
+        period=f"Before {archived_on}",
+        organization=prior_firm,
+        organization_ref=_guess_organization_ref(existing_rows=existing_rows, organization=prior_firm),
+        role=prior_role,
+        notes=f"Archived prior current role during enrichment run {run_id}.",
+        source_path=person_index_rel,
+        source_section="employment_history_table",
+        source_row=_next_source_row_number(existing_rows),
+    )
+    _append_jsonl_row(
+        path=employment_path,
+        payload=next_row.model_dump(mode="json", exclude_none=True),
+    )
+    return 1
+
+
+def _load_employment_history_rows(*, path: Path) -> list[EmploymentHistoryRow]:
+    if not path.exists():
+        return []
+    rows: list[EmploymentHistoryRow] = []
+    for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        text = line.strip()
+        if not text:
+            continue
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise EnrichmentRunError(
+                f"invalid JSON in {path.as_posix()} line {line_no}: {exc.msg}"
+            ) from exc
+        try:
+            rows.append(EmploymentHistoryRow.model_validate(payload))
+        except ValidationError as exc:
+            raise EnrichmentRunError(
+                f"invalid employment row in {path.as_posix()} line {line_no}: {exc.errors()[0]['msg']}"
+            ) from exc
+    return rows
+
+
+def _next_employment_row_id(rows: list[EmploymentHistoryRow]) -> str:
+    max_index = 0
+    for row in rows:
+        match = _EMPLOYMENT_ID_RE.match(row.id)
+        if match is None:
+            continue
+        max_index = max(max_index, int(match.group("index")))
+    return f"employment-{max_index + 1:03d}"
+
+
+def _next_source_row_number(rows: list[EmploymentHistoryRow]) -> int:
+    max_source_row = 0
+    for row in rows:
+        if row.source_row is not None:
+            max_source_row = max(max_source_row, row.source_row)
+    if max_source_row > 0:
+        return max_source_row + 1
+    return len(rows) + 1
+
+
+def _guess_organization_ref(*, existing_rows: list[EmploymentHistoryRow], organization: str) -> str | None:
+    normalized = organization.strip().lower()
+    for row in reversed(existing_rows):
+        if row.organization.strip().lower() != normalized:
+            continue
+        if row.organization_ref:
+            return row.organization_ref
+    return None
+
+
+def _append_jsonl_row(*, path: Path, payload: dict[str, Any]) -> None:
+    rendered = json.dumps(payload, sort_keys=True)
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(rendered + "\n", encoding="utf-8")
+        return
+    existing = path.read_text(encoding="utf-8")
+    prefix = "" if not existing or existing.endswith("\n") else "\n"
+    path.write_text(existing + prefix + rendered + "\n", encoding="utf-8")
 
 
 def _build_validation_phase(extraction_failed: bool) -> PhaseState:
