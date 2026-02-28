@@ -65,7 +65,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
 
   # Codex: run non-interactively with autonomous execution enabled.
   : > "$LAST_OUTPUT_FILE"
-  OUTPUT=$(codex exec --full-auto --color never --output-last-message "$LAST_OUTPUT_FILE" - < "$SCRIPT_DIR/CODEX.md" 2>&1 | tee /dev/stderr) || true
+  OUTPUT=$(codex exec --full-auto --yolo --color never --output-last-message "$LAST_OUTPUT_FILE" - < "$SCRIPT_DIR/CODEX.md" 2>&1 | tee /dev/stderr) || true
 
   # Persist Codex's final assistant output in the progress log.
   if [ -s "$LAST_OUTPUT_FILE" ]; then
