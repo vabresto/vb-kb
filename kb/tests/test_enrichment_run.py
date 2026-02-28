@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -153,6 +154,11 @@ def _read_frontmatter_and_body(index_path: Path) -> tuple[dict[str, object], str
     return payload, match.group("body")
 
 
+def _citation_key_from_source_ref(source_ref: str) -> str:
+    _, _, tail = source_ref.partition("source@")
+    return tail
+
+
 def test_resolve_entity_target_accepts_slug_and_canonical_path() -> None:
     slug_target = resolve_entity_target("founder-name")
     assert slug_target.entity_ref == "founder-name"
@@ -234,10 +240,37 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
     assert payload["phases"]["mapping"]["status"] == "succeeded"
     assert payload["phases"]["validation"]["status"] == "pending"
     assert payload["phases"]["reporting"]["status"] == "succeeded"
+    assert payload["fact_to_source_mappings"][0]["entity_kind"] == "person"
+    assert len(payload["fact_to_source_mappings"][0]["mappings"]) == 2
 
-    frontmatter, _ = _read_frontmatter_and_body(person_index_path)
+    assert len(report.fact_to_source_mappings) == 1
+    person_summary = report.fact_to_source_mappings[0]
+    assert person_summary.entity_kind == "person"
+    assert person_summary.entity_ref == "person/fo/person@founder-name"
+    assert len(person_summary.mappings) == 2
+    for mapping in person_summary.mappings:
+        assert mapping.source_entity_ref.startswith("source/")
+        assert mapping.source_citation_key.startswith("enrichment-")
+        assert mapping.source_identifier in {SupportedSource.linkedin, SupportedSource.skool}
+
+    frontmatter, body = _read_frontmatter_and_body(person_index_path)
     assert frontmatter["firm"] == "Legacy Labs"
     assert frontmatter["role"] in {"linkedin.com headline", "skool.com headline"}
+    assert "## Enrichment Provenance" in body
+
+    for source in (SupportedSource.linkedin, SupportedSource.skool):
+        state = source_states[source]
+        assert state.source_entity_ref is not None
+        assert state.source_entity_path is not None
+        citation_key = _citation_key_from_source_ref(state.source_entity_ref)
+        source_link = Path(
+            os.path.relpath(
+                tmp_path / state.source_entity_path,
+                start=person_index_path.parent,
+            )
+        ).as_posix()
+        assert f"[source@{citation_key}]({source_link})" in body
+        assert f"[^{citation_key}]" in body
 
     employment_rows = [
         json.loads(line)
@@ -428,7 +461,8 @@ def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: 
     assert frontmatter["firm"] == "Future Labs"
     assert frontmatter["role"] == "Chief Executive Officer"
     assert frontmatter["location"] == "Kitchener, ON"
-    assert body_after.strip() == body_before.strip()
+    assert body_before.strip() in body_after
+    assert "## Enrichment Provenance" in body_after
 
     employment_rows = [
         json.loads(line)
@@ -439,6 +473,43 @@ def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: 
     assert employment_rows[-1]["organization"] == "Legacy Labs"
     assert employment_rows[-1]["role"] == "Founder"
     assert employment_rows[-1]["source_path"] == "data/person/fo/person@founder-name/index.md"
+
+
+def test_run_enrichment_for_entity_fails_when_promoted_fact_lacks_source_linkage(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _write_person_fixture(tmp_path)
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _PersonFactsAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    def _write_source_entity_record_failure(**_kwargs):
+        raise RuntimeError("simulated source logging write failure")
+
+    monkeypatch.setattr(
+        "kb.enrichment_run._write_source_entity_record",
+        _write_source_entity_record_failure,
+    )
+
+    report = run_enrichment_for_entity(
+        "founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        run_id="enrich-provenance-failure-run",
+    )
+
+    assert report.status == RunStatus.failed
+    assert report.phases.source_logging.status == PhaseStatus.failed
+    assert report.phases.mapping.status == PhaseStatus.failed
+    assert report.phases.mapping.message is not None
+    assert "missing source entity linkage" in report.phases.mapping.message
+    assert report.fact_to_source_mappings == []
 
 
 def _write_org_fixture(
@@ -599,7 +670,8 @@ def test_run_enrichment_for_entity_maps_organization_with_confidence_gating(tmp_
     assert frontmatter["website"] == "https://future-labs.ai"
     assert frontmatter["hq-location"] == "Toronto, ON"
     assert frontmatter["thesis"] == "Applied AI tooling for enterprise teams."
-    assert body_after.strip() == body_before.strip()
+    assert body_before.strip() in body_after
+    assert "## Enrichment Provenance" in body_after
 
     known_people = frontmatter["known-people"]
     assert isinstance(known_people, list)
@@ -613,3 +685,9 @@ def test_run_enrichment_for_entity_maps_organization_with_confidence_gating(tmp_
     assert "relationship-end-date" in jane_entry
     assert "first-noted-at" in jane_entry
     assert "last-verified-at" in jane_entry
+
+    assert len(report.fact_to_source_mappings) == 1
+    org_summary = report.fact_to_source_mappings[0]
+    assert org_summary.entity_kind == "org"
+    assert org_summary.entity_ref == "org/fu/org@future-labs"
+    assert len(org_summary.mappings) == 5

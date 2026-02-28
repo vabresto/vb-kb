@@ -14,6 +14,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Source logging should write deterministic source entities under `data/source/<shard>/source@enrichment-.../` with both canonical `index.md` and structured `facts.json`; preserve these paths on `SourceExtractionState` for downstream provenance/mapping phases.
 - Person mapping should only promote facts meeting `confidence_policy.minimum_promotion_level`; update person frontmatter (`firm`, `role`, `location`) without rewriting narrative sections, and archive replaced current role values into `employment-history.jsonl`.
 - Organization mapping should target canonical `data/org/<shard>/org@<slug>/index.md`, keep narrative body sections unchanged, and merge `known-people` entries using canonical person links with required relationship/date fields.
+- Promoted enrichment facts must carry source-entity provenance (`source_entity_ref`, `source_entity_path`, citation key) before mapping writes; mapping should fail fast when linkage is missing and should upsert a managed `## Enrichment Provenance` markdown section with source-entity links + `[^citation-key]` tokens.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -498,4 +499,53 @@ Remaining `passes: false` stories:
     - Relationship/date metadata can arrive in mixed key styles (`snake_case` vs `kebab-case`); normalize both when mapping metadata into frontmatter.
   - Useful context (e.g., "the evaluation panel is in component X")
     - Mapping flow now branches by entity kind: person and organization targets are implemented, while source targets remain explicitly skipped.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:30:44)
+Implemented `US-010` on branch `ralph/playwright-kb-enrichment` and committed it.
+
+- Commit: `7f96263`
+- Message: `feat: [US-010] - [Implement organization mapping with confidence-gated promotion]`
+- Skill note: I did not use the `ralph` conversion skill because this turn was implementation against an existing `prd.json`, not PRD conversion.
+
+Changed files:
+- [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py)
+- [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks run and passed:
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py` (`8 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; all passed)
+
+Tracking updates completed:
+- Set `US-010` to `passes: true` in `scripts/ralph/prd.json`.
+- Appended the required progress entry and updated `## Codebase Patterns` in `scripts/ralph/progress.txt`.
+- Added reusable org-mapping guidance to `agents.md`.
+
+There are still stories with `passes: false` (`US-011`, `US-012`, `US-013`), so this iteration is complete but not final project completion.
+---
+## [2026-02-28 16:36:59 UTC] - US-011
+- What was implemented
+  - Added provenance-enforced mapping in `kb/enrichment_run.py`: promoted facts now require source-entity linkage (`source_entity_ref`, `source_entity_path`, citation key) and mapping fails fast with `PromotedFactProvenanceError` when provenance is missing.
+  - Added deterministic run-report fact-to-source output via `EnrichmentRunReport.fact_to_source_mappings`, including per-entity mapping rows with source identifier, citation key, source entity path/ref, retrieval timestamp, and optional location pointers.
+  - Added managed markdown citation output for mapped entities: person/org mapping now upserts a `## Enrichment Provenance` section that links to KB source entities and emits `[^citation-key]` references (no URL-only citations).
+  - Updated mapping phase reporting messages to include fact-to-source mapping counts for successful person/org writes.
+  - Expanded enrichment run tests to validate provenance report payloads, citation section writes for person/org mapping, and failure behavior when source logging prevents required provenance linkage.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Treat promoted-fact provenance as a hard precondition for mapping writes, not best-effort metadata: report summary and markdown citations should both derive from the same validated promoted-fact set.
+    - Keep enrichment citation output in a managed markdown block (`## Enrichment Provenance` with start/end markers) so reruns can replace stale provenance deterministically.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Source logging and mapping are separate phases; if source logging partially fails, mapping can still receive promoted facts without source artifacts unless provenance checks explicitly gate it.
+    - Continue using `UV_CACHE_DIR=/tmp/uv-cache` for local `uv`/`just` quality checks in this environment.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `fact_to_source_mappings` is now the canonical run-report surface for audit trails from promoted facts to source entities and should be kept stable for future validation/reporting stories.
 ---

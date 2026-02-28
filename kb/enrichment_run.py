@@ -43,6 +43,10 @@ _ENTITY_PATH_SLUG_RE = re.compile(
     r"(?:^|/)(?:person|org|source)@(?P<slug>[a-z0-9][a-z0-9-]*)(?:/index\.md)?$"
 )
 _FRONTMATTER_BLOCK_RE = re.compile(r"\A---\n(?P<frontmatter>.*?)\n---\n?(?P<body>.*)\Z", re.DOTALL)
+_ENRICHMENT_PROVENANCE_SECTION_RE = re.compile(
+    r"\n*## Enrichment Provenance\n\n<!-- enrichment-provenance:start -->.*?<!-- enrichment-provenance:end -->\n*",
+    re.DOTALL,
+)
 _MARKDOWN_LINK_RE = re.compile(r"^\[(?P<label>[^\]]+)\]\((?P<target>[^)]+)\)$")
 _EMPLOYMENT_ID_RE = re.compile(r"^employment-(?P<index>\d{3})$")
 _ROLE_ATTRIBUTE_PRIORITY = {
@@ -125,6 +129,20 @@ _CONFIDENCE_RANK = {
     ConfidenceLevel.medium: 1,
     ConfidenceLevel.high: 2,
 }
+_PROVENANCE_POINTER_METADATA_KEYS = (
+    "location_pointer",
+    "location-pointer",
+    "source_location_pointer",
+    "source-location-pointer",
+    "source_pointer",
+    "source-pointer",
+    "source_locator",
+    "source-locator",
+    "selector",
+    "xpath",
+    "css_selector",
+    "css-selector",
+)
 
 
 class RunStatus(str, Enum):
@@ -164,6 +182,26 @@ class SourceRecordWriteError(EnrichmentRunError):
         super().__init__(f"unable to persist source record for '{source.value}' at '{path}': {details}")
         self.source = source
         self.path = path
+        self.details = details
+
+
+class PromotedFactProvenanceError(EnrichmentRunError):
+    def __init__(
+        self,
+        *,
+        entity_label: str,
+        attribute: str,
+        source: SupportedSource,
+        details: str,
+    ) -> None:
+        message = (
+            f"{entity_label} promoted fact missing source entity linkage "
+            f"for attribute '{attribute}' from '{source.value}': {details}"
+        )
+        super().__init__(message)
+        self.entity_label = entity_label
+        self.attribute = attribute
+        self.source = source
         self.details = details
 
 
@@ -207,6 +245,26 @@ class RunPhaseStates(KBBaseModel):
     reporting: PhaseState
 
 
+class FactSourceMapping(KBBaseModel):
+    attribute: str
+    value: str
+    confidence: ConfidenceLevel
+    source_identifier: SupportedSource
+    source_entity_ref: str
+    source_entity_path: str
+    source_citation_key: str
+    source_url: str
+    retrieved_at: datetime
+    location_pointer: str | None = None
+
+
+class EntityFactSourceSummary(KBBaseModel):
+    entity_kind: str
+    entity_ref: str
+    entity_index_path: str
+    mappings: list[FactSourceMapping] = Field(default_factory=list)
+
+
 class EnrichmentRunReport(KBBaseModel):
     run_id: str
     entity_ref: str
@@ -219,6 +277,7 @@ class EnrichmentRunReport(KBBaseModel):
     facts_extracted_total: int = 0
     report_path: str
     phases: RunPhaseStates
+    fact_to_source_mappings: list[EntityFactSourceSummary] = Field(default_factory=list)
 
 
 class _SuccessfulExtraction(KBBaseModel):
@@ -242,6 +301,8 @@ class _SourceLoggingError(KBBaseModel):
 class _PromotedFact(KBBaseModel):
     source: SupportedSource
     source_entity_ref: str | None = None
+    source_entity_path: str | None = None
+    source_citation_key: str | None = None
     attribute: str
     value: str
     confidence: ConfidenceLevel
@@ -255,6 +316,7 @@ class _PersonMappingResult(KBBaseModel):
     promoted_fact_count: int = 0
     frontmatter_fields_updated: list[str] = Field(default_factory=list)
     employment_rows_added: int = 0
+    fact_source_summary: EntityFactSourceSummary | None = None
 
 
 class _OrganizationMappingResult(KBBaseModel):
@@ -262,6 +324,12 @@ class _OrganizationMappingResult(KBBaseModel):
     promoted_fact_count: int = 0
     frontmatter_fields_updated: list[str] = Field(default_factory=list)
     known_people_entries_added: int = 0
+    fact_source_summary: EntityFactSourceSummary | None = None
+
+
+class _MappingPhaseResult(KBBaseModel):
+    phase: PhaseState
+    fact_to_source_mappings: list[EntityFactSourceSummary] = Field(default_factory=list)
 
 
 class _KnownPersonEntry(KBBaseModel):
@@ -461,7 +529,7 @@ def run_enrichment_for_entity(
         state.source_logging_error_type = error.error_type
         state.source_logging_error = error.error
 
-    mapping_phase = _build_mapping_phase(
+    mapping_result = _build_mapping_phase(
         extraction_failed=extraction_failed,
         successful_extractions=successful_extractions,
         source_artifacts=source_artifacts,
@@ -470,6 +538,7 @@ def run_enrichment_for_entity(
         run_id=resolved_run_id,
         project_root=resolved_root,
     )
+    mapping_phase = mapping_result.phase
     validation_phase = _build_validation_phase(extraction_failed)
     reporting_phase = PhaseState(
         status=PhaseStatus.succeeded,
@@ -511,6 +580,7 @@ def run_enrichment_for_entity(
             validation=validation_phase,
             reporting=reporting_phase,
         ),
+        fact_to_source_mappings=mapping_result.fact_to_source_mappings,
     )
     _write_run_report(report, project_root=resolved_root)
     return report
@@ -592,23 +662,27 @@ def _build_mapping_phase(
     config: EnrichmentConfig,
     run_id: str,
     project_root: Path,
-) -> PhaseState:
+) -> _MappingPhaseResult:
     started_at = _normalize_now()
     if extraction_failed:
-        return PhaseState(
-            status=PhaseStatus.skipped,
-            message="skipped because extraction phase failed",
-            started_at=started_at,
-            completed_at=_normalize_now(),
+        return _MappingPhaseResult(
+            phase=PhaseState(
+                status=PhaseStatus.skipped,
+                message="skipped because extraction phase failed",
+                started_at=started_at,
+                completed_at=_normalize_now(),
+            )
         )
 
     entity_kind = _resolve_entity_kind(resolved_target)
     if entity_kind == "source":
-        return PhaseState(
-            status=PhaseStatus.pending,
-            message="mapping skipped for source target",
-            started_at=started_at,
-            completed_at=_normalize_now(),
+        return _MappingPhaseResult(
+            phase=PhaseState(
+                status=PhaseStatus.pending,
+                message="mapping skipped for source target",
+                started_at=started_at,
+                completed_at=_normalize_now(),
+            )
         )
 
     if entity_kind == "org":
@@ -621,11 +695,13 @@ def _build_mapping_phase(
                 project_root=project_root,
             )
         except Exception as exc:
-            return PhaseState(
-                status=PhaseStatus.failed,
-                message=f"organization mapping failed: {exc}",
-                started_at=started_at,
-                completed_at=_normalize_now(),
+            return _MappingPhaseResult(
+                phase=PhaseState(
+                    status=PhaseStatus.failed,
+                    message=f"organization mapping failed: {exc}",
+                    started_at=started_at,
+                    completed_at=_normalize_now(),
+                )
             )
 
         if mapping.promoted_fact_count == 0:
@@ -634,17 +710,30 @@ def _build_mapping_phase(
                 f"'{config.confidence_policy.minimum_promotion_level.value}' for promotion"
             )
         else:
+            mapping_count = (
+                len(mapping.fact_source_summary.mappings)
+                if mapping.fact_source_summary is not None
+                else 0
+            )
             message = (
                 f"promoted {mapping.promoted_fact_count} organization fact(s) into "
                 f"{mapping.organization_index_path}; "
                 f"frontmatter fields updated: {len(mapping.frontmatter_fields_updated)}; "
-                f"known-people entries added: {mapping.known_people_entries_added}"
+                f"known-people entries added: {mapping.known_people_entries_added}; "
+                f"fact-to-source mappings: {mapping_count}"
             )
-        return PhaseState(
-            status=PhaseStatus.succeeded,
-            message=message,
-            started_at=started_at,
-            completed_at=_normalize_now(),
+        return _MappingPhaseResult(
+            phase=PhaseState(
+                status=PhaseStatus.succeeded,
+                message=message,
+                started_at=started_at,
+                completed_at=_normalize_now(),
+            ),
+            fact_to_source_mappings=(
+                [mapping.fact_source_summary]
+                if mapping.fact_source_summary is not None
+                else []
+            ),
         )
 
     try:
@@ -657,11 +746,13 @@ def _build_mapping_phase(
             project_root=project_root,
         )
     except Exception as exc:
-        return PhaseState(
-            status=PhaseStatus.failed,
-            message=f"person mapping failed: {exc}",
-            started_at=started_at,
-            completed_at=_normalize_now(),
+        return _MappingPhaseResult(
+            phase=PhaseState(
+                status=PhaseStatus.failed,
+                message=f"person mapping failed: {exc}",
+                started_at=started_at,
+                completed_at=_normalize_now(),
+            )
         )
 
     if mapping.promoted_fact_count == 0:
@@ -670,17 +761,30 @@ def _build_mapping_phase(
             f"'{config.confidence_policy.minimum_promotion_level.value}' for promotion"
         )
     else:
+        mapping_count = (
+            len(mapping.fact_source_summary.mappings)
+            if mapping.fact_source_summary is not None
+            else 0
+        )
         message = (
             f"promoted {mapping.promoted_fact_count} person fact(s) into {mapping.person_index_path}; "
             f"frontmatter fields updated: {len(mapping.frontmatter_fields_updated)}; "
-            f"employment rows appended: {mapping.employment_rows_added}"
+            f"employment rows appended: {mapping.employment_rows_added}; "
+            f"fact-to-source mappings: {mapping_count}"
         )
 
-    return PhaseState(
-        status=PhaseStatus.succeeded,
-        message=message,
-        started_at=started_at,
-        completed_at=_normalize_now(),
+    return _MappingPhaseResult(
+        phase=PhaseState(
+            status=PhaseStatus.succeeded,
+            message=message,
+            started_at=started_at,
+            completed_at=_normalize_now(),
+        ),
+        fact_to_source_mappings=(
+            [mapping.fact_source_summary]
+            if mapping.fact_source_summary is not None
+            else []
+        ),
     )
 
 
@@ -724,12 +828,29 @@ def _map_person_facts(
             promoted_fact_count=0,
             frontmatter_fields_updated=[],
             employment_rows_added=0,
+            fact_source_summary=None,
         )
+
+    _validate_promoted_fact_provenance(promoted_facts=promoted_facts, entity_label="person")
 
     frontmatter, body = _read_markdown_document(
         index_path=person_index_path,
         entity_label="person",
     )
+    fact_source_summary = _build_entity_fact_source_summary(
+        entity_kind="person",
+        entity_index_path=person_index_rel,
+        promoted_facts=promoted_facts,
+        index_path=person_index_path,
+        project_root=project_root,
+    )
+    body_with_provenance = _upsert_enrichment_provenance_section(
+        body=body,
+        promoted_facts=promoted_facts,
+        index_path=person_index_path,
+        project_root=project_root,
+    )
+    body_updated = body_with_provenance.strip() != body.strip()
     frontmatter_updated_fields: list[str] = []
     employment_rows_added = 0
 
@@ -781,9 +902,9 @@ def _map_person_facts(
             run_id=run_id,
         )
 
-    if frontmatter_updated_fields:
+    if frontmatter_updated_fields or body_updated:
         person_index_path.write_text(
-            _render_markdown(frontmatter=frontmatter, body=body),
+            _render_markdown(frontmatter=frontmatter, body=body_with_provenance),
             encoding="utf-8",
         )
 
@@ -792,6 +913,7 @@ def _map_person_facts(
         promoted_fact_count=len(promoted_facts),
         frontmatter_fields_updated=frontmatter_updated_fields,
         employment_rows_added=employment_rows_added,
+        fact_source_summary=fact_source_summary,
     )
 
 
@@ -832,12 +954,29 @@ def _map_organization_facts(
             promoted_fact_count=0,
             frontmatter_fields_updated=[],
             known_people_entries_added=0,
+            fact_source_summary=None,
         )
+
+    _validate_promoted_fact_provenance(promoted_facts=promoted_facts, entity_label="organization")
 
     frontmatter, body = _read_markdown_document(
         index_path=organization_index_path,
         entity_label="organization",
     )
+    fact_source_summary = _build_entity_fact_source_summary(
+        entity_kind="org",
+        entity_index_path=organization_index_rel,
+        promoted_facts=promoted_facts,
+        index_path=organization_index_path,
+        project_root=project_root,
+    )
+    body_with_provenance = _upsert_enrichment_provenance_section(
+        body=body,
+        promoted_facts=promoted_facts,
+        index_path=organization_index_path,
+        project_root=project_root,
+    )
+    body_updated = body_with_provenance.strip() != body.strip()
     frontmatter_updated_fields: list[str] = []
 
     org_name_candidate = _select_best_promoted_fact(
@@ -879,12 +1018,12 @@ def _map_organization_facts(
     if known_people_entries_added > 0:
         frontmatter_updated_fields.append("known-people")
 
-    if frontmatter_updated_fields:
+    if frontmatter_updated_fields or body_updated:
         latest_promoted_at = max(fact.retrieved_at for fact in promoted_facts).date().isoformat()
         _set_frontmatter_text(frontmatter, key="updated-at", value=latest_promoted_at)
         _set_frontmatter_text(frontmatter, key="last-updated-from-source", value=latest_promoted_at)
         organization_index_path.write_text(
-            _render_markdown(frontmatter=frontmatter, body=body),
+            _render_markdown(frontmatter=frontmatter, body=body_with_provenance),
             encoding="utf-8",
         )
 
@@ -893,6 +1032,7 @@ def _map_organization_facts(
         promoted_fact_count=len(promoted_facts),
         frontmatter_fields_updated=frontmatter_updated_fields,
         known_people_entries_added=known_people_entries_added,
+        fact_source_summary=fact_source_summary,
     )
 
 
@@ -906,6 +1046,12 @@ def _collect_promoted_facts(
     for extraction in sorted(successful_extractions, key=lambda item: item.source.value):
         source_artifact = source_artifacts.get(extraction.source)
         source_entity_ref = source_artifact.source_entity_ref if source_artifact is not None else None
+        source_entity_path = source_artifact.source_entity_path if source_artifact is not None else None
+        source_citation_key = (
+            _citation_key_from_source_entity_ref(source_entity_ref)
+            if source_entity_ref is not None
+            else None
+        )
         for fact in extraction.normalize_result.facts:
             if not _confidence_meets_threshold(fact.confidence, minimum_level):
                 continue
@@ -913,6 +1059,8 @@ def _collect_promoted_facts(
                 _to_promoted_fact(
                     source=extraction.source,
                     source_entity_ref=source_entity_ref,
+                    source_entity_path=source_entity_path,
+                    source_citation_key=source_citation_key,
                     fact=fact,
                 )
             )
@@ -923,11 +1071,15 @@ def _to_promoted_fact(
     *,
     source: SupportedSource,
     source_entity_ref: str | None,
+    source_entity_path: str | None,
+    source_citation_key: str | None,
     fact: NormalizedFact,
 ) -> _PromotedFact:
     return _PromotedFact(
         source=source,
         source_entity_ref=source_entity_ref,
+        source_entity_path=source_entity_path,
+        source_citation_key=source_citation_key,
         attribute=fact.attribute.strip().lower(),
         value=fact.value.strip(),
         confidence=fact.confidence,
@@ -935,6 +1087,216 @@ def _to_promoted_fact(
         retrieved_at=_normalize_now(fact.retrieved_at),
         metadata=dict(fact.metadata),
     )
+
+
+def _citation_key_from_source_entity_ref(source_entity_ref: str) -> str | None:
+    _, marker, tail = source_entity_ref.partition("source@")
+    if not marker:
+        return None
+    citation_key = tail.strip().lower()
+    if _SLUG_RE.fullmatch(citation_key) is None:
+        return None
+    return citation_key
+
+
+def _validate_promoted_fact_provenance(*, promoted_facts: list[_PromotedFact], entity_label: str) -> None:
+    for fact in promoted_facts:
+        if fact.source_entity_ref is None:
+            raise PromotedFactProvenanceError(
+                entity_label=entity_label,
+                attribute=fact.attribute,
+                source=fact.source,
+                details="missing source entity reference",
+            )
+        if fact.source_entity_path is None:
+            raise PromotedFactProvenanceError(
+                entity_label=entity_label,
+                attribute=fact.attribute,
+                source=fact.source,
+                details="missing source entity path",
+            )
+        citation_key = fact.source_citation_key or _citation_key_from_source_entity_ref(fact.source_entity_ref)
+        if citation_key is None:
+            raise PromotedFactProvenanceError(
+                entity_label=entity_label,
+                attribute=fact.attribute,
+                source=fact.source,
+                details=f"invalid source entity reference '{fact.source_entity_ref}'",
+            )
+        fact.source_citation_key = citation_key
+
+
+def _build_entity_fact_source_summary(
+    *,
+    entity_kind: str,
+    entity_index_path: str,
+    promoted_facts: list[_PromotedFact],
+    index_path: Path,
+    project_root: Path,
+) -> EntityFactSourceSummary:
+    mappings = sorted(
+        (
+            _build_fact_source_mapping(
+                fact=fact,
+                entity_kind=entity_kind,
+                index_path=index_path,
+                project_root=project_root,
+            )
+            for fact in promoted_facts
+        ),
+        key=lambda mapping: (
+            mapping.attribute,
+            mapping.value,
+            mapping.confidence.value,
+            mapping.source_identifier.value,
+            mapping.source_citation_key,
+            mapping.retrieved_at,
+            mapping.source_url,
+            mapping.location_pointer or "",
+        ),
+    )
+    return EntityFactSourceSummary(
+        entity_kind=entity_kind,
+        entity_ref=_entity_ref_from_index_path(entity_index_path),
+        entity_index_path=entity_index_path,
+        mappings=mappings,
+    )
+
+
+def _build_fact_source_mapping(
+    *,
+    fact: _PromotedFact,
+    entity_kind: str,
+    index_path: Path,
+    project_root: Path,
+) -> FactSourceMapping:
+    if fact.source_entity_ref is None:
+        raise PromotedFactProvenanceError(
+            entity_label=entity_kind,
+            attribute=fact.attribute,
+            source=fact.source,
+            details="missing source entity reference",
+        )
+    if fact.source_entity_path is None:
+        raise PromotedFactProvenanceError(
+            entity_label=entity_kind,
+            attribute=fact.attribute,
+            source=fact.source,
+            details="missing source entity path",
+        )
+    citation_key = fact.source_citation_key or _citation_key_from_source_entity_ref(fact.source_entity_ref)
+    if citation_key is None:
+        raise PromotedFactProvenanceError(
+            entity_label=entity_kind,
+            attribute=fact.attribute,
+            source=fact.source,
+            details=f"invalid source entity reference '{fact.source_entity_ref}'",
+        )
+    source_entity_index_path = project_root / fact.source_entity_path
+    if not source_entity_index_path.exists():
+        relative_path = source_entity_index_path.relative_to(project_root).as_posix()
+        raise PromotedFactProvenanceError(
+            entity_label=entity_kind,
+            attribute=fact.attribute,
+            source=fact.source,
+            details=f"source entity path does not exist: {relative_path}",
+        )
+    return FactSourceMapping(
+        attribute=fact.attribute,
+        value=fact.value,
+        confidence=fact.confidence,
+        source_identifier=fact.source,
+        source_entity_ref=fact.source_entity_ref,
+        source_entity_path=fact.source_entity_path,
+        source_citation_key=citation_key,
+        source_url=fact.source_url,
+        retrieved_at=fact.retrieved_at,
+        location_pointer=_provenance_location_pointer(fact),
+    )
+
+
+def _entity_ref_from_index_path(index_path: str) -> str:
+    if not index_path.startswith("data/") or not index_path.endswith("/index.md"):
+        raise EnrichmentRunError(f"invalid canonical entity index path '{index_path}'")
+    entity_rel = index_path[len("data/") : -len("/index.md")]
+    try:
+        return validate_entity_rel_path(entity_rel)
+    except ValueError as exc:
+        raise EnrichmentRunError(f"invalid canonical entity index path '{index_path}': {exc}") from exc
+
+
+def _provenance_location_pointer(fact: _PromotedFact) -> str | None:
+    return _normalize_text(_metadata_value(fact.metadata, *_PROVENANCE_POINTER_METADATA_KEYS))
+
+
+def _upsert_enrichment_provenance_section(
+    *,
+    body: str,
+    promoted_facts: list[_PromotedFact],
+    index_path: Path,
+    project_root: Path,
+) -> str:
+    section = _render_enrichment_provenance_section(
+        promoted_facts=promoted_facts,
+        index_path=index_path,
+        project_root=project_root,
+    )
+    body_without_section = _ENRICHMENT_PROVENANCE_SECTION_RE.sub("\n\n", body).strip()
+    if not body_without_section:
+        return section
+    return f"{body_without_section}\n\n{section}"
+
+
+def _render_enrichment_provenance_section(
+    *,
+    promoted_facts: list[_PromotedFact],
+    index_path: Path,
+    project_root: Path,
+) -> str:
+    lines = [
+        "## Enrichment Provenance",
+        "",
+        "<!-- enrichment-provenance:start -->",
+        "Promoted facts mapped by this enrichment run. Each citation key resolves to a KB source entity.",
+        "",
+    ]
+    for fact in sorted(
+        promoted_facts,
+        key=lambda item: (
+            item.attribute,
+            item.value,
+            item.confidence.value,
+            item.source.value,
+            item.source_citation_key or "",
+            item.retrieved_at,
+            item.source_url,
+        ),
+    ):
+        if fact.source_entity_path is None or fact.source_citation_key is None:
+            continue
+        source_entity_index_path = project_root / fact.source_entity_path
+        source_link = _relative_link(
+            from_dir=index_path.parent,
+            target_path=source_entity_index_path,
+        )
+        retrieved_on = fact.retrieved_at.date().isoformat()
+        pointer = _provenance_location_pointer(fact)
+        line = (
+            f"- `{fact.attribute}` -> `{fact.value}` via "
+            f"[source@{fact.source_citation_key}]({source_link}) "
+            f"[^{fact.source_citation_key}] "
+            f"(`{fact.source.value}`, retrieved `{retrieved_on}`)"
+        )
+        if pointer is not None:
+            line += f"; pointer `{pointer}`"
+        lines.append(line)
+    lines.extend(
+        [
+            "",
+            "<!-- enrichment-provenance:end -->",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def _confidence_meets_threshold(level: ConfidenceLevel, minimum_level: ConfidenceLevel) -> bool:
