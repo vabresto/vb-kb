@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
@@ -27,6 +27,7 @@ from kb.enrichment_adapters import (
 from kb.enrichment_config import ConfidenceLevel, EnrichmentConfig, SupportedSource
 from kb.enrichment_linkedin_adapter import LinkedInSourceAdapter
 from kb.enrichment_skool_adapter import SkoolSourceAdapter
+from kb.edges import derive_citation_edges, derive_employment_edges, sync_edge_backlinks
 from kb.schemas import (
     EmploymentHistoryRow,
     KBBaseModel,
@@ -37,6 +38,7 @@ from kb.schemas import (
     shard_for_slug,
     validate_entity_rel_path,
 )
+from kb.validate import collect_changed_paths, infer_data_root, run_validation
 
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 _ENTITY_PATH_SLUG_RE = re.compile(
@@ -149,6 +151,7 @@ class RunStatus(str, Enum):
     succeeded = "succeeded"
     partial = "partial"
     failed = "failed"
+    blocked = "blocked"
 
 
 class PhaseStatus(str, Enum):
@@ -539,7 +542,12 @@ def run_enrichment_for_entity(
         project_root=resolved_root,
     )
     mapping_phase = mapping_result.phase
-    validation_phase = _build_validation_phase(extraction_failed)
+    validation_phase = _build_validation_phase(
+        extraction_failed=extraction_failed,
+        mapping_phase_status=mapping_phase.status,
+        project_root=resolved_root,
+        run_started_at=started_at,
+    )
     reporting_phase = PhaseState(
         status=PhaseStatus.succeeded,
         message=f"run report persisted to {config.run_report_path}",
@@ -551,9 +559,10 @@ def run_enrichment_for_entity(
     if (
         extraction_failed
         or mapping_phase.status == PhaseStatus.failed
-        or validation_phase.status == PhaseStatus.failed
     ):
         run_status = RunStatus.failed
+    elif validation_phase.status == PhaseStatus.failed:
+        run_status = RunStatus.blocked
     elif (
         source_logging_phase.status == PhaseStatus.succeeded
         and mapping_phase.status == PhaseStatus.succeeded
@@ -1885,16 +1894,183 @@ def _append_jsonl_row(*, path: Path, payload: dict[str, Any]) -> None:
     path.write_text(existing + prefix + rendered + "\n", encoding="utf-8")
 
 
-def _build_validation_phase(extraction_failed: bool) -> PhaseState:
+def _build_validation_phase(
+    *,
+    extraction_failed: bool,
+    mapping_phase_status: PhaseStatus,
+    project_root: Path,
+    run_started_at: datetime,
+) -> PhaseState:
+    started_at = _normalize_now()
     if extraction_failed:
         return PhaseState(
             status=PhaseStatus.skipped,
             message="skipped because extraction phase failed",
+            started_at=started_at,
+            completed_at=_normalize_now(),
         )
-    return PhaseState(
-        status=PhaseStatus.pending,
-        message="pending implementation for validation gating (US-012)",
+    if mapping_phase_status == PhaseStatus.failed:
+        return PhaseState(
+            status=PhaseStatus.skipped,
+            message="skipped because mapping phase failed",
+            started_at=started_at,
+            completed_at=_normalize_now(),
+        )
+
+    initial_validation = _run_validate_changed(project_root=project_root)
+    if bool(initial_validation.get("ok")):
+        return PhaseState(
+            status=PhaseStatus.succeeded,
+            message="validate-changed checks passed",
+            started_at=started_at,
+            completed_at=_normalize_now(),
+        )
+
+    remediation_steps = _run_validation_auto_remediation(
+        project_root=project_root,
+        as_of=run_started_at.date().isoformat(),
     )
+    retried_validation = _run_validate_changed(project_root=project_root)
+    if bool(retried_validation.get("ok")):
+        return PhaseState(
+            status=PhaseStatus.succeeded,
+            message=(
+                "validate-changed checks passed after one automated remediation attempt "
+                f"({_summarize_remediation_steps(remediation_steps)})"
+            ),
+            started_at=started_at,
+            completed_at=_normalize_now(),
+        )
+
+    blocked_message = _build_validation_blocked_message(
+        validation_result=retried_validation,
+        remediation_steps=remediation_steps,
+    )
+    return PhaseState(
+        status=PhaseStatus.failed,
+        message=blocked_message,
+        started_at=started_at,
+        completed_at=_normalize_now(),
+    )
+
+
+def _run_validate_changed(*, project_root: Path) -> dict[str, Any]:
+    data_root = infer_data_root(project_root, None)
+    scope_paths = collect_changed_paths(project_root, data_root)
+    return run_validation(
+        project_root=project_root,
+        data_root=data_root,
+        scope_paths=scope_paths,
+        scope_label="changed",
+    )
+
+
+def _run_validation_auto_remediation(*, project_root: Path, as_of: str) -> list[dict[str, Any]]:
+    data_root = infer_data_root(project_root, None)
+    return [
+        _run_remediation_step(
+            step_name="derive-employment-edges",
+            action=lambda: derive_employment_edges(
+                project_root=project_root,
+                data_root=data_root,
+                as_of=as_of,
+            ),
+        ),
+        _run_remediation_step(
+            step_name="derive-citation-edges",
+            action=lambda: derive_citation_edges(
+                project_root=project_root,
+                data_root=data_root,
+                as_of=as_of,
+            ),
+        ),
+        _run_remediation_step(
+            step_name="sync-edge-backlinks",
+            action=lambda: sync_edge_backlinks(
+                project_root=project_root,
+                data_root=data_root,
+            ),
+        ),
+    ]
+
+
+def _run_remediation_step(
+    *,
+    step_name: str,
+    action: Callable[[], dict[str, Any]],
+) -> dict[str, Any]:
+    try:
+        result = action()
+    except Exception as exc:  # pragma: no cover - defensive fallback around remediation commands.
+        return {
+            "step": step_name,
+            "ok": False,
+            "issue_count": 1,
+            "error": str(exc) or exc.__class__.__name__,
+        }
+
+    issue_count_raw = result.get("issue_count")
+    issue_count = issue_count_raw if isinstance(issue_count_raw, int) else 0
+    return {
+        "step": step_name,
+        "ok": bool(result.get("ok")),
+        "issue_count": issue_count,
+    }
+
+
+def _summarize_remediation_steps(steps: list[dict[str, Any]]) -> str:
+    summaries: list[str] = []
+    for step in steps:
+        step_name = str(step.get("step") or "unknown-step")
+        if bool(step.get("ok")):
+            summaries.append(f"{step_name}:ok")
+            continue
+        issue_count_raw = step.get("issue_count")
+        issue_count = issue_count_raw if isinstance(issue_count_raw, int) else 0
+        summaries.append(f"{step_name}:{issue_count} issue(s)")
+    return ", ".join(summaries)
+
+
+def _build_validation_blocked_message(
+    *,
+    validation_result: Mapping[str, Any],
+    remediation_steps: list[dict[str, Any]],
+) -> str:
+    check_codes, affected_files = _extract_validation_error_details(validation_result)
+    checks_fragment = _format_limited_list(check_codes)
+    files_fragment = _format_limited_list(affected_files)
+    remediation_fragment = _summarize_remediation_steps(remediation_steps)
+    return (
+        "validation blocked after one automated remediation attempt; human intervention required. "
+        f"failing checks: {checks_fragment}. "
+        f"affected files: {files_fragment}. "
+        f"remediation: {remediation_fragment}"
+    )
+
+
+def _extract_validation_error_details(validation_result: Mapping[str, Any]) -> tuple[list[str], list[str]]:
+    check_codes: set[str] = set()
+    affected_files: set[str] = set()
+    errors_raw = validation_result.get("errors")
+    if isinstance(errors_raw, list):
+        for entry in errors_raw:
+            if not isinstance(entry, Mapping):
+                continue
+            code = entry.get("code")
+            if isinstance(code, str) and code.strip():
+                check_codes.add(code.strip())
+            path = entry.get("path")
+            if isinstance(path, str) and path.strip():
+                affected_files.add(path.strip())
+    return sorted(check_codes), sorted(affected_files)
+
+
+def _format_limited_list(values: list[str], *, limit: int = 6) -> str:
+    if not values:
+        return "none"
+    if len(values) <= limit:
+        return ", ".join(values)
+    return f"{', '.join(values[:limit])}, +{len(values) - limit} more"
 
 
 def _write_run_report(report: EnrichmentRunReport, *, project_root: Path) -> None:

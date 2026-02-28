@@ -19,14 +19,19 @@ from kb.enrichment_run import (
 )
 
 
-def _stub_report(*, sources: list[SupportedSource]) -> EnrichmentRunReport:
+def _stub_report(
+    *,
+    sources: list[SupportedSource],
+    status: RunStatus = RunStatus.partial,
+    validation_status: PhaseStatus = PhaseStatus.pending,
+) -> EnrichmentRunReport:
     now = datetime(2026, 2, 28, 18, 0, tzinfo=UTC)
     return EnrichmentRunReport(
         run_id="enrich-stub-run",
         entity_ref="founder-name",
         entity_slug="founder-name",
         selected_sources=sources,
-        status=RunStatus.partial,
+        status=status,
         started_at=now,
         completed_at=now,
         facts_extracted_total=2,
@@ -46,8 +51,8 @@ def _stub_report(*, sources: list[SupportedSource]) -> EnrichmentRunReport:
                 message="pending mapping",
             ),
             validation=PhaseState(
-                status=PhaseStatus.pending,
-                message="pending validation",
+                status=validation_status,
+                message="stub validation phase",
             ),
             reporting=PhaseState(
                 status=PhaseStatus.succeeded,
@@ -159,3 +164,36 @@ def test_run_enrich_entity_reports_resolution_error(tmp_path: Path, monkeypatch,
     assert payload["ok"] is False
     assert payload["error_type"] == "EntityTargetResolutionError"
     assert "bad target" in payload["message"]
+
+
+def test_run_enrich_entity_reports_blocked_validation_status(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr(
+        "kb.cli.run_enrichment_for_entity",
+        lambda *_args, **_kwargs: _stub_report(
+            sources=[SupportedSource.linkedin],
+            status=RunStatus.blocked,
+            validation_status=PhaseStatus.failed,
+        ),
+    )
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "founder-name",
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["status"] == "blocked"
+    assert payload["phases"]["validation"]["status"] == "failed"

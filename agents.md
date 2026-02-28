@@ -20,6 +20,7 @@
 - When enrichment updates the current person `firm`/`role`, archive the previous pair into `employment-history.jsonl` as the next `employment-###` row with `source_section: employment_history_table` to preserve current-role frontmatter semantics.
 - Organization mapping (`US-010`) should write through canonical `data/org/<shard>/org@<slug>/index.md`, update frontmatter fields (`org`, `website`, `hq-location`, `thesis`) only from confidence-qualified facts, and merge `known-people` entries by canonical person reference while preserving existing narrative body sections.
 - Provenance enforcement (`US-011`) must fail mapping when any promoted fact lacks `source_entity_ref`, `source_entity_path`, or derivable citation key; when facts are promoted, upsert a managed `## Enrichment Provenance` section with source-entity links plus `[^citation-key]` footnote tokens (never URL-only citations), and keep `EnrichmentRunReport.fact_to_source_mappings` in sync.
+- Validation gating (`US-012`) should run the `validate-changed` flow automatically after write phases; if validation fails, run exactly one remediation pass (`derive-employment-edges`, `derive-citation-edges`, `sync-edge-backlinks`) before rerunning validation, and mark the run `blocked` with failing check codes + affected paths when unresolved.
 
 ## Reference Integrity
 

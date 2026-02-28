@@ -194,11 +194,11 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
         run_id="enrich-test-run",
     )
 
-    assert report.status == RunStatus.partial
+    assert report.status == RunStatus.succeeded
     assert report.phases.extraction.status == PhaseStatus.succeeded
     assert report.phases.source_logging.status == PhaseStatus.succeeded
     assert report.phases.mapping.status == PhaseStatus.succeeded
-    assert report.phases.validation.status == PhaseStatus.pending
+    assert report.phases.validation.status == PhaseStatus.succeeded
     assert report.phases.reporting.status == PhaseStatus.succeeded
     assert report.facts_extracted_total == 2
 
@@ -238,7 +238,7 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
     assert payload["phases"]["extraction"]["status"] == "succeeded"
     assert payload["phases"]["source_logging"]["status"] == "succeeded"
     assert payload["phases"]["mapping"]["status"] == "succeeded"
-    assert payload["phases"]["validation"]["status"] == "pending"
+    assert payload["phases"]["validation"]["status"] == "succeeded"
     assert payload["phases"]["reporting"]["status"] == "succeeded"
     assert payload["fact_to_source_mappings"][0]["entity_kind"] == "person"
     assert len(payload["fact_to_source_mappings"][0]["mappings"]) == 2
@@ -399,7 +399,7 @@ def test_run_enrichment_for_entity_never_prompts_after_kickoff(
         run_id="enrich-test-autonomous",
     )
 
-    assert report.status == RunStatus.partial
+    assert report.status == RunStatus.succeeded
     assert report.selected_sources == [SupportedSource.linkedin]
 
 
@@ -454,7 +454,7 @@ def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: 
         run_id="enrich-person-mapping-run",
     )
 
-    assert report.status == RunStatus.partial
+    assert report.status == RunStatus.succeeded
     assert report.phases.mapping.status == PhaseStatus.succeeded
 
     frontmatter, body_after = _read_frontmatter_and_body(person_index_path)
@@ -507,9 +507,162 @@ def test_run_enrichment_for_entity_fails_when_promoted_fact_lacks_source_linkage
     assert report.status == RunStatus.failed
     assert report.phases.source_logging.status == PhaseStatus.failed
     assert report.phases.mapping.status == PhaseStatus.failed
+    assert report.phases.validation.status == PhaseStatus.skipped
     assert report.phases.mapping.message is not None
     assert "missing source entity linkage" in report.phases.mapping.message
     assert report.fact_to_source_mappings == []
+
+
+def test_run_enrichment_for_entity_retries_validation_once_after_auto_remediation(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _write_person_fixture(tmp_path)
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _PersonFactsAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    validation_calls = 0
+    remediation_calls = 0
+
+    validation_results = [
+        {
+            "ok": False,
+            "error_count": 1,
+            "errors": [
+                {
+                    "code": "edge_backlink_count",
+                    "path": "data/edge/em/edge@employment-founder-name-employment-001.json",
+                    "message": "expected exactly 2 endpoint symlinks, found 1",
+                }
+            ],
+        },
+        {
+            "ok": True,
+            "error_count": 0,
+            "errors": [],
+        },
+    ]
+
+    def _run_validate_changed_stub(*, project_root: Path) -> dict[str, object]:
+        nonlocal validation_calls
+        assert project_root == tmp_path.resolve()
+        index = min(validation_calls, len(validation_results) - 1)
+        validation_calls += 1
+        return validation_results[index]
+
+    def _run_validation_auto_remediation_stub(*, project_root: Path, as_of: str) -> list[dict[str, object]]:
+        nonlocal remediation_calls
+        assert project_root == tmp_path.resolve()
+        assert as_of == "2026-02-28"
+        remediation_calls += 1
+        return [
+            {"step": "derive-employment-edges", "ok": True, "issue_count": 0},
+            {"step": "derive-citation-edges", "ok": True, "issue_count": 0},
+            {"step": "sync-edge-backlinks", "ok": True, "issue_count": 0},
+        ]
+
+    monkeypatch.setattr("kb.enrichment_run._run_validate_changed", _run_validate_changed_stub)
+    monkeypatch.setattr(
+        "kb.enrichment_run._run_validation_auto_remediation",
+        _run_validation_auto_remediation_stub,
+    )
+
+    report = run_enrichment_for_entity(
+        "founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        now=datetime(2026, 2, 28, 19, 5, tzinfo=UTC),
+        run_id="enrich-validation-remediate-run",
+    )
+
+    assert validation_calls == 2
+    assert remediation_calls == 1
+    assert report.status == RunStatus.succeeded
+    assert report.phases.validation.status == PhaseStatus.succeeded
+    assert report.phases.validation.message is not None
+    assert "after one automated remediation attempt" in report.phases.validation.message
+
+
+def test_run_enrichment_for_entity_blocks_on_unresolved_validation_after_remediation(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _write_person_fixture(tmp_path)
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _PersonFactsAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    validation_calls = 0
+    remediation_calls = 0
+
+    failed_validation = {
+        "ok": False,
+        "error_count": 2,
+        "errors": [
+            {
+                "code": "schema_error",
+                "path": "data/person/fo/person@founder-name/index.md",
+                "message": "simulated schema issue",
+            },
+            {
+                "code": "unresolved_citation",
+                "path": "data/person/fo/person@founder-name/index.md",
+                "message": "simulated unresolved citation",
+            },
+        ],
+    }
+
+    def _run_validate_changed_stub(*, project_root: Path) -> dict[str, object]:
+        nonlocal validation_calls
+        assert project_root == tmp_path.resolve()
+        validation_calls += 1
+        return failed_validation
+
+    def _run_validation_auto_remediation_stub(*, project_root: Path, as_of: str) -> list[dict[str, object]]:
+        nonlocal remediation_calls
+        assert project_root == tmp_path.resolve()
+        assert as_of == "2026-02-28"
+        remediation_calls += 1
+        return [
+            {"step": "derive-employment-edges", "ok": False, "issue_count": 1},
+            {"step": "derive-citation-edges", "ok": False, "issue_count": 1},
+            {"step": "sync-edge-backlinks", "ok": True, "issue_count": 0},
+        ]
+
+    monkeypatch.setattr("kb.enrichment_run._run_validate_changed", _run_validate_changed_stub)
+    monkeypatch.setattr(
+        "kb.enrichment_run._run_validation_auto_remediation",
+        _run_validation_auto_remediation_stub,
+    )
+
+    report = run_enrichment_for_entity(
+        "founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        now=datetime(2026, 2, 28, 19, 15, tzinfo=UTC),
+        run_id="enrich-validation-blocked-run",
+    )
+
+    assert validation_calls == 2
+    assert remediation_calls == 1
+    assert report.status == RunStatus.blocked
+    assert report.phases.validation.status == PhaseStatus.failed
+    assert report.phases.validation.message is not None
+    assert "human intervention required" in report.phases.validation.message
+    assert "schema_error" in report.phases.validation.message
+    assert "unresolved_citation" in report.phases.validation.message
+    assert "data/person/fo/person@founder-name/index.md" in report.phases.validation.message
 
 
 def _write_org_fixture(
@@ -662,7 +815,7 @@ def test_run_enrichment_for_entity_maps_organization_with_confidence_gating(tmp_
         run_id="enrich-org-mapping-run",
     )
 
-    assert report.status == RunStatus.partial
+    assert report.status == RunStatus.succeeded
     assert report.phases.mapping.status == PhaseStatus.succeeded
 
     frontmatter, body_after = _read_frontmatter_and_body(org_index_path)

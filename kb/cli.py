@@ -518,14 +518,14 @@ def run_enrich_entity(args: argparse.Namespace) -> int:
         return 1
 
     payload = {
-        "ok": report.status != RunStatus.failed,
+        "ok": report.status not in {RunStatus.failed, RunStatus.blocked},
         **report.model_dump(mode="json"),
     }
     if args.pretty:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         print(json.dumps(payload, sort_keys=True))
-    return 0 if report.status != RunStatus.failed else 1
+    return 0 if report.status not in {RunStatus.failed, RunStatus.blocked} else 1
 
 
 def main() -> int:

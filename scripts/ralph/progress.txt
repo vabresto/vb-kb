@@ -15,6 +15,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Person mapping should only promote facts meeting `confidence_policy.minimum_promotion_level`; update person frontmatter (`firm`, `role`, `location`) without rewriting narrative sections, and archive replaced current role values into `employment-history.jsonl`.
 - Organization mapping should target canonical `data/org/<shard>/org@<slug>/index.md`, keep narrative body sections unchanged, and merge `known-people` entries using canonical person links with required relationship/date fields.
 - Promoted enrichment facts must carry source-entity provenance (`source_entity_ref`, `source_entity_path`, citation key) before mapping writes; mapping should fail fast when linkage is missing and should upsert a managed `## Enrichment Provenance` markdown section with source-entity links + `[^citation-key]` tokens.
+- Validation gating should call `run_validation(..., scope_label="changed")` after mapping/source writes; if it fails, run one remediation pass (`derive-employment-edges`, `derive-citation-edges`, `sync-edge-backlinks`), rerun validation once, and escalate as `blocked` with failing check codes + affected paths when unresolved.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -548,4 +549,58 @@ There are still stories with `passes: false` (`US-011`, `US-012`, `US-013`), so 
     - Continue using `UV_CACHE_DIR=/tmp/uv-cache` for local `uv`/`just` quality checks in this environment.
   - Useful context (e.g., "the evaluation panel is in component X")
     - `fact_to_source_mappings` is now the canonical run-report surface for audit trails from promoted facts to source entities and should be kept stable for future validation/reporting stories.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:37:59)
+Implemented `US-011` on branch `ralph/playwright-kb-enrichment` and completed the full iteration flow.
+
+- Commit: `0e3315a`
+- Message: `feat: [US-011] - [Enforce provenance and source-entity citation requirements]`
+
+Files changed:
+- [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py)
+- [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+What was implemented:
+- Enforced promoted-fact provenance gating (missing source-entity linkage now fails mapping).
+- Added structured run-report fact-to-source summaries (`fact_to_source_mappings`).
+- Added deterministic `## Enrichment Provenance` markdown section upsert for person/org writes with KB source-entity citations (`[^citation-key]`) and source links.
+- Added tests for provenance report content, citation output, and failure on missing provenance.
+- Marked `US-011` as `passes: true` in PRD.
+- Appended required progress entry and updated `## Codebase Patterns`.
+- Added reusable provenance guidance to `agents.md`.
+
+Quality checks run and passed:
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py` (`9 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_cli_enrich_entity.py` (`4 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; all passed)
+
+There are still stories with `passes: false` (`US-012`, `US-013`).
+---
+
+## [2026-02-28 16:43:16 UTC] - US-012
+- What was implemented
+  - Implemented real validation gating in `kb/enrichment_run.py`: enrichment now runs `validate-changed` automatically after write phases (when extraction and mapping are not failed).
+  - Added one-shot automated remediation flow for validation failures using `derive-employment-edges`, `derive-citation-edges`, and `sync-edge-backlinks`, then reruns validation exactly once.
+  - Added blocked escalation semantics with `RunStatus.blocked`; unresolved validation now produces a human-intervention message listing failing check codes and affected files.
+  - Updated CLI success/failure semantics so blocked runs return non-zero and emit `"ok": false`.
+  - Expanded tests to cover validation success, remediation retry behavior, blocked escalation, and CLI blocked-status handling.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/cli.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `kb/tests/test_cli_enrich_entity.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Keep validation/remediation orchestration inside `run_enrichment_for_entity(...)` via helper functions (`_run_validate_changed`, `_run_validation_auto_remediation`) so status and phase reporting stay deterministic.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - When adding new run terminal states (like `blocked`), update CLI `ok`/exit-code logic and tests so automation surfaces treat blocked runs as failures.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - In non-git temp test roots, `collect_changed_paths(...)` returns an empty scope and validation is effectively a no-op unless tests monkeypatch validation helpers to simulate failures.
 ---
