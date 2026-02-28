@@ -1,0 +1,215 @@
+{
+  "project": "VB Knowledge Base",
+  "branchName": "ralph/playwright-kb-enrichment",
+  "description": "Playwright Authenticated Enrichment for KB Entities - manual kickoff, autonomous headless runs for linkedin.com and skool.com, optional local headful session export, confidence-gated KB writes, and source-entity-backed provenance.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add enrichment configuration, confidence policy, and artifact paths",
+      "description": "As a developer, I need typed enrichment configuration so auth/session behavior, confidence thresholds, and artifact locations are deterministic.",
+      "acceptanceCriteria": [
+        "Add configuration model for enrichment settings including headless default, confidence threshold policy, and run report path",
+        "Configuration supports source-specific settings for linkedin.com and skool.com",
+        "Configuration includes secret-provider selection with environment-variable fallback",
+        "Default artifact paths for sessions and source evidence live under .build and are excluded from git tracking",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Define source adapter contract and registry",
+      "description": "As a developer, I want a reusable adapter interface so LinkedIn and Skool integrations can plug into one orchestration flow.",
+      "acceptanceCriteria": [
+        "Define a source adapter interface with typed methods for authenticate, fetch, normalize, and snapshot operations",
+        "Implement adapter registry keyed by source identifier with typed lookup errors",
+        "Unsupported source selection returns explicit adapter-not-found error",
+        "Adapter contract includes typed anti-bot and MFA challenge errors",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Implement session storage plus import/export utilities",
+      "description": "As an operator, I want to reuse session state and move it between environments so authenticated runs stay stable in headless execution.",
+      "acceptanceCriteria": [
+        "Implement utilities to load and save Playwright storageState files per source",
+        "Implement JSON storageState export/import utility for moving sessions from local bootstrap to headless environments",
+        "Session lookup reports missing or expired session state with actionable diagnostics",
+        "Invalid session state surfaces typed authentication error before extraction begins",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add login bootstrap commands for headless and local headful flows",
+      "description": "As an operator, I want scripted bootstrap commands so I can initialize sessions in headless mode and use local headful export when needed.",
+      "acceptanceCriteria": [
+        "Add CLI command to bootstrap login for a specified supported source in headless mode",
+        "Add CLI command or flag for local headful bootstrap that exports storageState JSON",
+        "Bootstrap success persists session artifacts for subsequent runs",
+        "MFA or anti-bot challenge detection fails fast with remediation instructions",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Implement LinkedIn adapter extraction",
+      "description": "As Codex, I want a LinkedIn adapter so enrichment can collect authenticated facts for target entities from linkedin.com.",
+      "acceptanceCriteria": [
+        "Implement linkedin.com adapter conforming to the shared adapter contract",
+        "Adapter supports authenticated fetch using saved session with bootstrap fallback path",
+        "Adapter returns normalized fact records with source URL, retrieval timestamp, and confidence metadata",
+        "Adapter emits typed extraction or anti-bot errors for unsupported or blocked flows",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Implement Skool adapter extraction",
+      "description": "As Codex, I want a Skool adapter so enrichment can collect authenticated facts for target entities from skool.com.",
+      "acceptanceCriteria": [
+        "Implement skool.com adapter conforming to the shared adapter contract",
+        "Adapter supports authenticated fetch using saved session with bootstrap fallback path",
+        "Adapter returns normalized fact records with source URL, retrieval timestamp, and confidence metadata",
+        "Adapter emits typed extraction or anti-bot errors for unsupported or blocked flows",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add manual kickoff command and autonomous orchestrator",
+      "description": "As an operator, I want to launch one entity enrichment run manually so Codex completes extraction and write flow autonomously after kickoff.",
+      "acceptanceCriteria": [
+        "Add command to start enrichment for exactly one entity path or slug per invocation",
+        "Run orchestrator executes without interactive approval prompts after kickoff",
+        "Orchestrator can run selected supported sources in one invocation",
+        "Run output includes explicit phase states for extraction, source logging, mapping, validation, and reporting",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Persist source entities with snapshots and full fact logs",
+      "description": "As a reviewer, I want all extracted evidence captured under source entities so enrichment remains auditable, including low-confidence facts.",
+      "acceptanceCriteria": [
+        "Run creates or updates source entities under nested data/source structure",
+        "Source records store all extracted facts with confidence tags regardless of promotion eligibility",
+        "Run stores page snapshot or dump artifacts when technically feasible and links them from source records",
+        "Structured source output is deterministic per run and per source",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Implement person mapping with confidence-gated promotion",
+      "description": "As Codex, I want normalized facts mapped into person records so only reasonably confident facts are promoted to canonical person pages.",
+      "acceptanceCriteria": [
+        "Map eligible normalized facts into canonical person file structure under data/person",
+        "Only facts at or above configured minimum confidence (default medium) are promoted to person records",
+        "Mapper preserves first-mention linking rules for known entities in narrative sections",
+        "Employment updates preserve current role frontmatter semantics and append prior roles to Employment History table",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Implement organization mapping with confidence-gated promotion",
+      "description": "As Codex, I want normalized facts mapped into organization records so only reasonably confident facts are promoted to canonical organization pages.",
+      "acceptanceCriteria": [
+        "Map eligible normalized facts into canonical organization file structure under data/org",
+        "Only facts at or above configured minimum confidence (default medium) are promoted to organization records",
+        "known-people entries use person file-path links and required relationship object fields",
+        "Mapper preserves first-mention linking rules in organization narrative content",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Enforce provenance and source-entity citation requirements",
+      "description": "As a reviewer, I want every promoted fact to link back to a source entity so claims are auditable beyond raw URLs.",
+      "acceptanceCriteria": [
+        "All promoted facts carry provenance metadata including source identifier and retrieval timestamp",
+        "Written markdown citations reference KB source entities rather than URL-only citations",
+        "Run fails when any promoted fact is missing required provenance or source citation linkage",
+        "Final run report includes fact-to-source mapping for each changed person or organization",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Add validation gating with auto-remediation and human escalation",
+      "description": "As an operator, I want failed validations handled automatically first and escalated only when unresolved.",
+      "acceptanceCriteria": [
+        "Enrichment run executes validate-changed checks automatically after write phase",
+        "Validation failure triggers one automated remediation attempt before final status",
+        "If remediation fails, run status is blocked and human intervention request includes failing checks and affected files",
+        "No automatic rollback is required in v1",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Expose workflows in justfile and operator docs",
+      "description": "As a maintainer, I want standard just commands and documentation for enrichment workflows so operation is discoverable and repeatable.",
+      "acceptanceCriteria": [
+        "Root justfile includes targets for session bootstrap, session export/import, enrichment run, and Playwright-focused tests or checks",
+        "README or dedicated docs describe local secret-manager usage and environment-variable fallback",
+        "Documentation states v1 is manual kickoff with autonomous execution after start",
+        "Commands can be executed locally without undocumented shell steps",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
