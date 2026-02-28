@@ -53,6 +53,10 @@ check:
   just test
   just site-build
 
+# Run Ralph autonomous loop from scripts/ralph.
+ralph max_iterations="10":
+  ./scripts/ralph/ralph.sh {{max_iterations}}
+
 # Derive canonical employment edges from person JSONL rows.
 derive-edges:
   uv run kb derive-employment-edges --data-root data
