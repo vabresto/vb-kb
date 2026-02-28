@@ -4,6 +4,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 ## Codebase Patterns
 - Use `KBBaseModel` from `kb.schemas` for new typed configuration models so unknown fields are rejected consistently.
 - Keep generated runtime artifacts under `.build/`; the repo already ignores this tree.
+- Enrichment source selection should go through `SourceAdapterRegistry.get(...)` so unsupported sources consistently raise `AdapterNotFoundError` instead of ad-hoc `ValueError`s.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -49,4 +50,25 @@ Branch note:
 
 1. If you want the commit on the PRD branch, run:
 `git checkout master && git checkout -b ralph/playwright-kb-enrichment && git cherry-pick a26c7f0`
+---
+
+## [2026-02-28 10:08:47 EST] - US-002
+- What was implemented
+  - Added `kb/enrichment_adapters.py` with a typed source adapter contract covering `authenticate`, `fetch`, `normalize`, and `snapshot`.
+  - Added typed request/result models for each adapter phase using `KBBaseModel`.
+  - Implemented explicit typed errors for adapter lookup and auth challenges: `AdapterNotFoundError`, `AntiBotChallengeError`, and `MFAChallengeError`.
+  - Implemented `SourceAdapterRegistry` with typed registration/lookup and explicit adapter-not-found behavior for unsupported or unregistered sources.
+  - Added tests validating contract shape, registry lookup semantics, and typed challenge errors.
+- Files changed
+  - `kb/enrichment_adapters.py`
+  - `kb/tests/test_enrichment_adapters.py`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Treat source selection as a first-class typed operation via `SourceAdapterRegistry` and `SupportedSource` to keep orchestration behavior deterministic.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - In Python enum subclasses, `str(enum_member)` may return `EnumClass.member`; use `.value` for user-facing source identifiers in errors and logs.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - The adapter contract is intentionally transport-agnostic: it can be used by future Playwright adapters without committing to sync vs async orchestration yet.
 ---
