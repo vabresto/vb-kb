@@ -166,6 +166,37 @@ def test_run_enrich_entity_reports_resolution_error(tmp_path: Path, monkeypatch,
     assert "bad target" in payload["message"]
 
 
+def test_run_enrich_entity_rejects_untyped_slug(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr(
+        "kb.cli.run_enrichment_for_entity",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            EntityTargetResolutionError(
+                entity_target="founder-name",
+                details="target must be '<kind>@<slug>'",
+            )
+        ),
+    )
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "founder-name",
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "EntityTargetResolutionError"
+    assert "founder-name" in payload["message"]
+    assert "<kind>@<slug>" in payload["message"]
+
+
 def test_run_enrich_entity_reports_blocked_validation_status(
     tmp_path: Path,
     monkeypatch,
