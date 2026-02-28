@@ -8,6 +8,7 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Run `lookup_session_state(...)` before authenticated extraction. It returns actionable missing/expired diagnostics and keeps session preflight deterministic.
 - Treat malformed session payloads as auth failures by raising typed `AuthenticationError` subclasses before adapter fetch/normalize phases.
 - Session bootstrap commands should emit JSON storageState (`cookies` + `origins`) or `{ "storage_state": ... }`; `kb bootstrap-session` injects source/headless/session-path context via `KB_ENRICHMENT_BOOTSTRAP_*` env vars and maps challenge signals to typed MFA/anti-bot errors.
+- Adapter response models enforce relative path tokens for `used_session_state_path` and `snapshot_path`; keep absolute paths internal for filesystem I/O and return relative config/output paths in typed results.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -183,4 +184,54 @@ There are still stories with `passes: false` (`US-004` onward), so this iteratio
     - Continue using `UV_CACHE_DIR=/tmp/uv-cache` when running `just check` in this environment.
   - Useful context (e.g., "the evaluation panel is in component X")
     - `kb bootstrap-session` injects runtime context for bootstrap scripts through `KB_ENRICHMENT_BOOTSTRAP_SOURCE`, `KB_ENRICHMENT_BOOTSTRAP_HEADLESS`, `KB_ENRICHMENT_BOOTSTRAP_SESSION_PATH`, and `KB_ENRICHMENT_BOOTSTRAP_EVIDENCE_PATH`.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 15:36:30)
+Implemented `US-004` on `ralph/playwright-kb-enrichment` and committed it.
+
+Commit:
+- `6f6f5fb`
+- `feat: [US-004] - [Add login bootstrap commands for headless and local headful flows]`
+
+Key changes:
+- Added bootstrap orchestration with typed challenge handling and session persistence/export in [kb/enrichment_bootstrap.py](/root/ws/vb-kb2/kb/enrichment_bootstrap.py)
+- Added `bootstrap-session` CLI command in [kb/cli.py](/root/ws/vb-kb2/kb/cli.py)
+- Extended source config with `bootstrap_command` + env overrides in [kb/enrichment_config.py](/root/ws/vb-kb2/kb/enrichment_config.py)
+- Added bootstrap + CLI tests in [kb/tests/test_enrichment_bootstrap.py](/root/ws/vb-kb2/kb/tests/test_enrichment_bootstrap.py) and [kb/tests/test_cli_bootstrap_session.py](/root/ws/vb-kb2/kb/tests/test_cli_bootstrap_session.py)
+- Added just workflows in [justfile](/root/ws/vb-kb2/justfile)
+- Added reusable enrichment bootstrap guidance in [agents.md](/root/ws/vb-kb2/agents.md)
+
+Tracking updates:
+- Set `US-004` to `passes: true` in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended required progress entry and updated `Codebase Patterns` in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks passed:
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, `pytest`, `mkdocs build`) with `61 passed`.
+
+There are still stories with `passes: false` (`US-005` through `US-013`).
+---
+
+## [2026-02-28 15:43:27 UTC] - US-005
+- What was implemented
+  - Added `kb/enrichment_linkedin_adapter.py` implementing `LinkedInSourceAdapter` with typed authenticate/fetch/normalize/snapshot flows.
+  - Adapter now preflights session state via `load_session_state(...)` and automatically runs bootstrap fallback when session is missing/expired before extraction.
+  - Added command-driven LinkedIn fetch flow (`KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND` / `fetch_command`) with challenge detection that raises typed `AntiBotChallengeError`/`MFAChallengeError`.
+  - Added normalization logic that emits `NormalizedFact` records with source URL, retrieval timestamp, confidence level, and metadata; added snapshot persistence for html/json payloads.
+  - Added extraction error handling with typed `LinkedInExtractionError` for unsupported or malformed flows.
+- Files changed
+  - `kb/enrichment_linkedin_adapter.py`
+  - `kb/tests/test_enrichment_linkedin_adapter.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+  - `README.md`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - For adapter outputs, typed models expect relative path tokens, so keep resolved absolute paths internal for file I/O only.
+    - Command-backed adapters should parse stdout as a strict JSON object and map challenge hints to typed auth errors before normalization.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Returning absolute paths in `AuthenticationResult` or `SnapshotResult` fails pydantic validation because `normalize_path_token` rejects them.
+    - Keep using `UV_CACHE_DIR=/tmp/uv-cache` when running `just check` in this environment.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `LinkedInSourceAdapter` supports dependency injection for `fetch_runner` and `bootstrap_login_runner`, which keeps adapter tests deterministic without browser runtime.
 ---

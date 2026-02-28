@@ -11,6 +11,7 @@
 - Use `lookup_session_state(...)` before authenticated enrichment extraction. It returns actionable missing/expired diagnostics, while invalid `storageState` payloads fail fast with typed authentication errors.
 - For portable session transfer, use an envelope JSON with `source`, `exported_at`, `expires_at`, and `storage_state`; reject imports when `source` does not match the target adapter source.
 - `kb bootstrap-session` resolves per-source login commands from `SourceSettings.bootstrap_command` (or `KB_ENRICHMENT_*_BOOTSTRAP_COMMAND` env overrides), sets `KB_ENRICHMENT_BOOTSTRAP_*` context env vars for the command, and expects JSON output as raw storageState (`cookies` + `origins`) or `{ "storage_state": ... }`.
+- Adapter result path fields (`AuthenticationResult.used_session_state_path`, `SnapshotResult.snapshot_path`) must stay relative paths; resolve absolute filesystem paths only for local I/O and return the relative path token in typed models.
 
 ## Reference Integrity
 

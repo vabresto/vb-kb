@@ -31,6 +31,35 @@ The `justfile` in the repo root lists common workflows (validation, migrations, 
 - Any runnable workflow in this repo must be represented in the root `justfile`.
 - When adding scripts, deploy commands, tests, or maintenance tasks, add or update a `just` target in the same change.
 
+## Playwright enrichment layout
+
+Python files for authenticated enrichment are organized by concern:
+
+- `kb/enrichment_config.py`: typed enrichment config and env overrides (including per-source bootstrap commands).
+- `kb/enrichment_adapters.py`: shared source-adapter contract and typed extraction/auth errors.
+- `kb/enrichment_sessions.py`: session storageState read/write/import/export and missing/expired diagnostics.
+- `kb/enrichment_bootstrap.py`: source bootstrap command runner for login/session creation with MFA/anti-bot challenge mapping.
+- `kb/enrichment_linkedin_adapter.py`: LinkedIn adapter implementation with session preflight/bootstrap fallback, fetch normalization, and snapshot persistence.
+- `kb/cli.py`: user-facing command wiring (`kb bootstrap-session ...`).
+
+Related tests:
+
+- `kb/tests/test_enrichment_config.py`
+- `kb/tests/test_enrichment_adapters.py`
+- `kb/tests/test_enrichment_sessions.py`
+- `kb/tests/test_enrichment_bootstrap.py`
+- `kb/tests/test_enrichment_linkedin_adapter.py`
+- `kb/tests/test_cli_bootstrap_session.py`
+
+Related runnable workflows:
+
+- `just enrichment-bootstrap <source>`
+- `just enrichment-bootstrap-headful <source> <export_path>`
+
+Bootstrap command contract:
+
+- Bootstrap scripts should emit JSON as either raw Playwright `storageState` (`cookies` + `origins`) or `{ "storage_state": ... }`.
+
 ## Validate data
 
 ```bash
