@@ -5,6 +5,8 @@ Started: Sat Feb 28 09:59:22 EST 2026
 - Use `KBBaseModel` from `kb.schemas` for new typed configuration models so unknown fields are rejected consistently.
 - Keep generated runtime artifacts under `.build/`; the repo already ignores this tree.
 - Enrichment source selection should go through `SourceAdapterRegistry.get(...)` so unsupported sources consistently raise `AdapterNotFoundError` instead of ad-hoc `ValueError`s.
+- Run `lookup_session_state(...)` before authenticated extraction. It returns actionable missing/expired diagnostics and keeps session preflight deterministic.
+- Treat malformed session payloads as auth failures by raising typed `AuthenticationError` subclasses before adapter fetch/normalize phases.
 
 ## [2026-02-28 10:02:42 EST] - US-001
 - What was implemented
@@ -96,4 +98,26 @@ Implemented `US-002` and committed it.
   - `cannot lock ref 'refs/heads/ralph/playwright-kb-enrichment': unable to create directory ...`
 
 There are still stories with `passes: false` in the PRD (11 remaining).
+---
+
+## [2026-02-28 15:18:17 UTC] - US-003
+- What was implemented
+  - Added `kb/enrichment_sessions.py` with typed session utilities to resolve per-source storageState paths, save/load Playwright storageState JSON, and run preflight lookup with explicit missing/expired diagnostics.
+  - Added typed authentication errors for session preflight: `SessionStateMissingError`, `SessionStateExpiredError`, and `InvalidSessionStateError` so invalid session artifacts fail before extraction starts.
+  - Added JSON export/import utilities for portable session transfer: `export_session_state_json(...)` and `import_session_state_json(...)`, with source mismatch protection via `SessionTransferPayload`.
+  - Added `kb/tests/test_enrichment_sessions.py` covering save/load round trips, missing and expired diagnostics, invalid JSON/shape handling, and export/import source-guard behavior.
+- Files changed
+  - `kb/enrichment_sessions.py`
+  - `kb/tests/test_enrichment_sessions.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Session preflight should run through `lookup_session_state(...)` so orchestration can report actionable missing/expired status before adapter execution.
+    - Portable session transfer should include source metadata (`source`, `exported_at`, `expires_at`) to prevent importing artifacts into the wrong adapter source.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - `uv` commands in this environment require a writable cache path; use `UV_CACHE_DIR=/tmp/uv-cache` for tests/checks.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `import_session_state_json(...)` accepts either raw Playwright storageState JSON or the transfer-envelope format, enabling local bootstrap export and headless import workflows without extra conversion steps.
 ---

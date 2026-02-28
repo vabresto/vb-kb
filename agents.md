@@ -6,6 +6,11 @@
 - When adding new scripts, integration suites, deploy commands, or maintenance tasks, add/update the corresponding `just` target in the same change.
 - Prefer documenting usage as `just <target>` instead of ad-hoc shell invocations.
 
+## Enrichment Sessions
+
+- Use `lookup_session_state(...)` before authenticated enrichment extraction. It returns actionable missing/expired diagnostics, while invalid `storageState` payloads fail fast with typed authentication errors.
+- For portable session transfer, use an envelope JSON with `source`, `exported_at`, `expires_at`, and `storage_state`; reject imports when `source` does not match the target adapter source.
+
 ## Reference Integrity
 
 - In structured reference fields (for example `known-people`), reference entities like people by file path link, not by plain name.
