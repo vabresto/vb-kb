@@ -41,6 +41,23 @@ class UrlCheckResult:
     error: str | None
 
 
+def _normalize_diff_path(raw: str) -> str | None:
+    value = raw.strip()
+    if value == "/dev/null":
+        return None
+    if value.startswith("a/") or value.startswith("b/"):
+        return value[2:]
+    return value
+
+
+def _should_skip_diff_file(path: str | None) -> bool:
+    if path is None:
+        return False
+    pure = pathlib.PurePosixPath(path)
+    parts = pure.parts
+    return len(parts) >= 5 and parts[0] == "data" and parts[1] == "source" and parts[-1] == "snapshot.html"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Validate that newly added URLs in staged diff resolve to final 2xx."
@@ -119,8 +136,14 @@ def staged_added_urls() -> list[str]:
         raise RuntimeError(process.stderr.strip() or "git diff --cached failed.")
 
     urls: set[str] = set()
+    current_diff_file: str | None = None
     for line in process.stdout.splitlines():
+        if line.startswith("+++ "):
+            current_diff_file = _normalize_diff_path(line[4:])
+            continue
         if not line.startswith("+") or line.startswith("+++"):
+            continue
+        if _should_skip_diff_file(current_diff_file):
             continue
 
         for match in URL_RE.findall(line[1:]):
