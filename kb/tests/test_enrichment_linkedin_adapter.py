@@ -121,7 +121,7 @@ def test_linkedin_adapter_fetch_bootstraps_when_session_missing(tmp_path: Path) 
         observed["bootstrap_headless"] = kwargs["headless"]
         save_session_state(
             source,
-            _storage_state(expires=datetime(2026, 2, 28, 18, 0, tzinfo=UTC).timestamp()),
+            _storage_state(expires=datetime(2030, 2, 28, 18, 0, tzinfo=UTC).timestamp()),
             config=kwargs["config"],
             project_root=kwargs["project_root"],
         )
@@ -238,7 +238,7 @@ def test_linkedin_authenticate_uses_request_session_path_with_bootstrap_fallback
         observed["config_session_path"] = kwargs["config"].sources[SupportedSource.linkedin].session_state_path
         save_session_state(
             source,
-            _storage_state(expires=datetime(2026, 2, 28, 19, 0, tzinfo=UTC).timestamp()),
+            _storage_state(expires=datetime(2030, 2, 28, 19, 0, tzinfo=UTC).timestamp()),
             config=kwargs["config"],
             project_root=kwargs["project_root"],
         )

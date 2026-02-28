@@ -94,7 +94,11 @@ Bootstrap command contract:
 - Env fallback credentials are provided through the source credential env vars:
   - `KB_ENRICH_LINKEDIN_USERNAME` / `KB_ENRICH_LINKEDIN_PASSWORD`
   - `KB_ENRICH_SKOOL_USERNAME` / `KB_ENRICH_SKOOL_PASSWORD`
-- Source env var names are also overrideable via `KB_ENRICHMENT_*_USERNAME_ENV` and `KB_ENRICHMENT_*_PASSWORD_ENV`.
+- LinkedIn TOTP can be provided via `KB_ENRICH_LINKEDIN_TOTP_SECRET` (base32 secret).
+- Source env var names are also overrideable via:
+  - `KB_ENRICHMENT_*_USERNAME_ENV`
+  - `KB_ENRICHMENT_*_PASSWORD_ENV`
+  - `KB_ENRICHMENT_LINKEDIN_TOTP_ENV` (and optional `KB_ENRICHMENT_SKOOL_TOTP_ENV`)
 
 ## Validate data
 

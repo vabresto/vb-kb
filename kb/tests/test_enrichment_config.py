@@ -32,10 +32,12 @@ def test_default_enrichment_config_includes_supported_sources_and_artifacts() ->
     assert linkedin.evidence_path.startswith(".build/")
     assert linkedin.bootstrap_command == DEFAULT_LINKEDIN_BOOTSTRAP_COMMAND
     assert linkedin.fetch_command == DEFAULT_LINKEDIN_FETCH_COMMAND
+    assert linkedin.totp_env_var == "KB_ENRICH_LINKEDIN_TOTP_SECRET"
     assert skool.session_state_path.startswith(".build/")
     assert skool.evidence_path.startswith(".build/")
     assert skool.bootstrap_command == DEFAULT_SKOOL_BOOTSTRAP_COMMAND
     assert skool.fetch_command == DEFAULT_SKOOL_FETCH_COMMAND
+    assert skool.totp_env_var is None
     assert "linkedin.com" in linkedin.session_state_path
     assert "skool.com" in skool.session_state_path
 
@@ -95,6 +97,7 @@ def test_load_enrichment_config_from_env_overrides_defaults() -> None:
             "KB_ENRICHMENT_LINKEDIN_EVIDENCE_PATH": ".build/enrichment/source-evidence/linkedin.com/custom",
             "KB_ENRICHMENT_LINKEDIN_BOOTSTRAP_COMMAND": "scripts/bootstrap-linkedin.sh",
             "KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND": "scripts/fetch-linkedin.sh",
+            "KB_ENRICHMENT_LINKEDIN_TOTP_ENV": "LINKEDIN_TOTP_SECRET",
             "KB_ENRICHMENT_LINKEDIN_HEADLESS_OVERRIDE": "true",
             "KB_ENRICHMENT_SKOOL_SESSION_PATH": ".build/enrichment/sessions/skool.com/custom.json",
             "KB_ENRICHMENT_SKOOL_EVIDENCE_PATH": ".build/enrichment/source-evidence/skool.com/custom",
@@ -114,6 +117,7 @@ def test_load_enrichment_config_from_env_overrides_defaults() -> None:
     assert linkedin.session_state_path.endswith("custom.json")
     assert linkedin.bootstrap_command == "scripts/bootstrap-linkedin.sh"
     assert linkedin.fetch_command == "scripts/fetch-linkedin.sh"
+    assert linkedin.totp_env_var == "LINKEDIN_TOTP_SECRET"
     assert linkedin.headless_override is True
     assert skool.session_state_path.endswith("custom.json")
     assert skool.bootstrap_command == "scripts/bootstrap-skool.sh"

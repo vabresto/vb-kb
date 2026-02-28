@@ -114,6 +114,7 @@ class SourceSettings(KBBaseModel):
     headless_override: bool | None = None
     username_env_var: str | None = None
     password_env_var: str | None = None
+    totp_env_var: str | None = None
     username_secret_ref: str | None = None
     password_secret_ref: str | None = None
 
@@ -125,6 +126,7 @@ class SourceSettings(KBBaseModel):
     @field_validator(
         "username_env_var",
         "password_env_var",
+        "totp_env_var",
         "username_secret_ref",
         "password_secret_ref",
         "bootstrap_command",
@@ -144,6 +146,7 @@ def default_source_settings() -> dict[SupportedSource, SourceSettings]:
             fetch_command=DEFAULT_LINKEDIN_FETCH_COMMAND,
             username_env_var="KB_ENRICH_LINKEDIN_USERNAME",
             password_env_var="KB_ENRICH_LINKEDIN_PASSWORD",
+            totp_env_var="KB_ENRICH_LINKEDIN_TOTP_SECRET",
             username_secret_ref="linkedin.username",
             password_secret_ref="linkedin.password",
         ),
@@ -154,6 +157,7 @@ def default_source_settings() -> dict[SupportedSource, SourceSettings]:
             fetch_command=DEFAULT_SKOOL_FETCH_COMMAND,
             username_env_var="KB_ENRICH_SKOOL_USERNAME",
             password_env_var="KB_ENRICH_SKOOL_PASSWORD",
+            totp_env_var=None,
             username_secret_ref="skool.username",
             password_secret_ref="skool.password",
         ),
@@ -224,6 +228,7 @@ def load_enrichment_config_from_env(
             "fetch_command": "KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND",
             "username_env_var": "KB_ENRICHMENT_LINKEDIN_USERNAME_ENV",
             "password_env_var": "KB_ENRICHMENT_LINKEDIN_PASSWORD_ENV",
+            "totp_env_var": "KB_ENRICHMENT_LINKEDIN_TOTP_ENV",
             "username_secret_ref": "KB_ENRICHMENT_LINKEDIN_USERNAME_SECRET",
             "password_secret_ref": "KB_ENRICHMENT_LINKEDIN_PASSWORD_SECRET",
         },
@@ -234,6 +239,7 @@ def load_enrichment_config_from_env(
             "fetch_command": "KB_ENRICHMENT_SKOOL_FETCH_COMMAND",
             "username_env_var": "KB_ENRICHMENT_SKOOL_USERNAME_ENV",
             "password_env_var": "KB_ENRICHMENT_SKOOL_PASSWORD_ENV",
+            "totp_env_var": "KB_ENRICHMENT_SKOOL_TOTP_ENV",
             "username_secret_ref": "KB_ENRICHMENT_SKOOL_USERNAME_SECRET",
             "password_secret_ref": "KB_ENRICHMENT_SKOOL_PASSWORD_SECRET",
         },

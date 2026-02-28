@@ -55,6 +55,7 @@ def test_bootstrap_session_login_persists_session_and_exports_when_requested(tmp
         observed["argv"] = argv
         observed["headless"] = env["KB_ENRICHMENT_BOOTSTRAP_HEADLESS"]
         observed["source"] = env["KB_ENRICHMENT_BOOTSTRAP_SOURCE"]
+        observed["totp_env_key"] = env.get("KB_ENRICHMENT_BOOTSTRAP_TOTP_ENV")
         observed["cwd"] = cwd
         return BootstrapCommandResult(returncode=0, stdout=json.dumps(storage_state))
 
@@ -71,6 +72,7 @@ def test_bootstrap_session_login_persists_session_and_exports_when_requested(tmp
     assert observed["argv"] == ["bootstrap-linkedin"]
     assert observed["headless"] == "false"
     assert observed["source"] == "linkedin.com"
+    assert observed["totp_env_key"] == "KB_ENRICH_LINKEDIN_TOTP_SECRET"
     assert observed["cwd"] == tmp_path.resolve()
 
     assert Path(result.session_state_path).exists()

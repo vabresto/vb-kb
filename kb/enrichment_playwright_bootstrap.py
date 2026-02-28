@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
+import hashlib
+import hmac
 import json
 import os
+import struct
 import sys
+import time
 from collections.abc import Sequence
 from typing import Any
 
@@ -13,6 +19,21 @@ _LOGIN_URLS: dict[SupportedSource, str] = {
     SupportedSource.linkedin: "https://www.linkedin.com/login",
     SupportedSource.skool: "https://www.skool.com/login",
 }
+_LINKEDIN_TOTP_INPUT_SELECTORS: tuple[str, ...] = (
+    "input[name='pin']",
+    "input[name='verificationCode']",
+    "input[name='verification_code']",
+    "input[id*='verification-code']",
+    "input[id*='verification_code']",
+    "input[autocomplete='one-time-code']",
+    "input[inputmode='numeric']",
+)
+_LINKEDIN_TOTP_SUBMIT_SELECTORS: tuple[str, ...] = (
+    "button[type='submit']",
+    "button:has-text('Verify')",
+    "button:has-text('Submit')",
+    "button:has-text('Continue')",
+)
 
 
 def _parse_headless(value: str | None) -> bool:
@@ -40,6 +61,44 @@ def _lookup_credential(env_key_name: str | None) -> str | None:
     if env_key_name is None or not env_key_name.strip():
         return None
     return os.environ.get(env_key_name.strip())
+
+
+def _normalize_totp_secret(secret: str) -> str:
+    return "".join(ch for ch in secret.strip().upper() if ch.isalnum())
+
+
+def _generate_totp_code(
+    *,
+    secret: str,
+    for_time: int | float | None = None,
+    period_seconds: int = 30,
+    digits: int = 6,
+) -> str:
+    normalized_secret = _normalize_totp_secret(secret)
+    if not normalized_secret:
+        raise RuntimeError("linkedin totp secret is empty")
+    if digits <= 0:
+        raise RuntimeError("totp digits must be positive")
+    if period_seconds <= 0:
+        raise RuntimeError("totp period_seconds must be positive")
+
+    try:
+        key = base64.b32decode(normalized_secret, casefold=True)
+    except (binascii.Error, ValueError) as exc:
+        raise RuntimeError("linkedin totp secret must be valid base32") from exc
+
+    timestamp = int(time.time() if for_time is None else for_time)
+    counter = int(timestamp // period_seconds)
+    counter_bytes = struct.pack(">Q", counter)
+    digest = hmac.new(key, counter_bytes, hashlib.sha1).digest()
+    offset = digest[-1] & 0x0F
+    code_int = (
+        ((digest[offset] & 0x7F) << 24)
+        | (digest[offset + 1] << 16)
+        | (digest[offset + 2] << 8)
+        | digest[offset + 3]
+    )
+    return str(code_int % (10**digits)).zfill(digits)
 
 
 def _first_visible_selector(page: Any, selectors: Sequence[str]) -> str | None:
@@ -83,6 +142,21 @@ def _attempt_linkedin_login(page: Any, username: str, password: str) -> None:
         ),
     ):
         raise RuntimeError("unable to locate LinkedIn sign-in button")
+
+
+def _linkedin_totp_prompt_visible(page: Any) -> bool:
+    return _first_visible_selector(page, _LINKEDIN_TOTP_INPUT_SELECTORS) is not None
+
+
+def _attempt_linkedin_totp(page: Any, totp_secret: str) -> None:
+    code = _generate_totp_code(secret=totp_secret)
+    if not _fill_first(page, _LINKEDIN_TOTP_INPUT_SELECTORS, code):
+        raise RuntimeError("unable to locate LinkedIn verification code input")
+    if not _click_first(page, _LINKEDIN_TOTP_SUBMIT_SELECTORS):
+        page.keyboard.press("Enter")
+    page.wait_for_timeout(4_000)
+    if _linkedin_totp_prompt_visible(page):
+        raise RuntimeError("linkedin verification code was not accepted; check TOTP secret and system clock")
 
 
 def _attempt_skool_login(page: Any, username: str, password: str) -> None:
@@ -154,6 +228,9 @@ def _run_bootstrap(source: SupportedSource) -> int:
     headless = _parse_headless(os.environ.get("KB_ENRICHMENT_BOOTSTRAP_HEADLESS"))
     username = _lookup_credential(os.environ.get("KB_ENRICHMENT_BOOTSTRAP_USERNAME_ENV"))
     password = _lookup_credential(os.environ.get("KB_ENRICHMENT_BOOTSTRAP_PASSWORD_ENV"))
+    totp_secret = _lookup_credential(os.environ.get("KB_ENRICHMENT_BOOTSTRAP_TOTP_ENV"))
+    if source == SupportedSource.linkedin and not totp_secret:
+        totp_secret = os.environ.get("KB_ENRICH_LINKEDIN_TOTP_SECRET")
     manual_wait_seconds = _manual_wait_seconds(os.environ.get("KB_ENRICHMENT_BOOTSTRAP_WAIT_SECONDS"))
 
     if headless and (not username or not password):
@@ -177,6 +254,14 @@ def _run_bootstrap(source: SupportedSource) -> int:
         if username and password:
             if source == SupportedSource.linkedin:
                 _attempt_linkedin_login(page, username, password)
+                page.wait_for_timeout(2_500)
+                if _linkedin_totp_prompt_visible(page):
+                    if not totp_secret:
+                        raise RuntimeError(
+                            "linkedin verification code prompt detected but no TOTP secret is configured. "
+                            "Set KB_ENRICH_LINKEDIN_TOTP_SECRET (or override via KB_ENRICHMENT_LINKEDIN_TOTP_ENV)."
+                        )
+                    _attempt_linkedin_totp(page, totp_secret)
             else:
                 _attempt_skool_login(page, username, password)
             page.wait_for_timeout(6_000)

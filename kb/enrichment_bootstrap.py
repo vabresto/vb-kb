@@ -105,6 +105,8 @@ def bootstrap_session_login(
         run_env["KB_ENRICHMENT_BOOTSTRAP_USERNAME_ENV"] = source_settings.username_env_var
     if source_settings.password_env_var:
         run_env["KB_ENRICHMENT_BOOTSTRAP_PASSWORD_ENV"] = source_settings.password_env_var
+    if source_settings.totp_env_var:
+        run_env["KB_ENRICHMENT_BOOTSTRAP_TOTP_ENV"] = source_settings.totp_env_var
 
     runner = command_runner or _default_command_runner
     command_result = runner(argv, run_env, resolved_root)
