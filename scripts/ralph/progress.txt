@@ -1,0 +1,26 @@
+# Ralph Progress Log
+Started: Sat Feb 28 09:59:22 EST 2026
+
+## Codebase Patterns
+- Use `KBBaseModel` from `kb.schemas` for new typed configuration models so unknown fields are rejected consistently.
+- Keep generated runtime artifacts under `.build/`; the repo already ignores this tree.
+
+## [2026-02-28 10:02:42 EST] - US-001
+- What was implemented
+  - Added `kb/enrichment_config.py` with typed enrichment settings: headless default, run report path, confidence threshold policy, secret-provider policy with env-var fallback, and source-specific settings for `linkedin.com` and `skool.com`.
+  - Added `load_enrichment_config_from_env(...)` to apply deterministic environment overrides, including per-source session/evidence paths and secret/env token mappings.
+  - Added validation for required supported sources, relative artifact paths, and monotonic confidence thresholds.
+- Files changed
+  - `kb/enrichment_config.py`
+  - `kb/tests/test_enrichment_config.py`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - New schema/config models should inherit from `KBBaseModel` to keep `extra="forbid"` behavior aligned across modules.
+    - Artifact defaults should be rooted under `.build/` with deterministic per-source subpaths.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - In this environment, `just check` can fail unless `UV_CACHE_DIR` points to a writable location; use `UV_CACHE_DIR=/tmp/uv-cache just check`.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - The current quality gate is `just check` (`validate-changed`, `pytest`, then `mkdocs build`).
+---
