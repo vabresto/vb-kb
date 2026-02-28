@@ -322,6 +322,45 @@ def test_run_enrichment_reuses_existing_source_artifact_when_facts_unchanged(tmp
     assert len(source_dirs) == 1
 
 
+def test_run_enrichment_reuses_existing_skool_source_artifact_when_facts_unchanged(tmp_path: Path) -> None:
+    _write_person_fixture(tmp_path)
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _SuccessfulAdapter(SupportedSource.skool, project_root=tmp_path),
+        )
+    )
+
+    report_first = run_enrichment_for_entity(
+        "person@founder-name",
+        selected_sources=[SupportedSource.skool],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        run_id="enrich-skool-dedup-first",
+    )
+    report_second = run_enrichment_for_entity(
+        "person@founder-name",
+        selected_sources=[SupportedSource.skool],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        run_id="enrich-skool-dedup-second",
+    )
+
+    first_state = report_first.phases.extraction.sources[0]
+    second_state = report_second.phases.extraction.sources[0]
+    assert first_state.source_entity_ref == second_state.source_entity_ref
+    assert first_state.source_entity_path == second_state.source_entity_path
+    assert first_state.facts_artifact_path == second_state.facts_artifact_path
+    assert report_second.phases.source_logging.status == PhaseStatus.succeeded
+    assert report_second.phases.source_logging.message is not None
+    assert "reused 1 unchanged source artifact" in report_second.phases.source_logging.message
+
+    source_dirs = sorted((tmp_path / "data" / "source").glob("*/source@enrichment-skool-com-founder-name-*"))
+    assert len(source_dirs) == 1
+
+
 def test_run_enrichment_for_entity_marks_failed_extraction_phase(tmp_path: Path) -> None:
     _write_person_fixture(tmp_path)
     config = EnrichmentConfig()

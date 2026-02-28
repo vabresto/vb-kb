@@ -36,12 +36,22 @@ def test_extract_skool_facts_from_title_and_description() -> None:
     facts = _extract_skool_facts(
         title="Founders Circle - Jane Founder | Skool",
         description="Community for startup builders.",
+        profile_entries=[
+            "Community: Founders Circle | 4,201 members",
+            "Community: Founders Circle | 4,201 members",
+            "Top post: Hiring AI engineers",
+        ],
     )
 
-    values_by_attribute = {fact["attribute"]: fact["value"] for fact in facts}
+    values_by_attribute = {fact["attribute"]: fact["value"] for fact in facts if fact["attribute"] != "profile_entry"}
     assert values_by_attribute["headline"] == "Founders Circle - Jane Founder"
     assert values_by_attribute["community"] == "Founders Circle"
     assert values_by_attribute["about"] == "Community for startup builders."
+    profile_values = [fact["value"] for fact in facts if fact["attribute"] == "profile_entry"]
+    assert profile_values == [
+        "Community: Founders Circle | 4,201 members",
+        "Top post: Hiring AI engineers",
+    ]
 
 
 def test_unsupported_reason_detects_login_and_captcha() -> None:

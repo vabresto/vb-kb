@@ -54,9 +54,21 @@ _LINKEDIN_EXPERIENCE_SELECTORS = (
     "section[data-section='experience'] li",
     "main section:has(h2:has-text('Experience')) li",
 )
+_SKOOL_PROFILE_ENTRY_SELECTORS = (
+    "main li",
+    "main article li",
+    "main section li",
+)
 _EXPERIENCE_IGNORED_PREFIXES = (
     "show all",
     "see all",
+)
+_SKOOL_IGNORED_PREFIXES = (
+    "show more",
+    "show less",
+    "see more",
+    "see less",
+    "view profile",
 )
 
 
@@ -184,6 +196,42 @@ def _collect_linkedin_experience_entries(page: Any) -> list[str]:
     return entries
 
 
+def _normalize_skool_entry(raw_value: str) -> str | None:
+    lines = [_normalize_optional_text(line) for line in raw_value.splitlines()]
+    cleaned = [line for line in lines if line is not None]
+    if not cleaned:
+        return None
+    candidate = " | ".join(cleaned[:4])
+    lowered = candidate.lower()
+    if any(lowered.startswith(prefix) for prefix in _SKOOL_IGNORED_PREFIXES):
+        return None
+    if len(candidate) > 280:
+        candidate = candidate[:280].rstrip()
+    return candidate
+
+
+def _collect_skool_profile_entries(page: Any) -> list[str]:
+    entries: list[str] = []
+    seen: set[str] = set()
+    for selector in _SKOOL_PROFILE_ENTRY_SELECTORS:
+        try:
+            locator = page.locator(selector)
+            count = min(locator.count(), 120)
+        except Exception:
+            continue
+        for index in range(count):
+            try:
+                raw_text = locator.nth(index).inner_text(timeout=2_000)
+            except Exception:
+                continue
+            normalized = _normalize_skool_entry(raw_text)
+            if normalized is None or normalized in seen:
+                continue
+            seen.add(normalized)
+            entries.append(normalized)
+    return entries
+
+
 def _extract_role_company_from_experience(entry: str) -> tuple[str | None, str | None]:
     parts = [_normalize_optional_text(part) for part in entry.split("|")]
     cleaned = [part for part in parts if part is not None]
@@ -291,7 +339,12 @@ def _extract_linkedin_facts(
     return facts
 
 
-def _extract_skool_facts(*, title: str | None, description: str | None) -> list[dict[str, Any]]:
+def _extract_skool_facts(
+    *,
+    title: str | None,
+    description: str | None,
+    profile_entries: list[str] | None = None,
+) -> list[dict[str, Any]]:
     facts: list[dict[str, Any]] = []
     cleaned_title = _normalize_optional_text(_SKOOL_TITLE_SUFFIX_RE.sub("", title or ""))
     _append_fact(facts, attribute="headline", value=cleaned_title, confidence="medium")
@@ -299,6 +352,18 @@ def _extract_skool_facts(*, title: str | None, description: str | None) -> list[
     if cleaned_title is not None:
         community_hint = cleaned_title.split(" - ")[0].strip()
         _append_fact(facts, attribute="community", value=community_hint, confidence="low")
+    normalized_entries = _deduplicate_text_rows([entry for entry in (profile_entries or []) if entry])
+    for index, entry in enumerate(normalized_entries):
+        _append_fact(
+            facts,
+            attribute="profile_entry",
+            value=entry,
+            confidence="low",
+            metadata={
+                "source_section": "profile",
+                "ordinal": index + 1,
+            },
+        )
     return facts
 
 
@@ -389,8 +454,11 @@ def _run_fetch(source: SupportedSource) -> int:
             page, "og:description"
         )
         experience_entries: list[str] = []
+        skool_entries: list[str] = []
         if source == SupportedSource.linkedin:
             experience_entries = _collect_linkedin_experience_entries(page)
+        else:
+            skool_entries = _collect_skool_profile_entries(page)
         html = page.content()
         browser.close()
 
@@ -413,7 +481,11 @@ def _run_fetch(source: SupportedSource) -> int:
             experience_entries=experience_entries,
         )
     else:
-        facts = _extract_skool_facts(title=title, description=description)
+        facts = _extract_skool_facts(
+            title=title,
+            description=description,
+            profile_entries=skool_entries,
+        )
     facts = _deduplicate_fact_rows(facts)
 
     if not facts:
