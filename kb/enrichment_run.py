@@ -2146,6 +2146,27 @@ def _build_snapshot_output_path(
     return f"{source_evidence_path}/{run_id}/{entity_slug}.json"
 
 
+def _persist_source_snapshot_artifact(
+    *,
+    source_dir: Path,
+    snapshot_result: SnapshotResult,
+    project_root: Path,
+) -> str | None:
+    snapshot_source_path = Path(snapshot_result.snapshot_path)
+    resolved_source_path = (
+        snapshot_source_path
+        if snapshot_source_path.is_absolute()
+        else project_root / snapshot_source_path
+    )
+    if not resolved_source_path.exists():
+        return None
+
+    local_name = "snapshot.html" if snapshot_result.content_type == "text/html" else "snapshot.json"
+    local_path = source_dir / local_name
+    local_path.write_bytes(resolved_source_path.read_bytes())
+    return local_name
+
+
 def _write_source_entity_record(
     *,
     source: SupportedSource,
@@ -2237,15 +2258,34 @@ def _write_source_entity_record(
             f"({fetch_result.source_url}). Retrieved on {retrieved_on}."
         ),
     }
-    if snapshot_result.content_type == "text/html":
-        source_record_payload["html-capture-path"] = snapshot_result.snapshot_path
+    local_snapshot_path = None
+    try:
+        local_snapshot_path = _persist_source_snapshot_artifact(
+            source_dir=source_dir,
+            snapshot_result=snapshot_result,
+            project_root=project_root,
+        )
+    except OSError as exc:
+        raise SourceRecordWriteError(
+            source=source,
+            path=source_entity_path,
+            details=f"failed to persist local snapshot artifact: {exc}",
+        ) from exc
+
+    if snapshot_result.content_type == "text/html" and local_snapshot_path is not None:
+        source_record_payload["html-capture-path"] = local_snapshot_path
     source_record = SourceRecord.model_validate(source_record_payload)
     source_frontmatter = source_record.model_dump(mode="json", by_alias=True, exclude_none=True)
 
-    snapshot_link = _relative_link(
-        from_dir=source_dir,
-        target_path=(project_root / snapshot_result.snapshot_path),
-    )
+    snapshot_path_for_body = snapshot_result.snapshot_path
+    if local_snapshot_path is not None:
+        snapshot_path_for_body = local_snapshot_path
+        snapshot_link = local_snapshot_path
+    else:
+        snapshot_link = _relative_link(
+            from_dir=source_dir,
+            target_path=(project_root / snapshot_result.snapshot_path),
+        )
     source_body = _render_source_entity_body(
         title=title,
         source_ref=source_ref,
@@ -2254,7 +2294,7 @@ def _write_source_entity_record(
         run_id=run_id,
         source_url=fetch_result.source_url,
         retrieved_at=_normalize_now(fetch_result.retrieved_at).isoformat(),
-        snapshot_path=snapshot_result.snapshot_path,
+        snapshot_path=snapshot_path_for_body,
         snapshot_content_type=snapshot_result.content_type,
         snapshot_link=snapshot_link,
         sorted_facts=sorted_facts,

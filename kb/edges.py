@@ -10,7 +10,13 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from kb.schemas import EdgeRecord, EmploymentHistoryRow, SourceRecord, parse_partial_date
+from kb.schemas import (
+    EdgeRecord,
+    EmploymentHistoryRow,
+    SourceRecord,
+    parse_partial_date,
+    partial_date_sort_key,
+)
 from kb.validate import gather_edge_files, gather_entities, gather_source_files
 
 EDGE_ID_SANITIZE_RE = re.compile(r"[^a-z0-9]+")
@@ -195,6 +201,51 @@ def index_existing_edges(data_root: Path) -> tuple[dict[str, Path], set[str]]:
     return edge_path_by_id, duplicate_existing_ids
 
 
+def _merge_existing_edge_dates(
+    *,
+    edge_id: str,
+    candidate_payload: dict[str, Any],
+    edge_path_by_id: dict[str, Path],
+    project_root: Path,
+    issues: list[dict[str, Any]],
+    effective_as_of: str,
+) -> tuple[str, str]:
+    existing_path = edge_path_by_id.get(edge_id)
+    if existing_path is None or not existing_path.exists():
+        return effective_as_of, effective_as_of
+
+    try:
+        existing_record = read_edge_record(existing_path)
+    except (json.JSONDecodeError, ValidationError, ValueError) as exc:
+        issues.append(
+            {
+                "code": "schema_error",
+                "path": relpath(existing_path, project_root),
+                "message": str(exc),
+            }
+        )
+        return effective_as_of, effective_as_of
+
+    existing_payload = existing_record.model_dump(mode="json", by_alias=True)
+    existing_without_dates = {
+        key: value
+        for key, value in existing_payload.items()
+        if key not in {"first_noted_at", "last_verified_at"}
+    }
+    candidate_without_dates = {
+        key: value
+        for key, value in candidate_payload.items()
+        if key not in {"first_noted_at", "last_verified_at"}
+    }
+    if candidate_without_dates == existing_without_dates:
+        return existing_record.first_noted_at, existing_record.last_verified_at
+
+    return (
+        existing_record.first_noted_at,
+        max(existing_record.last_verified_at, effective_as_of, key=partial_date_sort_key),
+    )
+
+
 def write_edge_record(
     *,
     edge_record: EdgeRecord,
@@ -318,21 +369,33 @@ def derive_employment_edges(
                 continue
 
             edge_id = sanitize_fragment(f"employment-{entity.entity_id}-{row.id}")
+            payload = {
+                "id": edge_id,
+                "relation": relation_for_employment(),
+                "directed": True,
+                "from": entity.rel_dir,
+                "to": row.organization_ref,
+                "first_noted_at": effective_as_of,
+                "last_verified_at": effective_as_of,
+                "valid_from": None,
+                "valid_to": None,
+                "sources": source_refs,
+                "notes": build_edge_notes(row),
+                "strength": None,
+            }
+            first_noted_at, last_verified_at = _merge_existing_edge_dates(
+                edge_id=edge_id,
+                candidate_payload=payload,
+                edge_path_by_id=edge_path_by_id,
+                project_root=project_root,
+                issues=issues,
+                effective_as_of=effective_as_of,
+            )
+            payload["first_noted_at"] = first_noted_at
+            payload["last_verified_at"] = last_verified_at
 
             edge_record = EdgeRecord.model_validate(
-                {
-                    "id": edge_id,
-                    "relation": relation_for_employment(),
-                    "directed": True,
-                    "from": entity.rel_dir,
-                    "to": row.organization_ref,
-                    "first_noted_at": effective_as_of,
-                    "last_verified_at": effective_as_of,
-                    "valid_from": None,
-                    "valid_to": None,
-                    "sources": source_refs,
-                    "notes": build_edge_notes(row),
-                }
+                payload
             )
 
             changed = write_edge_record(
@@ -460,23 +523,35 @@ def derive_citation_edges(
             edge_id = sanitize_fragment(
                 f"citation-{entity.kind}-{entity.entity_id}-{citation_key}"
             )
+            payload = {
+                "id": edge_id,
+                "relation": relation_for_citation(),
+                "directed": True,
+                "from": entity.rel_dir,
+                "to": target_source_rel,
+                "first_noted_at": effective_as_of,
+                "last_verified_at": effective_as_of,
+                "valid_from": None,
+                "valid_to": None,
+                "sources": [target_source_rel],
+                "notes": (
+                    f"Derived citation edge from footnote [^{citation_key}] "
+                    f"in {entity.rel_dir}"
+                ),
+                "strength": None,
+            }
+            first_noted_at, last_verified_at = _merge_existing_edge_dates(
+                edge_id=edge_id,
+                candidate_payload=payload,
+                edge_path_by_id=edge_path_by_id,
+                project_root=project_root,
+                issues=issues,
+                effective_as_of=effective_as_of,
+            )
+            payload["first_noted_at"] = first_noted_at
+            payload["last_verified_at"] = last_verified_at
             edge_record = EdgeRecord.model_validate(
-                {
-                    "id": edge_id,
-                    "relation": relation_for_citation(),
-                    "directed": True,
-                    "from": entity.rel_dir,
-                    "to": target_source_rel,
-                    "first_noted_at": effective_as_of,
-                    "last_verified_at": effective_as_of,
-                    "valid_from": None,
-                    "valid_to": None,
-                    "sources": [target_source_rel],
-                    "notes": (
-                        f"Derived citation edge from footnote [^{citation_key}] "
-                        f"in {entity.rel_dir}"
-                    ),
-                }
+                payload
             )
 
             changed = write_edge_record(

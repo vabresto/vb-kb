@@ -84,6 +84,17 @@ class _FailingAdapter(_SuccessfulAdapter):
         raise SourceAdapterError(source=self.source, message="simulated extraction failure")
 
 
+class _HtmlSnapshotAdapter(_SuccessfulAdapter):
+    def snapshot(self, request: SnapshotRequest) -> SnapshotResult:
+        output_path = self._project_root / request.output_path
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text("<html><body>snapshot</body></html>", encoding="utf-8")
+        return SnapshotResult(
+            snapshot_path=request.output_path,
+            content_type="text/html",
+        )
+
+
 def _write_person_fixture(
     project_root: Path,
     *,
@@ -320,6 +331,35 @@ def test_run_enrichment_reuses_existing_source_artifact_when_facts_unchanged(tmp
 
     source_dirs = sorted((tmp_path / "data" / "source").glob("*/source@enrichment-linkedin-com-founder-name-*"))
     assert len(source_dirs) == 1
+
+
+def test_run_enrichment_writes_local_html_snapshot_for_source_record(tmp_path: Path) -> None:
+    _write_person_fixture(tmp_path)
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _HtmlSnapshotAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    report = run_enrichment_for_entity(
+        "person@founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        now=datetime(2026, 2, 28, 18, 5, tzinfo=UTC),
+        run_id="enrich-html-snapshot",
+    )
+
+    assert report.status == RunStatus.succeeded
+    state = report.phases.extraction.sources[0]
+    assert state.source_entity_path is not None
+    source_index_path = tmp_path / state.source_entity_path
+    frontmatter, body = _read_frontmatter_and_body(source_index_path)
+    assert frontmatter["html-capture-path"] == "snapshot.html"
+    assert (source_index_path.parent / "snapshot.html").exists()
+    assert "Snapshot artifact: [`snapshot.html`](snapshot.html) (`text/html`)" in body
 
 
 def test_run_enrichment_reuses_existing_skool_source_artifact_when_facts_unchanged(tmp_path: Path) -> None:

@@ -37,6 +37,37 @@ def test_extract_linkedin_facts_from_title_and_description() -> None:
     ]
 
 
+def test_extract_linkedin_facts_strips_badge_prefix_and_prefers_profile_headline() -> None:
+    facts = _extract_linkedin_facts(
+        title="(2) Jose Luis Avilez | LinkedIn",
+        description="",
+        profile_headline="Quantitative Researcher at Squarepoint Capital",
+        section_entries=[
+            "Experience | Quantitative Researcher | Squarepoint Capital",
+            "Publications | Efficient Portfolio Construction",
+            "Publications | Efficient Portfolio Construction",
+        ],
+    )
+
+    values_by_attribute = {fact["attribute"]: fact["value"] for fact in facts if fact["attribute"] != "section_entry"}
+    assert values_by_attribute["headline"] == "Quantitative Researcher at Squarepoint Capital"
+    assert values_by_attribute["current_company"] == "Squarepoint Capital"
+    section_values = [fact["value"] for fact in facts if fact["attribute"] == "section_entry"]
+    assert section_values == [
+        "Experience | Quantitative Researcher | Squarepoint Capital",
+        "Publications | Efficient Portfolio Construction",
+    ]
+
+
+def test_extract_linkedin_facts_strips_badge_prefix_from_title_fallback() -> None:
+    facts = _extract_linkedin_facts(
+        title="(7) Jane Founder | LinkedIn",
+        description=None,
+    )
+    values_by_attribute = {fact["attribute"]: fact["value"] for fact in facts}
+    assert values_by_attribute["headline"] == "Jane Founder"
+
+
 def test_extract_skool_facts_from_title_and_description() -> None:
     facts = _extract_skool_facts(
         title="Founders Circle - Jane Founder | Skool",

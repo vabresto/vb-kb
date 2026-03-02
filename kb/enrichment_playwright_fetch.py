@@ -19,6 +19,7 @@ _PROFILE_URLS: dict[SupportedSource, str] = {
     SupportedSource.skool: "https://www.skool.com/@{slug}",
 }
 _LINKEDIN_TITLE_SUFFIX_RE = re.compile(r"\s*\|\s*linkedin\s*$", re.IGNORECASE)
+_LINKEDIN_TITLE_PREFIX_RE = re.compile(r"^\(\d+\)\s*")
 _SKOOL_TITLE_SUFFIX_RE = re.compile(r"\s*\|\s*skool\s*$", re.IGNORECASE)
 _COMPANY_HINT_RE = re.compile(r"\bat\s+([^|,]+)", re.IGNORECASE)
 _HTML_SCRIPT_STYLE_RE = re.compile(r"<(script|style|noscript)\b[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)
@@ -55,6 +56,25 @@ _LINKEDIN_EXPERIENCE_SELECTORS = (
     "section[data-section='experience'] li",
     "main section:has(h2:has-text('Experience')) li",
 )
+_LINKEDIN_HEADLINE_SELECTORS = (
+    "main .text-body-medium.break-words",
+    "main section .text-body-medium.break-words",
+    "section .text-body-medium.break-words",
+)
+_LINKEDIN_SECTION_SELECTORS = (
+    "main section",
+    "section[id*='profile']",
+)
+_LINKEDIN_SECTION_TITLE_SELECTORS = (
+    "h2",
+    "h3",
+)
+_LINKEDIN_EXPAND_BUTTON_TEXTS = (
+    "Show more",
+    "See more",
+    "Show all",
+    "See all",
+)
 _SKOOL_PROFILE_ENTRY_SELECTORS = (
     "main li",
     "main article li",
@@ -63,6 +83,13 @@ _SKOOL_PROFILE_ENTRY_SELECTORS = (
 _EXPERIENCE_IGNORED_PREFIXES = (
     "show all",
     "see all",
+)
+_LINKEDIN_SECTION_IGNORED_PREFIXES = (
+    "show all",
+    "see all",
+    "follow",
+    "message",
+    "connect",
 )
 _SKOOL_IGNORED_PREFIXES = (
     "show more",
@@ -193,9 +220,37 @@ def _append_fact(
     )
 
 
+def _normalize_linkedin_title(value: str | None) -> str | None:
+    normalized = _normalize_optional_text(value)
+    if normalized is None:
+        return None
+    normalized = _LINKEDIN_TITLE_SUFFIX_RE.sub("", normalized)
+    normalized = _LINKEDIN_TITLE_PREFIX_RE.sub("", normalized)
+    return _normalize_optional_text(normalized)
+
+
+def _normalize_linkedin_profile_headline(value: str | None) -> str | None:
+    normalized = _normalize_optional_text(value)
+    if normalized is None:
+        return None
+    return _LINKEDIN_TITLE_PREFIX_RE.sub("", normalized).strip()
+
+
+def _clean_repeated_segments(parts: list[str]) -> list[str]:
+    cleaned: list[str] = []
+    for part in parts:
+        normalized = _normalize_optional_text(part)
+        if normalized is None:
+            continue
+        if cleaned and cleaned[-1] == normalized:
+            continue
+        cleaned.append(normalized)
+    return cleaned
+
+
 def _normalize_experience_entry(raw_value: str) -> str | None:
     lines = [_normalize_optional_text(line) for line in raw_value.splitlines()]
-    cleaned = [line for line in lines if line is not None]
+    cleaned = _clean_repeated_segments([line for line in lines if line is not None])
     if not cleaned:
         return None
     candidate = " | ".join(cleaned[:4])
@@ -225,6 +280,137 @@ def _collect_linkedin_experience_entries(page: Any) -> list[str]:
             seen.add(normalized)
             entries.append(normalized)
     return entries
+
+
+def _extract_first_text(page: Any, selectors: tuple[str, ...], *, timeout_ms: int = 1_500) -> str | None:
+    for selector in selectors:
+        try:
+            locator = page.locator(selector).first
+            if locator.count() == 0:
+                continue
+            value = _normalize_optional_text(locator.inner_text(timeout=timeout_ms))
+            if value is not None:
+                return value
+        except Exception:
+            continue
+    return None
+
+
+def _normalize_linkedin_section_heading(value: str | None) -> str | None:
+    normalized = _normalize_optional_text(value)
+    if normalized is None:
+        return None
+    cleaned = normalized.rstrip(":")
+    if len(cleaned) > 80:
+        cleaned = cleaned[:80].rstrip()
+    return _normalize_optional_text(cleaned)
+
+
+def _normalize_linkedin_section_entry(raw_value: str) -> str | None:
+    lines = [_normalize_optional_text(line) for line in raw_value.splitlines()]
+    cleaned = _clean_repeated_segments([line for line in lines if line is not None])
+    if not cleaned:
+        return None
+    candidate = " | ".join(cleaned[:6])
+    lowered = candidate.lower()
+    if any(lowered.startswith(prefix) for prefix in _LINKEDIN_SECTION_IGNORED_PREFIXES):
+        return None
+    if len(candidate) > 420:
+        candidate = candidate[:420].rstrip()
+    return candidate
+
+
+def _collect_linkedin_section_entries(page: Any) -> list[str]:
+    entries: list[str] = []
+    seen: set[str] = set()
+    for section_selector in _LINKEDIN_SECTION_SELECTORS:
+        try:
+            section_locator = page.locator(section_selector)
+            section_count = min(section_locator.count(), 40)
+        except Exception:
+            continue
+        for section_index in range(section_count):
+            section = section_locator.nth(section_index)
+            section_title = _extract_first_text(section, _LINKEDIN_SECTION_TITLE_SELECTORS, timeout_ms=1_000)
+            normalized_title = _normalize_linkedin_section_heading(section_title)
+            if normalized_title is None:
+                continue
+            try:
+                item_locator = section.locator("li")
+                item_count = min(item_locator.count(), 40)
+            except Exception:
+                continue
+            for item_index in range(item_count):
+                try:
+                    raw_text = item_locator.nth(item_index).inner_text(timeout=1_500)
+                except Exception:
+                    continue
+                normalized_entry = _normalize_linkedin_section_entry(raw_text)
+                if normalized_entry is None:
+                    continue
+                value = f"{normalized_title} | {normalized_entry}"
+                if value in seen:
+                    continue
+                seen.add(value)
+                entries.append(value)
+    return entries
+
+
+def _try_click_expand_control(locator: Any) -> bool:
+    try:
+        if not locator.is_visible(timeout=500):
+            return False
+    except Exception:
+        return False
+    try:
+        locator.scroll_into_view_if_needed(timeout=500)
+    except Exception:
+        pass
+    try:
+        locator.click(timeout=1_500)
+    except Exception:
+        return False
+    return True
+
+
+def _expand_linkedin_profile_sections(page: Any, wait_settings: RandomWaitSettings) -> None:
+    seen_controls: set[str] = set()
+    for _ in range(4):
+        clicked = 0
+        for button_text in _LINKEDIN_EXPAND_BUTTON_TEXTS:
+            for selector in (
+                f"button:has-text('{button_text}')",
+                f"a:has-text('{button_text}')",
+            ):
+                try:
+                    locator = page.locator(selector)
+                    count = min(locator.count(), 60)
+                except Exception:
+                    continue
+                for index in range(count):
+                    control = locator.nth(index)
+                    href = None
+                    if selector.startswith("a:"):
+                        try:
+                            href = control.get_attribute("href", timeout=500)
+                        except Exception:
+                            href = None
+                        if href and "/overlay/" not in href and not href.startswith("#"):
+                            continue
+                    key = f"{selector}|{index}|{href or ''}"
+                    if key in seen_controls:
+                        continue
+                    if not _try_click_expand_control(control):
+                        continue
+                    seen_controls.add(key)
+                    clicked += 1
+                    try:
+                        page.wait_for_timeout(300)
+                    except Exception:
+                        pass
+                    wait_random_delay(page, wait_settings, minimum_ms=80, maximum_ms=220)
+        if clicked == 0:
+            break
 
 
 def _normalize_skool_entry(raw_value: str) -> str | None:
@@ -317,14 +503,18 @@ def _extract_linkedin_facts(
     *,
     title: str | None,
     description: str | None,
+    profile_headline: str | None = None,
     experience_entries: list[str] | None = None,
+    section_entries: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     facts: list[dict[str, Any]] = []
-    cleaned_title = _normalize_optional_text(_LINKEDIN_TITLE_SUFFIX_RE.sub("", title or ""))
-    _append_fact(facts, attribute="headline", value=cleaned_title, confidence="medium")
+    cleaned_title = _normalize_linkedin_title(title)
+    cleaned_profile_headline = _normalize_linkedin_profile_headline(profile_headline)
+    headline_value = cleaned_profile_headline or cleaned_title
+    _append_fact(facts, attribute="headline", value=headline_value, confidence="medium")
     _append_fact(facts, attribute="about", value=description, confidence="low")
-    if cleaned_title is not None:
-        company_match = _COMPANY_HINT_RE.search(cleaned_title)
+    if headline_value is not None:
+        company_match = _COMPANY_HINT_RE.search(headline_value)
         if company_match is not None:
             _append_fact(
                 facts,
@@ -365,6 +555,18 @@ def _extract_linkedin_facts(
             metadata={
                 "source_section": "experience",
                 "inferred": True,
+            },
+        )
+    normalized_sections = _deduplicate_text_rows([entry for entry in (section_entries or []) if entry])
+    for index, entry in enumerate(normalized_sections):
+        _append_fact(
+            facts,
+            attribute="section_entry",
+            value=entry,
+            confidence="low",
+            metadata={
+                "source_section": "profile_sections",
+                "ordinal": index + 1,
             },
         )
     return facts
@@ -651,16 +853,25 @@ def _capture_profile_payload(
 ) -> dict[str, Any]:
     page.goto(url, wait_until="domcontentloaded", timeout=60_000)
     page.wait_for_timeout(1200)
+    try:
+        page.wait_for_load_state("networkidle", timeout=8_000)
+    except Exception:
+        pass
     wait_random_delay(page, wait_settings)
     _scroll_profile(page, wait_settings)
 
     source_url = _normalize_optional_text(page.url) or url
     title = _normalize_optional_text(page.title())
     description = _extract_meta_content(page, "description") or _extract_meta_content(page, "og:description")
+    profile_headline = None
     experience_entries: list[str] = []
     skool_entries: list[str] = []
+    section_entries: list[str] = []
     if source == SupportedSource.linkedin:
+        _expand_linkedin_profile_sections(page, wait_settings)
+        profile_headline = _extract_first_text(page, _LINKEDIN_HEADLINE_SELECTORS)
         experience_entries = _collect_linkedin_experience_entries(page)
+        section_entries = _collect_linkedin_section_entries(page)
     else:
         skool_entries = _collect_skool_profile_entries(page)
     html = page.content()
@@ -668,10 +879,69 @@ def _capture_profile_payload(
         "source_url": source_url,
         "title": title,
         "description": description,
+        "profile_headline": profile_headline,
         "experience_entries": experience_entries,
+        "section_entries": section_entries,
         "skool_entries": skool_entries,
         "html": html,
     }
+
+
+def _log_runtime(message: str) -> None:
+    print(f"[kb-enrichment] {message}", file=sys.stderr)
+
+
+def _register_debug_hooks(page: Any) -> tuple[list[str], list[str]]:
+    console_errors: list[str] = []
+    page_errors: list[str] = []
+
+    def _on_console(message: Any) -> None:
+        try:
+            level = str(getattr(message, "type", "log")).lower()
+        except Exception:
+            level = "log"
+        if level not in {"error", "warning"}:
+            return
+        try:
+            raw_text = getattr(message, "text", None)
+            text = raw_text() if callable(raw_text) else raw_text
+        except Exception:
+            text = None
+        normalized = _normalize_optional_text(text)
+        if normalized is None:
+            return
+        if normalized not in console_errors:
+            console_errors.append(normalized)
+
+    def _on_page_error(exc: Exception) -> None:
+        normalized = _normalize_optional_text(str(exc))
+        if normalized is None:
+            return
+        if normalized not in page_errors:
+            page_errors.append(normalized)
+
+    try:
+        page.on("console", _on_console)
+    except Exception:
+        pass
+    try:
+        page.on("pageerror", _on_page_error)
+    except Exception:
+        pass
+    return console_errors, page_errors
+
+
+def _wait_for_manual_intervention(page: Any, *, headless: bool, reason: str) -> None:
+    if headless:
+        return
+    _log_runtime(
+        f"Human intervention may be required ({reason}). "
+        "Holding browser open for 15 seconds so you can inspect the page."
+    )
+    try:
+        page.wait_for_timeout(15_000)
+    except Exception:
+        return
 
 
 def _run_fetch(source: SupportedSource) -> int:
@@ -684,10 +954,14 @@ def _run_fetch(source: SupportedSource) -> int:
 
     from playwright.sync_api import sync_playwright
 
+    console_errors: list[str] = []
+    page_errors: list[str] = []
+
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=headless)
         context = browser.new_context(storage_state=str(session_state_path))
         page = context.new_page()
+        console_errors, page_errors = _register_debug_hooks(page)
         profile_payload = _capture_profile_payload(
             page=page,
             source=source,
@@ -697,18 +971,30 @@ def _run_fetch(source: SupportedSource) -> int:
         source_url = str(profile_payload["source_url"])
         title = _normalize_optional_text(profile_payload.get("title"))
         description = _normalize_optional_text(profile_payload.get("description"))
+        profile_headline = _normalize_optional_text(profile_payload.get("profile_headline"))
         experience_entries = list(profile_payload.get("experience_entries") or [])
+        section_entries = list(profile_payload.get("section_entries") or [])
         skool_entries = list(profile_payload.get("skool_entries") or [])
         html = str(profile_payload["html"])
 
         challenge_reason = _unsupported_reason(source=source, url=source_url, title=title, html=html)
         if challenge_reason is not None:
+            _log_runtime(f"{source.value} extraction requires intervention: {challenge_reason}")
+            if console_errors:
+                _log_runtime("Browser console warnings/errors detected during extraction:")
+                for entry in console_errors[:8]:
+                    _log_runtime(f"  console: {entry}")
+            for entry in page_errors[:8]:
+                _log_runtime(f"  pageerror: {entry}")
+            _wait_for_manual_intervention(page, headless=headless, reason=challenge_reason)
             browser.close()
             payload = {
                 "status": "unsupported",
                 "reason": challenge_reason,
                 "source_url": source_url,
                 "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                "console_errors": console_errors[:20],
+                "page_errors": page_errors[:20],
                 "html": html,
             }
             print(json.dumps(payload))
@@ -732,17 +1018,29 @@ def _run_fetch(source: SupportedSource) -> int:
                 source_url = str(profile_payload["source_url"])
                 title = _normalize_optional_text(profile_payload.get("title"))
                 description = _normalize_optional_text(profile_payload.get("description"))
+                profile_headline = _normalize_optional_text(profile_payload.get("profile_headline"))
                 experience_entries = list(profile_payload.get("experience_entries") or [])
+                section_entries = list(profile_payload.get("section_entries") or [])
                 skool_entries = list(profile_payload.get("skool_entries") or [])
                 html = str(profile_payload["html"])
                 challenge_reason = _unsupported_reason(source=source, url=source_url, title=title, html=html)
                 if challenge_reason is not None:
+                    _log_runtime(f"{source.value} extraction requires intervention: {challenge_reason}")
+                    if console_errors:
+                        _log_runtime("Browser console warnings/errors detected during extraction:")
+                        for entry in console_errors[:8]:
+                            _log_runtime(f"  console: {entry}")
+                    for entry in page_errors[:8]:
+                        _log_runtime(f"  pageerror: {entry}")
+                    _wait_for_manual_intervention(page, headless=headless, reason=challenge_reason)
                     browser.close()
                     payload = {
                         "status": "unsupported",
                         "reason": challenge_reason,
                         "source_url": source_url,
                         "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                        "console_errors": console_errors[:20],
+                        "page_errors": page_errors[:20],
                         "html": html,
                     }
                     print(json.dumps(payload))
@@ -754,12 +1052,22 @@ def _run_fetch(source: SupportedSource) -> int:
                     html=html,
                 )
             if resolution_reason is not None:
+                _log_runtime(f"{source.value} extraction requires intervention: {resolution_reason}")
+                if console_errors:
+                    _log_runtime("Browser console warnings/errors detected during extraction:")
+                    for entry in console_errors[:8]:
+                        _log_runtime(f"  console: {entry}")
+                for entry in page_errors[:8]:
+                    _log_runtime(f"  pageerror: {entry}")
+                _wait_for_manual_intervention(page, headless=headless, reason=resolution_reason)
                 browser.close()
                 payload = {
                     "status": "unsupported",
                     "reason": resolution_reason,
                     "source_url": source_url,
                     "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                    "console_errors": console_errors[:20],
+                    "page_errors": page_errors[:20],
                     "html": html,
                 }
                 print(json.dumps(payload))
@@ -774,6 +1082,8 @@ def _run_fetch(source: SupportedSource) -> int:
             "reason": reason,
             "source_url": source_url,
             "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "console_errors": console_errors[:20],
+            "page_errors": page_errors[:20],
             "html": html,
         }
         print(json.dumps(payload))
@@ -783,7 +1093,9 @@ def _run_fetch(source: SupportedSource) -> int:
         facts = _extract_linkedin_facts(
             title=title,
             description=description,
+            profile_headline=profile_headline,
             experience_entries=experience_entries,
+            section_entries=section_entries,
         )
     else:
         facts = _extract_skool_facts(
@@ -810,6 +1122,8 @@ def _run_fetch(source: SupportedSource) -> int:
     payload = {
         "source_url": source_url,
         "retrieved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "console_errors": console_errors[:20],
+        "page_errors": page_errors[:20],
         "facts": facts,
         "html": html,
     }
