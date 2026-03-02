@@ -12,7 +12,13 @@ from typing import Any
 from urllib.parse import parse_qs, quote_plus, unquote, urljoin, urlparse, urlunparse
 
 from kb.enrichment_config import SupportedSource
-from kb.enrichment_playwright_timing import RandomWaitSettings, parse_random_wait_settings, wait_random_delay
+from kb.enrichment_playwright_timing import (
+    RandomWaitSettings,
+    parse_random_wait_settings,
+    wait_humanized_delay,
+    wait_random_delay,
+)
+from kb.enrichment_runtime_logging import runtime_log
 
 _PROFILE_URLS: dict[SupportedSource, str] = {
     SupportedSource.linkedin: "https://www.linkedin.com/in/{slug}/",
@@ -172,6 +178,46 @@ def _normalize_optional_text(value: object) -> str | None:
     if not normalized:
         return None
     return normalized
+
+
+def _wait_with_timing_profile(
+    page: Any,
+    wait_settings: RandomWaitSettings,
+    *,
+    minimum_ms: int | None = None,
+    maximum_ms: int | None = None,
+    humanize: bool = False,
+) -> int:
+    if humanize:
+        return wait_humanized_delay(
+            page,
+            wait_settings,
+            minimum_ms=minimum_ms,
+            maximum_ms=maximum_ms,
+            allow_actions=True,
+        )
+    return wait_random_delay(
+        page,
+        wait_settings,
+        minimum_ms=minimum_ms,
+        maximum_ms=maximum_ms,
+    )
+
+
+def _wait_linkedin_action_delay(
+    page: Any,
+    wait_settings: RandomWaitSettings,
+    *,
+    minimum_ms: int | None = None,
+    maximum_ms: int | None = None,
+) -> int:
+    return _wait_with_timing_profile(
+        page,
+        wait_settings,
+        minimum_ms=minimum_ms,
+        maximum_ms=maximum_ms,
+        humanize=True,
+    )
 
 
 def _parse_headless(value: str | None) -> bool:
@@ -434,7 +480,7 @@ def _close_linkedin_modal_if_present(page: Any, wait_settings: RandomWaitSetting
             page.wait_for_timeout(220)
         except Exception:
             pass
-        wait_random_delay(page, wait_settings, minimum_ms=70, maximum_ms=180)
+        _wait_linkedin_action_delay(page, wait_settings, minimum_ms=70, maximum_ms=180)
         if not _has_visible_linkedin_modal(page):
             return True
     return True
@@ -496,7 +542,7 @@ def _try_click_expand_control(page: Any, locator: Any, wait_settings: RandomWait
         page.wait_for_timeout(250)
     except Exception:
         pass
-    wait_random_delay(page, wait_settings, minimum_ms=70, maximum_ms=170)
+    _wait_linkedin_action_delay(page, wait_settings, minimum_ms=70, maximum_ms=170)
     if _has_visible_linkedin_modal(page):
         _close_linkedin_modal_if_present(page, wait_settings)
         return False
@@ -544,7 +590,7 @@ def _expand_linkedin_profile_sections(page: Any, wait_settings: RandomWaitSettin
                             page.wait_for_timeout(300)
                         except Exception:
                             pass
-                        wait_random_delay(page, wait_settings, minimum_ms=80, maximum_ms=220)
+                        _wait_linkedin_action_delay(page, wait_settings, minimum_ms=80, maximum_ms=220)
         if clicked == 0:
             break
 
@@ -654,9 +700,9 @@ def _collect_linkedin_detail_entries(
                 page.wait_for_load_state("networkidle", timeout=7_000)
             except Exception:
                 pass
-            wait_random_delay(page, wait_settings)
+            _wait_linkedin_action_delay(page, wait_settings)
             _close_linkedin_modal_if_present(page, wait_settings)
-            _scroll_profile(page, wait_settings)
+            _scroll_profile(page, wait_settings, humanize=True)
         except Exception:
             continue
         heading = _extract_first_text(page, ("main h1", "main h2", "h1", "h2"), timeout_ms=1_200)
@@ -1062,12 +1108,23 @@ def _collect_profile_candidates_from_page(page: Any, *, source: SupportedSource)
     return candidates
 
 
-def _scroll_search_results(page: Any, wait_settings: RandomWaitSettings) -> None:
+def _scroll_search_results(
+    page: Any,
+    wait_settings: RandomWaitSettings,
+    *,
+    humanize: bool = False,
+) -> None:
     for _ in range(3):
         try:
             page.evaluate("() => window.scrollBy(0, Math.max(800, window.innerHeight))")
             page.wait_for_timeout(250)
-            wait_random_delay(page, wait_settings, minimum_ms=70, maximum_ms=220)
+            _wait_with_timing_profile(
+                page,
+                wait_settings,
+                minimum_ms=70,
+                maximum_ms=220,
+                humanize=humanize,
+            )
         except Exception:
             break
 
@@ -1085,8 +1142,8 @@ def _discover_profile_url(
         try:
             page.goto(search_url, wait_until="domcontentloaded", timeout=60_000)
             page.wait_for_timeout(900)
-            wait_random_delay(page, wait_settings)
-            _scroll_search_results(page, wait_settings)
+            _wait_with_timing_profile(page, wait_settings, humanize=source == SupportedSource.linkedin)
+            _scroll_search_results(page, wait_settings, humanize=source == SupportedSource.linkedin)
         except Exception:
             continue
         candidates = _collect_profile_candidates_from_page(page, source=source)
@@ -1100,7 +1157,12 @@ def _discover_profile_url(
     return None
 
 
-def _scroll_profile(page: Any, wait_settings: RandomWaitSettings) -> None:
+def _scroll_profile(
+    page: Any,
+    wait_settings: RandomWaitSettings,
+    *,
+    humanize: bool = False,
+) -> None:
     last_height = 0
     stable_steps = 0
     max_steps = 40
@@ -1108,7 +1170,13 @@ def _scroll_profile(page: Any, wait_settings: RandomWaitSettings) -> None:
         try:
             page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
             page.wait_for_timeout(350)
-            wait_random_delay(page, wait_settings, minimum_ms=80, maximum_ms=260)
+            _wait_with_timing_profile(
+                page,
+                wait_settings,
+                minimum_ms=80,
+                maximum_ms=260,
+                humanize=humanize,
+            )
             height = int(page.evaluate("() => document.body.scrollHeight"))
         except Exception:
             break
@@ -1120,7 +1188,13 @@ def _scroll_profile(page: Any, wait_settings: RandomWaitSettings) -> None:
         if stable_steps >= 2:
             break
     page.wait_for_timeout(500)
-    wait_random_delay(page, wait_settings, minimum_ms=100, maximum_ms=300)
+    _wait_with_timing_profile(
+        page,
+        wait_settings,
+        minimum_ms=100,
+        maximum_ms=300,
+        humanize=humanize,
+    )
 
 
 def _capture_profile_payload(
@@ -1136,8 +1210,8 @@ def _capture_profile_payload(
         page.wait_for_load_state("networkidle", timeout=8_000)
     except Exception:
         pass
-    wait_random_delay(page, wait_settings)
-    _scroll_profile(page, wait_settings)
+    _wait_with_timing_profile(page, wait_settings, humanize=source == SupportedSource.linkedin)
+    _scroll_profile(page, wait_settings, humanize=source == SupportedSource.linkedin)
 
     source_url = _normalize_optional_text(page.url) or url
     title = _normalize_optional_text(page.title())
@@ -1184,7 +1258,7 @@ def _capture_profile_payload(
 
 
 def _log_runtime(message: str) -> None:
-    print(f"[kb-enrichment] {message}", file=sys.stderr)
+    runtime_log("playwright-fetch", message)
 
 
 def _register_debug_hooks(page: Any) -> tuple[list[str], list[str]]:

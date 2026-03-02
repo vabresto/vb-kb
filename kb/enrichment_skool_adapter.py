@@ -28,6 +28,7 @@ from kb.enrichment_adapters import (
 )
 from kb.enrichment_bootstrap import bootstrap_session_login
 from kb.enrichment_config import ConfidenceLevel, EnrichmentConfig, SupportedSource
+from kb.enrichment_runtime_logging import runtime_log
 from kb.enrichment_sessions import (
     SessionStateExpiredError,
     SessionStateMissingError,
@@ -91,8 +92,21 @@ class SkoolSourceAdapter(SourceAdapter):
         self._fetch_command = _normalize_optional_token(fetch_command) or _normalize_optional_token(
             self._environ.get(SKOOL_FETCH_COMMAND_ENV_VAR)
         ) or default_fetch_command
+        runtime_log(
+            "skool-adapter",
+            (
+                f"initialized (project_root={self._project_root.as_posix()}, "
+                f"fetch_command_configured={self._fetch_command is not None})"
+            ),
+            environ=self._environ,
+        )
 
     def authenticate(self, request: AuthenticationRequest) -> AuthenticationResult:
+        runtime_log(
+            "skool-adapter",
+            f"authenticate start (session_path={request.session_state_path}, headless={request.headless})",
+            environ=self._environ,
+        )
         auth_config = self._config_with_session_path(request.session_state_path)
         try:
             load_session_state(
@@ -101,6 +115,11 @@ class SkoolSourceAdapter(SourceAdapter):
                 project_root=self._project_root,
             )
         except (SessionStateMissingError, SessionStateExpiredError):
+            runtime_log(
+                "skool-adapter",
+                "session state missing/expired; bootstrapping login",
+                environ=self._environ,
+            )
             self._bootstrap_login_runner(
                 self.source,
                 config=auth_config,
@@ -119,6 +138,12 @@ class SkoolSourceAdapter(SourceAdapter):
             config=auth_config,
             project_root=self._project_root,
         )
+        expiry_text = diagnostics.expires_at.isoformat() if diagnostics.expires_at is not None else "unknown"
+        runtime_log(
+            "skool-adapter",
+            f"authenticate succeeded (expires_at={expiry_text})",
+            environ=self._environ,
+        )
         return AuthenticationResult(
             authenticated=True,
             used_session_state_path=request.session_state_path,
@@ -126,6 +151,11 @@ class SkoolSourceAdapter(SourceAdapter):
         )
 
     def fetch(self, request: FetchRequest) -> FetchResult:
+        runtime_log(
+            "skool-adapter",
+            f"fetch start (entity_slug={request.entity_slug}, run_id={request.run_id})",
+            environ=self._environ,
+        )
         auth = self.authenticate(
             AuthenticationRequest(
                 session_state_path=self._config.sources[self.source].session_state_path,
@@ -148,6 +178,11 @@ class SkoolSourceAdapter(SourceAdapter):
                 reason="fetch command is empty",
                 details="provide a non-empty skool extraction command",
             )
+        runtime_log(
+            "skool-adapter",
+            f"running fetch command: {' '.join(argv)}",
+            environ=self._environ,
+        )
 
         run_env = dict(self._environ)
         run_env["KB_ENRICHMENT_EXTRACT_SOURCE"] = self.source.value
@@ -162,6 +197,14 @@ class SkoolSourceAdapter(SourceAdapter):
         command_result = self._fetch_runner(argv, run_env, self._project_root)
         if command_result.returncode != 0:
             output = _trim_output(command_result.stderr or command_result.stdout)
+            runtime_log(
+                "skool-adapter",
+                (
+                    "fetch command failed "
+                    f"(status={command_result.returncode}, output={output or 'n/a'})"
+                ),
+                environ=self._environ,
+            )
             _raise_challenge_error_if_detected(source=self.source, signal=output, phase="fetch-command")
             raise SkoolExtractionError(
                 reason=f"command exited with status {command_result.returncode}",
@@ -179,6 +222,16 @@ class SkoolSourceAdapter(SourceAdapter):
 
         source_url = _resolve_source_url(payload, entity_slug=request.entity_slug)
         retrieved_at = _resolve_retrieved_at(payload, fallback=request.started_at)
+        fact_payload = payload.get("facts")
+        fact_payload_count = len(fact_payload) if isinstance(fact_payload, list) else 0
+        runtime_log(
+            "skool-adapter",
+            (
+                f"fetch succeeded (source_url={source_url}, retrieved_at={retrieved_at.isoformat()}, "
+                f"facts_payload_count={fact_payload_count})"
+            ),
+            environ=self._environ,
+        )
         return FetchResult(
             source_url=source_url,
             retrieved_at=retrieved_at,
@@ -193,6 +246,11 @@ class SkoolSourceAdapter(SourceAdapter):
                 reason="no facts extracted",
                 details="payload did not include supported skool fact fields",
             )
+        runtime_log(
+            "skool-adapter",
+            f"normalize succeeded (facts={len(facts)})",
+            environ=self._environ,
+        )
         return NormalizeResult(facts=facts)
 
     def snapshot(self, request: SnapshotRequest) -> SnapshotResult:
@@ -203,6 +261,11 @@ class SkoolSourceAdapter(SourceAdapter):
         html = payload.get("html")
         if isinstance(html, str) and html.strip():
             output_path.write_text(html, encoding="utf-8")
+            runtime_log(
+                "skool-adapter",
+                f"snapshot persisted (path={request.output_path}, content_type=text/html)",
+                environ=self._environ,
+            )
             return SnapshotResult(
                 snapshot_path=request.output_path,
                 content_type="text/html",
@@ -211,6 +274,11 @@ class SkoolSourceAdapter(SourceAdapter):
         output_path.write_text(
             json.dumps(payload, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
+        )
+        runtime_log(
+            "skool-adapter",
+            f"snapshot persisted (path={request.output_path}, content_type=application/json)",
+            environ=self._environ,
         )
         return SnapshotResult(
             snapshot_path=request.output_path,

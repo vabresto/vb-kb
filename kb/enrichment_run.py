@@ -26,6 +26,7 @@ from kb.enrichment_adapters import (
 )
 from kb.enrichment_config import ConfidenceLevel, EnrichmentConfig, SupportedSource
 from kb.enrichment_linkedin_adapter import LinkedInSourceAdapter
+from kb.enrichment_runtime_logging import runtime_log
 from kb.enrichment_skool_adapter import SkoolSourceAdapter
 from kb.edges import derive_citation_edges, derive_employment_edges, sync_edge_backlinks
 from kb.schemas import (
@@ -468,6 +469,13 @@ def run_enrichment_for_entity(
         project_root=resolved_root,
         environ=environ,
     )
+    runtime_log(
+        "orchestration",
+        (
+            f"run started (run_id={resolved_run_id}, entity={resolved_target.entity_ref}, "
+            f"sources={[source.value for source in resolved_sources]})"
+        ),
+    )
 
     extraction_phase = ExtractionPhaseState(
         status=PhaseStatus.running,
@@ -486,6 +494,10 @@ def run_enrichment_for_entity(
             started_at=started_at,
         )
         try:
+            runtime_log(
+                "orchestration",
+                f"source extraction started ({source.value})",
+            )
             adapter = registry.get(source)
             fetch_result = adapter.fetch(request)
             normalize_result = adapter.normalize(NormalizeRequest(fetch_result=fetch_result))
@@ -521,6 +533,13 @@ def run_enrichment_for_entity(
                     snapshot_result=snapshot_result,
                 )
             )
+            runtime_log(
+                "orchestration",
+                (
+                    f"source extraction succeeded ({source.value}, facts={facts_count}, "
+                    f"source_url={fetch_result.source_url})"
+                ),
+            )
         except SourceAdapterError as exc:
             source_states.append(
                 SourceExtractionState(
@@ -530,6 +549,10 @@ def run_enrichment_for_entity(
                     error=str(exc),
                 )
             )
+            runtime_log(
+                "orchestration",
+                f"source extraction failed ({source.value}, error={exc})",
+            )
         except Exception as exc:  # pragma: no cover - defensive fallback for unexpected adapter errors.
             source_states.append(
                 SourceExtractionState(
@@ -538,6 +561,10 @@ def run_enrichment_for_entity(
                     error_type=exc.__class__.__name__,
                     error=str(exc) or exc.__class__.__name__,
                 )
+            )
+            runtime_log(
+                "orchestration",
+                f"source extraction failed ({source.value}, error={exc.__class__.__name__}: {exc})",
             )
 
     extraction_failed = any(state.status == PhaseStatus.failed for state in source_states)
@@ -549,6 +576,13 @@ def run_enrichment_for_entity(
     else:
         extraction_phase.status = PhaseStatus.succeeded
         extraction_phase.message = f"extraction completed for {len(source_states)} source(s)"
+    runtime_log(
+        "orchestration",
+        (
+            f"extraction phase {extraction_phase.status.value} "
+            f"(message={extraction_phase.message or 'n/a'})"
+        ),
+    )
 
     source_logging_phase, source_artifacts, source_logging_errors = _build_source_logging_phase(
         extraction_failed=extraction_failed,
@@ -571,6 +605,13 @@ def run_enrichment_for_entity(
             continue
         state.source_logging_error_type = error.error_type
         state.source_logging_error = error.error
+    runtime_log(
+        "orchestration",
+        (
+            f"source logging phase {source_logging_phase.status.value} "
+            f"(message={source_logging_phase.message or 'n/a'})"
+        ),
+    )
 
     mapping_result = _build_mapping_phase(
         extraction_failed=extraction_failed,
@@ -587,6 +628,14 @@ def run_enrichment_for_entity(
         mapping_phase_status=mapping_phase.status,
         project_root=resolved_root,
         run_started_at=started_at,
+    )
+    runtime_log(
+        "orchestration",
+        f"mapping phase {mapping_phase.status.value} (message={mapping_phase.message or 'n/a'})",
+    )
+    runtime_log(
+        "orchestration",
+        f"validation phase {validation_phase.status.value} (message={validation_phase.message or 'n/a'})",
     )
     reporting_phase = PhaseState(
         status=PhaseStatus.succeeded,
@@ -632,6 +681,10 @@ def run_enrichment_for_entity(
         fact_to_source_mappings=mapping_result.fact_to_source_mappings,
     )
     _write_run_report(report, project_root=resolved_root)
+    runtime_log(
+        "orchestration",
+        f"run completed (run_id={resolved_run_id}, status={run_status.value}, report={config.run_report_path})",
+    )
     return report
 
 def _build_source_logging_phase(
@@ -662,6 +715,10 @@ def _build_source_logging_phase(
     errors: dict[SupportedSource, _SourceLoggingError] = {}
     for extraction in sorted(successful_extractions, key=lambda item: item.source.value):
         try:
+            runtime_log(
+                "orchestration",
+                f"source logging started ({extraction.source.value})",
+            )
             artifacts[extraction.source] = _write_source_entity_record(
                 source=extraction.source,
                 fetch_result=extraction.fetch_result,
@@ -671,10 +728,21 @@ def _build_source_logging_phase(
                 run_id=run_id,
                 project_root=project_root,
             )
+            runtime_log(
+                "orchestration",
+                f"source logging succeeded ({extraction.source.value})",
+            )
         except Exception as exc:  # pragma: no cover - defensive fallback for filesystem or schema edge cases.
             errors[extraction.source] = _SourceLoggingError(
                 error_type=exc.__class__.__name__,
                 error=str(exc) or exc.__class__.__name__,
+            )
+            runtime_log(
+                "orchestration",
+                (
+                    "source logging failed "
+                    f"({extraction.source.value}, error={exc.__class__.__name__}: {exc})"
+                ),
             )
 
     deduplicated_count = sum(1 for artifact in artifacts.values() if artifact.deduplicated)
