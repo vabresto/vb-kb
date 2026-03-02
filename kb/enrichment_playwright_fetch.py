@@ -75,6 +75,41 @@ _LINKEDIN_EXPAND_BUTTON_TEXTS = (
     "Show all",
     "See all",
 )
+_LINKEDIN_DETAIL_SECTIONS = (
+    "experience",
+    "education",
+    "publications",
+    "skills",
+    "languages",
+    "honors",
+    "certifications",
+    "projects",
+    "courses",
+    "volunteering-experiences",
+    "patents",
+)
+_LINKEDIN_MODAL_ROOT_SELECTORS = (
+    ".artdeco-modal",
+    "div[role='dialog']",
+)
+_LINKEDIN_MODAL_CLOSE_SELECTORS = (
+    ".artdeco-modal button[aria-label='Dismiss']",
+    ".artdeco-modal button[aria-label='Close']",
+    ".artdeco-modal button[aria-label*='close' i]",
+    ".artdeco-modal__dismiss",
+    "div[role='dialog'] button[aria-label='Dismiss']",
+    "div[role='dialog'] button[aria-label='Close']",
+)
+_LINKEDIN_EXPAND_EXCLUDED_TOKENS = (
+    "people you may know",
+    "recommend",
+    "suggested",
+    "followers",
+    "connections",
+    "similar profile",
+    "also viewed",
+    "discover more",
+)
 _SKOOL_PROFILE_ENTRY_SELECTORS = (
     "main li",
     "main article li",
@@ -356,7 +391,94 @@ def _collect_linkedin_section_entries(page: Any) -> list[str]:
     return entries
 
 
-def _try_click_expand_control(locator: Any) -> bool:
+def _has_visible_linkedin_modal(page: Any) -> bool:
+    for selector in _LINKEDIN_MODAL_ROOT_SELECTORS:
+        try:
+            locator = page.locator(selector)
+            count = min(locator.count(), 4)
+        except Exception:
+            continue
+        for index in range(count):
+            try:
+                if locator.nth(index).is_visible(timeout=200):
+                    return True
+            except Exception:
+                continue
+    return False
+
+
+def _close_linkedin_modal_if_present(page: Any, wait_settings: RandomWaitSettings) -> bool:
+    if not _has_visible_linkedin_modal(page):
+        return False
+
+    for _ in range(3):
+        clicked_close = False
+        for selector in _LINKEDIN_MODAL_CLOSE_SELECTORS:
+            try:
+                control = page.locator(selector).first
+                if control.count() == 0:
+                    continue
+                if not control.is_visible(timeout=300):
+                    continue
+                control.click(timeout=1_000)
+                clicked_close = True
+                break
+            except Exception:
+                continue
+        if not clicked_close:
+            try:
+                page.keyboard.press("Escape")
+            except Exception:
+                pass
+        try:
+            page.wait_for_timeout(220)
+        except Exception:
+            pass
+        wait_random_delay(page, wait_settings, minimum_ms=70, maximum_ms=180)
+        if not _has_visible_linkedin_modal(page):
+            return True
+    return True
+
+
+def _control_text_candidates(control: Any) -> str:
+    chunks: list[str] = []
+    for attribute in ("aria-label", "id", "data-control-name"):
+        try:
+            value = _normalize_optional_text(control.get_attribute(attribute, timeout=250))
+        except Exception:
+            value = None
+        if value is not None:
+            chunks.append(value)
+    try:
+        text = _normalize_optional_text(control.inner_text(timeout=250))
+    except Exception:
+        text = None
+    if text is not None:
+        chunks.append(text)
+    return " ".join(chunks).lower()
+
+
+def _should_skip_linkedin_expand_control(control: Any, href: str | None) -> bool:
+    text_blob = _control_text_candidates(control)
+    if any(token in text_blob for token in _LINKEDIN_EXPAND_EXCLUDED_TOKENS):
+        return True
+
+    if href is None:
+        return False
+    normalized_href = href.lower()
+    if "/details/" in normalized_href:
+        return True
+    if "/overlay/" in normalized_href:
+        return True
+    if "pymk" in normalized_href or "recommendation" in normalized_href or "miniprofileurn" in normalized_href:
+        return True
+    if normalized_href and not normalized_href.startswith("#"):
+        return True
+    return False
+
+
+def _try_click_expand_control(page: Any, locator: Any, wait_settings: RandomWaitSettings) -> bool:
+    _close_linkedin_modal_if_present(page, wait_settings)
     try:
         if not locator.is_visible(timeout=500):
             return False
@@ -370,47 +492,195 @@ def _try_click_expand_control(locator: Any) -> bool:
         locator.click(timeout=1_500)
     except Exception:
         return False
+    try:
+        page.wait_for_timeout(250)
+    except Exception:
+        pass
+    wait_random_delay(page, wait_settings, minimum_ms=70, maximum_ms=170)
+    if _has_visible_linkedin_modal(page):
+        _close_linkedin_modal_if_present(page, wait_settings)
+        return False
     return True
 
 
 def _expand_linkedin_profile_sections(page: Any, wait_settings: RandomWaitSettings) -> None:
     seen_controls: set[str] = set()
     for _ in range(4):
+        _close_linkedin_modal_if_present(page, wait_settings)
         clicked = 0
-        for button_text in _LINKEDIN_EXPAND_BUTTON_TEXTS:
-            for selector in (
-                f"button:has-text('{button_text}')",
-                f"a:has-text('{button_text}')",
-            ):
-                try:
-                    locator = page.locator(selector)
-                    count = min(locator.count(), 60)
-                except Exception:
-                    continue
-                for index in range(count):
-                    control = locator.nth(index)
-                    href = None
-                    if selector.startswith("a:"):
+        for section_selector in _LINKEDIN_SECTION_SELECTORS:
+            try:
+                section_locator = page.locator(section_selector)
+                section_count = min(section_locator.count(), 30)
+            except Exception:
+                continue
+            for section_index in range(section_count):
+                section = section_locator.nth(section_index)
+                for button_text in _LINKEDIN_EXPAND_BUTTON_TEXTS:
+                    selector = f"button:has-text('{button_text}')"
+                    try:
+                        locator = section.locator(selector)
+                        count = min(locator.count(), 30)
+                    except Exception:
+                        continue
+                    for index in range(count):
+                        control = locator.nth(index)
+                        href = None
                         try:
-                            href = control.get_attribute("href", timeout=500)
+                            href = control.get_attribute("href", timeout=250)
                         except Exception:
                             href = None
-                        if href and "/overlay/" not in href and not href.startswith("#"):
+                        key = f"{section_selector}|{section_index}|{selector}|{index}|{href or ''}"
+                        if key in seen_controls:
                             continue
-                    key = f"{selector}|{index}|{href or ''}"
-                    if key in seen_controls:
-                        continue
-                    if not _try_click_expand_control(control):
-                        continue
-                    seen_controls.add(key)
-                    clicked += 1
-                    try:
-                        page.wait_for_timeout(300)
-                    except Exception:
-                        pass
-                    wait_random_delay(page, wait_settings, minimum_ms=80, maximum_ms=220)
+                        if _should_skip_linkedin_expand_control(control, href):
+                            seen_controls.add(key)
+                            continue
+                        if not _try_click_expand_control(page, control, wait_settings):
+                            continue
+                        seen_controls.add(key)
+                        clicked += 1
+                        try:
+                            page.wait_for_timeout(300)
+                        except Exception:
+                            pass
+                        wait_random_delay(page, wait_settings, minimum_ms=80, maximum_ms=220)
         if clicked == 0:
             break
+
+
+def _linkedin_profile_slug_from_url(url: str) -> str | None:
+    parsed = urlparse(url)
+    host = parsed.netloc.lower()
+    if "linkedin.com" not in host:
+        return None
+    parts = [part for part in parsed.path.split("/") if part]
+    if len(parts) < 2 or parts[0].lower() != "in":
+        return None
+    slug = _normalize_optional_text(parts[1])
+    if slug is None:
+        return None
+    return slug.lower()
+
+
+def _normalize_linkedin_detail_url(url: str, *, profile_slug: str) -> str | None:
+    parsed = urlparse(url)
+    host = parsed.netloc.lower()
+    if "linkedin.com" not in host:
+        return None
+    parts = [part for part in parsed.path.split("/") if part]
+    if len(parts) < 4:
+        return None
+    if parts[0].lower() != "in":
+        return None
+    slug = parts[1].strip().lower()
+    if slug != profile_slug:
+        return None
+    if parts[2].lower() != "details":
+        return None
+    section = parts[3].strip().lower()
+    if section not in _LINKEDIN_DETAIL_SECTIONS:
+        return None
+    return f"https://www.linkedin.com/in/{slug}/details/{section}/"
+
+
+def _collect_linkedin_detail_urls(page: Any, *, profile_url: str) -> list[str]:
+    profile_slug = _linkedin_profile_slug_from_url(profile_url)
+    if profile_slug is None:
+        return []
+
+    urls: list[str] = []
+    seen: set[str] = set()
+    try:
+        locator = page.locator("a[href*='/details/']")
+        count = min(locator.count(), 200)
+    except Exception:
+        return []
+    for index in range(count):
+        try:
+            href = locator.nth(index).get_attribute("href", timeout=500)
+        except Exception:
+            continue
+        normalized_href = _normalize_optional_text(href)
+        if normalized_href is None:
+            continue
+        resolved = urljoin(profile_url, normalized_href)
+        detail_url = _normalize_linkedin_detail_url(resolved, profile_slug=profile_slug)
+        if detail_url is None or detail_url in seen:
+            continue
+        seen.add(detail_url)
+        urls.append(detail_url)
+    return urls
+
+
+def _detail_section_label_from_url(url: str) -> str:
+    parsed = urlparse(url)
+    parts = [part for part in parsed.path.split("/") if part]
+    if len(parts) < 4:
+        return "Details"
+    section = parts[3].strip().replace("-", " ")
+    if not section:
+        return "Details"
+    return section.title()
+
+
+def _normalize_linkedin_detail_entry(raw_value: str) -> str | None:
+    lines = [_normalize_optional_text(line) for line in raw_value.splitlines()]
+    cleaned = _clean_repeated_segments([line for line in lines if line is not None])
+    if not cleaned:
+        return None
+    candidate = " | ".join(cleaned[:8])
+    lowered = candidate.lower()
+    if any(lowered.startswith(prefix) for prefix in _LINKEDIN_SECTION_IGNORED_PREFIXES):
+        return None
+    if len(candidate) > 520:
+        candidate = candidate[:520].rstrip()
+    return candidate
+
+
+def _collect_linkedin_detail_entries(
+    page: Any,
+    *,
+    detail_urls: list[str],
+    wait_settings: RandomWaitSettings,
+) -> list[str]:
+    entries: list[str] = []
+    seen: set[str] = set()
+    for detail_url in detail_urls[:8]:
+        try:
+            page.goto(detail_url, wait_until="domcontentloaded", timeout=60_000)
+            page.wait_for_timeout(900)
+            try:
+                page.wait_for_load_state("networkidle", timeout=7_000)
+            except Exception:
+                pass
+            wait_random_delay(page, wait_settings)
+            _close_linkedin_modal_if_present(page, wait_settings)
+            _scroll_profile(page, wait_settings)
+        except Exception:
+            continue
+        heading = _extract_first_text(page, ("main h1", "main h2", "h1", "h2"), timeout_ms=1_200)
+        normalized_heading = _normalize_linkedin_section_heading(heading) or _detail_section_label_from_url(detail_url)
+        for selector in ("main li", "main section li"):
+            try:
+                locator = page.locator(selector)
+                count = min(locator.count(), 180)
+            except Exception:
+                continue
+            for index in range(count):
+                try:
+                    raw_text = locator.nth(index).inner_text(timeout=1_500)
+                except Exception:
+                    continue
+                normalized = _normalize_linkedin_detail_entry(raw_text)
+                if normalized is None:
+                    continue
+                value = f"{normalized_heading} | {normalized}"
+                if value in seen:
+                    continue
+                seen.add(value)
+                entries.append(value)
+    return entries
 
 
 def _normalize_skool_entry(raw_value: str) -> str | None:
@@ -511,16 +781,22 @@ def _extract_linkedin_facts(
     cleaned_title = _normalize_linkedin_title(title)
     cleaned_profile_headline = _normalize_linkedin_profile_headline(profile_headline)
     headline_value = cleaned_profile_headline or cleaned_title
+    headline_company: str | None = None
     _append_fact(facts, attribute="headline", value=headline_value, confidence="medium")
     _append_fact(facts, attribute="about", value=description, confidence="low")
     if headline_value is not None:
         company_match = _COMPANY_HINT_RE.search(headline_value)
         if company_match is not None:
+            headline_company = company_match.group(1)
             _append_fact(
                 facts,
                 attribute="current_company",
-                value=company_match.group(1),
-                confidence="low",
+                value=headline_company,
+                confidence="medium",
+                metadata={
+                    "source_section": "headline",
+                    "inferred": True,
+                },
             )
     experience_values = [_normalize_optional_text(entry) for entry in (experience_entries or [])]
     normalized_experiences = _deduplicate_text_rows([entry for entry in experience_values if entry is not None])
@@ -529,7 +805,7 @@ def _extract_linkedin_facts(
             facts,
             attribute="experience",
             value=entry,
-            confidence="low",
+            confidence="medium",
             metadata={
                 "source_section": "experience",
                 "ordinal": index + 1,
@@ -541,22 +817,25 @@ def _extract_linkedin_facts(
             facts,
             attribute="current_role",
             value=role,
-            confidence="low",
+            confidence="medium",
             metadata={
                 "source_section": "experience",
                 "inferred": True,
             },
         )
-        _append_fact(
-            facts,
-            attribute="current_company",
-            value=company,
-            confidence="low",
-            metadata={
-                "source_section": "experience",
-                "inferred": True,
-            },
-        )
+        normalized_headline_company = _normalize_optional_text(headline_company.lower()) if headline_company else None
+        normalized_experience_company = _normalize_optional_text(company.lower()) if company else None
+        if normalized_experience_company is not None and normalized_experience_company != normalized_headline_company:
+            _append_fact(
+                facts,
+                attribute="current_company",
+                value=company,
+                confidence="medium",
+                metadata={
+                    "source_section": "experience",
+                    "inferred": True,
+                },
+            )
     normalized_sections = _deduplicate_text_rows([entry for entry in (section_entries or []) if entry])
     for index, entry in enumerate(normalized_sections):
         _append_fact(
@@ -867,14 +1146,31 @@ def _capture_profile_payload(
     experience_entries: list[str] = []
     skool_entries: list[str] = []
     section_entries: list[str] = []
+    html = page.content()
     if source == SupportedSource.linkedin:
+        _close_linkedin_modal_if_present(page, wait_settings)
         _expand_linkedin_profile_sections(page, wait_settings)
+        _close_linkedin_modal_if_present(page, wait_settings)
         profile_headline = _extract_first_text(page, _LINKEDIN_HEADLINE_SELECTORS)
         experience_entries = _collect_linkedin_experience_entries(page)
         section_entries = _collect_linkedin_section_entries(page)
+        html = page.content()
+        detail_urls = _collect_linkedin_detail_urls(page, profile_url=source_url)
+        if detail_urls:
+            _log_runtime(
+                f"Captured {len(detail_urls)} LinkedIn detail page link(s); collecting expanded section data."
+            )
+        detail_entries = _collect_linkedin_detail_entries(
+            page,
+            detail_urls=detail_urls,
+            wait_settings=wait_settings,
+        )
+        if detail_entries:
+            _log_runtime(f"Captured {len(detail_entries)} LinkedIn detail section entries.")
+        section_entries = _deduplicate_text_rows(section_entries + detail_entries)
     else:
         skool_entries = _collect_skool_profile_entries(page)
-    html = page.content()
+        html = page.content()
     return {
         "source_url": source_url,
         "title": title,

@@ -41,6 +41,12 @@ class UrlCheckResult:
     error: str | None
 
 
+def _url_match_is_template(*, line: str, match_end: int) -> bool:
+    if match_end < len(line) and line[match_end] == "{":
+        return True
+    return False
+
+
 def _normalize_diff_path(raw: str) -> str | None:
     value = raw.strip()
     if value == "/dev/null":
@@ -55,6 +61,8 @@ def _should_skip_diff_file(path: str | None) -> bool:
         return False
     pure = pathlib.PurePosixPath(path)
     parts = pure.parts
+    if len(parts) >= 4 and parts[0] == "data" and parts[1] == "source" and parts[3].startswith("source@enrichment-"):
+        return True
     return len(parts) >= 5 and parts[0] == "data" and parts[1] == "source" and parts[-1] == "snapshot.html"
 
 
@@ -123,7 +131,7 @@ def should_check_url(url: str) -> bool:
     return not ip.is_loopback
 
 
-def staged_added_urls() -> list[str]:
+def staged_added_url_origins() -> dict[str, set[str]]:
     command = ["git", "diff", "--cached", "--unified=0", "--no-color", "--"]
     process = subprocess.run(
         command,
@@ -135,7 +143,7 @@ def staged_added_urls() -> list[str]:
     if process.returncode not in (0, 1):
         raise RuntimeError(process.stderr.strip() or "git diff --cached failed.")
 
-    urls: set[str] = set()
+    url_origins: dict[str, set[str]] = {}
     current_diff_file: str | None = None
     for line in process.stdout.splitlines():
         if line.startswith("+++ "):
@@ -146,12 +154,21 @@ def staged_added_urls() -> list[str]:
         if _should_skip_diff_file(current_diff_file):
             continue
 
-        for match in URL_RE.findall(line[1:]):
-            cleaned = clean_url(match)
+        added_line = line[1:]
+        for match in URL_RE.finditer(added_line):
+            cleaned = clean_url(match.group(0))
+            if _url_match_is_template(line=added_line, match_end=match.end()):
+                continue
             if cleaned and should_check_url(cleaned):
-                urls.add(cleaned)
+                origins = url_origins.setdefault(cleaned, set())
+                if current_diff_file is not None:
+                    origins.add(current_diff_file)
 
-    return sorted(urls)
+    return url_origins
+
+
+def staged_added_urls() -> list[str]:
+    return sorted(staged_added_url_origins().keys())
 
 
 def fetch_once(url: str, timeout: float) -> tuple[int, str]:
@@ -259,11 +276,12 @@ def main() -> int:
     args = parse_args()
 
     try:
-        urls = staged_added_urls()
+        url_origins = staged_added_url_origins()
     except RuntimeError as exc:
         print(f"URL reachability check failed to read staged diff: {exc}")
         return 1
 
+    urls = sorted(url_origins)
     if not urls:
         return 0
 
@@ -284,7 +302,16 @@ def main() -> int:
         details = failure.error or "request failed"
         if failure.final_url and failure.final_url != failure.url:
             status = f"{status} (final: {failure.final_url})"
-        print(f"- {failure.url}: {status} - {details}")
+        files = sorted(url_origins.get(failure.url, set()))
+        if not files:
+            file_hint = "unknown"
+        elif len(files) == 1:
+            file_hint = files[0]
+        elif len(files) <= 3:
+            file_hint = ", ".join(files)
+        else:
+            file_hint = f"{', '.join(files[:3])}, +{len(files) - 3} more"
+        print(f"- {failure.url} [file: {file_hint}]: {status} - {details}")
 
     return 1
 

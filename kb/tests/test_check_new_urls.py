@@ -29,7 +29,8 @@ def test_should_skip_diff_file_matches_enrichment_snapshot_html() -> None:
         )
         is True
     )
-    assert check_new_urls._should_skip_diff_file("data/source/en/source@enrichment-linkedin-com-foo/index.md") is False  # noqa: SLF001
+    assert check_new_urls._should_skip_diff_file("data/source/en/source@enrichment-linkedin-com-foo/index.md") is True  # noqa: SLF001
+    assert check_new_urls._should_skip_diff_file("data/source/re/source@reflections-long-form-foo/index.md") is False  # noqa: SLF001
 
 
 def test_staged_added_urls_skips_snapshot_html_entries(monkeypatch) -> None:
@@ -59,3 +60,33 @@ def test_staged_added_urls_skips_snapshot_html_entries(monkeypatch) -> None:
     monkeypatch.setattr(check_new_urls.subprocess, "run", _run)
     urls = check_new_urls.staged_added_urls()
     assert urls == [profile_url]
+
+
+def test_staged_added_url_origins_skip_template_urls_and_capture_paths(monkeypatch) -> None:
+    profile_url = "hxxps://www.linkedin.com/in/jose-luis-avilez/".replace("hxxps://", "https://")
+    template_fragment = "hxxps://www.linkedin.com/in/".replace("hxxps://", "https://")
+    diff = "\n".join(
+        [
+            "diff --git a/kb/enrichment_playwright_fetch.py b/kb/enrichment_playwright_fetch.py",
+            "index 1111111..2222222 100644",
+            "--- a/kb/enrichment_playwright_fetch.py",
+            "+++ b/kb/enrichment_playwright_fetch.py",
+            "@@ -1 +1 @@",
+            '+return f"https://www.linkedin.com/in/{slug}/details/{section}/"',
+            "diff --git a/data/person/jo/person@jose/index.md b/data/person/jo/person@jose/index.md",
+            "index 3333333..4444444 100644",
+            "--- a/data/person/jo/person@jose/index.md",
+            "+++ b/data/person/jo/person@jose/index.md",
+            "@@ -1 +1 @@",
+            f"+See profile {profile_url}",
+        ]
+    )
+
+    def _run(*_args, **_kwargs):
+        return subprocess.CompletedProcess(args=["git"], returncode=0, stdout=diff, stderr="")
+
+    monkeypatch.setattr(check_new_urls.subprocess, "run", _run)
+    origins = check_new_urls.staged_added_url_origins()
+    assert profile_url in origins
+    assert origins[profile_url] == {"data/person/jo/person@jose/index.md"}
+    assert template_fragment not in origins

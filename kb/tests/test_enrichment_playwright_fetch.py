@@ -6,6 +6,7 @@ from kb.enrichment_playwright_fetch import (
     _deduplicate_fact_rows,
     _extract_linkedin_facts,
     _extract_skool_facts,
+    _normalize_linkedin_detail_url,
     _profile_resolution_reason,
     _resolve_source,
     _search_query_from_slug,
@@ -30,11 +31,18 @@ def test_extract_linkedin_facts_from_title_and_description() -> None:
     assert values_by_attribute["headline"] == "Jane Founder at Future Labs"
     assert values_by_attribute["about"] == "Building applied AI tools."
     assert values_by_attribute["current_company"] == "Future Labs"
+    current_company_facts = [fact for fact in facts if fact["attribute"] == "current_company"]
+    assert len(current_company_facts) == 1
+    assert current_company_facts[0]["confidence"] == "medium"
     experience_values = [fact["value"] for fact in facts if fact["attribute"] == "experience"]
+    experience_confidences = [fact["confidence"] for fact in facts if fact["attribute"] == "experience"]
     assert experience_values == [
         "Founder | Future Labs · Full-time | Jan 2021 - Present",
         "Engineer | Prior Co | 2018 - 2020",
     ]
+    assert experience_confidences == ["medium", "medium"]
+    current_role_fact = next(fact for fact in facts if fact["attribute"] == "current_role")
+    assert current_role_fact["confidence"] == "medium"
 
 
 def test_extract_linkedin_facts_strips_badge_prefix_and_prefers_profile_headline() -> None:
@@ -52,6 +60,8 @@ def test_extract_linkedin_facts_strips_badge_prefix_and_prefers_profile_headline
     values_by_attribute = {fact["attribute"]: fact["value"] for fact in facts if fact["attribute"] != "section_entry"}
     assert values_by_attribute["headline"] == "Quantitative Researcher at Squarepoint Capital"
     assert values_by_attribute["current_company"] == "Squarepoint Capital"
+    current_company_fact = next(fact for fact in facts if fact["attribute"] == "current_company")
+    assert current_company_fact["confidence"] == "medium"
     section_values = [fact["value"] for fact in facts if fact["attribute"] == "section_entry"]
     assert section_values == [
         "Experience | Quantitative Researcher | Squarepoint Capital",
@@ -225,6 +235,42 @@ def test_canonical_profile_url_normalizes_source_specific_paths() -> None:
     )
     assert linkedin == "https://www.linkedin.com/in/Jane-Founder/"
     assert skool == "https://www.skool.com/@jane-founder"
+
+
+def test_normalize_linkedin_detail_url_filters_to_known_sections_for_profile() -> None:
+    experience_url = "hxxps://www.linkedin.com/in/Jane-Founder/details/experience/?trk=public_profile".replace(
+        "hxxps://", "https://"
+    )
+    people_also_viewed_url = "hxxps://www.linkedin.com/in/jane-founder/details/people-also-viewed/".replace(
+        "hxxps://", "https://"
+    )
+    other_profile_url = "hxxps://www.linkedin.com/in/another-person/details/experience/".replace(
+        "hxxps://", "https://"
+    )
+    normalized_expected = "hxxps://www.linkedin.com/in/jane-founder/details/experience/".replace(
+        "hxxps://", "https://"
+    )
+    assert (
+        _normalize_linkedin_detail_url(
+            experience_url,
+            profile_slug="jane-founder",
+        )
+        == normalized_expected
+    )
+    assert (
+        _normalize_linkedin_detail_url(
+            people_also_viewed_url,
+            profile_slug="jane-founder",
+        )
+        is None
+    )
+    assert (
+        _normalize_linkedin_detail_url(
+            other_profile_url,
+            profile_slug="jane-founder",
+        )
+        is None
+    )
 
 
 def test_select_best_profile_candidate_prefers_slug_match() -> None:

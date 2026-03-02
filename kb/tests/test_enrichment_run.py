@@ -553,6 +553,62 @@ class _PersonFactsAdapter(_SuccessfulAdapter):
         )
 
 
+class _PersonFactsWithExperienceAdapter(_SuccessfulAdapter):
+    def normalize(self, request: NormalizeRequest) -> NormalizeResult:
+        return NormalizeResult(
+            facts=[
+                NormalizedFact(
+                    attribute="current_company",
+                    value="Future Labs",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="current_role",
+                    value="Chief Executive Officer",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value="Chief Executive Officer | Future Labs · Full-time | Jan 2024 - Present · 2 yrs",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 1},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value="Engineer | Prior Co | 2020 - 2024",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 2},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value="Research Intern | Example Labs | 2019 - 2019",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 3},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value="Machine Learning, Deep Learning and +3 skills",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 4},
+                ),
+            ]
+        )
+
+
 def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: Path) -> None:
     person_index_path = _write_person_fixture(tmp_path)
     _, body_before = _read_frontmatter_and_body(person_index_path)
@@ -591,6 +647,41 @@ def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: 
     assert employment_rows[-1]["organization"] == "Legacy Labs"
     assert employment_rows[-1]["role"] == "Founder"
     assert employment_rows[-1]["source_path"] == "data/person/fo/person@founder-name/index.md"
+
+
+def test_run_enrichment_maps_experience_facts_into_employment_history_jsonl(tmp_path: Path) -> None:
+    person_index_path = _write_person_fixture(tmp_path)
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _PersonFactsWithExperienceAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    report = run_enrichment_for_entity(
+        "person@founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        run_id="enrich-person-experience-history-run",
+    )
+
+    assert report.status == RunStatus.succeeded
+
+    employment_rows = [
+        json.loads(line)
+        for line in (person_index_path.parent / "employment-history.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(employment_rows) == 3
+    assert employment_rows[1]["organization"] == "Legacy Labs"
+    assert employment_rows[1]["role"] == "Founder"
+    assert employment_rows[2]["organization"] == "Example Labs"
+    assert employment_rows[2]["role"] == "Research Intern"
+    assert employment_rows[2]["period"] == "2019 - 2019"
+    assert employment_rows[2]["source_section"] == "enrichment_experience_fact"
+    assert employment_rows[2]["source"] == "Enrichment experience fact (linkedin.com)."
 
 
 def test_run_enrichment_for_entity_fails_when_promoted_fact_lacks_source_linkage(

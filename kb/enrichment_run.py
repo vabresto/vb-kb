@@ -54,6 +54,27 @@ _ENRICHMENT_PROVENANCE_SECTION_RE = re.compile(
 )
 _MARKDOWN_LINK_RE = re.compile(r"^\[(?P<label>[^\]]+)\]\((?P<target>[^)]+)\)$")
 _EMPLOYMENT_ID_RE = re.compile(r"^employment-(?P<index>\d{3})$")
+_EMPLOYMENT_PERIOD_MONTH_RE = re.compile(
+    r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|"
+    r"nov(?:ember)?|dec(?:ember)?)\b",
+    re.IGNORECASE,
+)
+_EMPLOYMENT_PERIOD_YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
+_ALPHANUM_TOKEN_RE = re.compile(r"[a-z0-9]+")
+_ORG_TOKEN_STOPWORDS = frozenset(
+    {
+        "the",
+        "co",
+        "company",
+        "inc",
+        "llc",
+        "ltd",
+        "corp",
+        "corporation",
+        "limited",
+    }
+)
 _ROLE_ATTRIBUTE_PRIORITY = {
     "current_role": 0,
     "role": 1,
@@ -939,6 +960,14 @@ def _map_person_facts(
             archived_on=archived_on,
             run_id=run_id,
         )
+
+    employment_rows_added += _append_employment_rows_from_experience_facts(
+        person_index_rel=person_index_rel,
+        person_index_path=person_index_path,
+        promoted_facts=promoted_facts,
+        current_firm=_normalize_text(frontmatter.get("firm")),
+        current_role=_normalize_text(frontmatter.get("role")),
+    )
 
     if frontmatter_updated_fields or body_updated:
         person_index_path.write_text(
@@ -1857,6 +1886,177 @@ def _append_prior_current_role(
         payload=next_row.model_dump(mode="json", exclude_none=True),
     )
     return 1
+
+
+def _normalize_signature_text(value: str) -> str:
+    return " ".join(value.strip().lower().split())
+
+
+def _employment_row_signature(*, period: str, organization: str, role: str) -> tuple[str, str, str]:
+    return (
+        _normalize_signature_text(period),
+        _normalize_signature_text(organization),
+        _normalize_signature_text(role),
+    )
+
+
+def _organization_tokens(value: str) -> set[str]:
+    tokens = {token for token in _ALPHANUM_TOKEN_RE.findall(value.lower()) if token}
+    return {token for token in tokens if token not in _ORG_TOKEN_STOPWORDS}
+
+
+def _organizations_equivalent(left: str, right: str) -> bool:
+    left_tokens = _organization_tokens(left)
+    right_tokens = _organization_tokens(right)
+    if not left_tokens or not right_tokens:
+        return _normalize_signature_text(left) == _normalize_signature_text(right)
+    if left_tokens == right_tokens:
+        return True
+    smaller, larger = (
+        (left_tokens, right_tokens) if len(left_tokens) <= len(right_tokens) else (right_tokens, left_tokens)
+    )
+    return smaller.issubset(larger)
+
+
+def _looks_like_experience_period(value: str) -> bool:
+    normalized = _normalize_text(value)
+    if normalized is None:
+        return False
+    lowered = normalized.lower()
+    if " - " not in normalized and " to " not in lowered:
+        return False
+    if "present" in lowered:
+        return True
+    if _EMPLOYMENT_PERIOD_YEAR_RE.search(normalized):
+        return True
+    if _EMPLOYMENT_PERIOD_MONTH_RE.search(normalized):
+        return True
+    return False
+
+
+def _parse_experience_fact_row(value: str) -> tuple[str, str, str, str | None] | None:
+    segments = [_normalize_text(segment) for segment in value.split("|")]
+    parts = [segment for segment in segments if segment is not None]
+    if len(parts) < 3:
+        return None
+
+    role = parts[0]
+    organization_parts = [_normalize_text(part) for part in parts[1].split("·")]
+    organization_tokens = [part for part in organization_parts if part is not None]
+    if role is None or not organization_tokens:
+        return None
+    organization = organization_tokens[0]
+
+    period: str | None = None
+    for segment in parts[2:]:
+        candidate = _normalize_text(segment.split("·", 1)[0])
+        if candidate is None:
+            continue
+        if _looks_like_experience_period(candidate):
+            period = candidate
+            break
+    if period is None:
+        return None
+
+    notes_parts: list[str] = []
+    if len(organization_tokens) > 1:
+        notes_parts.append(", ".join(organization_tokens[1:]))
+    for segment in parts[2:]:
+        if segment == period:
+            continue
+        candidate = _normalize_text(segment.split("·", 1)[0])
+        if candidate is not None and _looks_like_experience_period(candidate):
+            continue
+        notes_parts.append(segment)
+    deduplicated_notes: list[str] = []
+    for item in notes_parts:
+        if not deduplicated_notes or deduplicated_notes[-1] != item:
+            deduplicated_notes.append(item)
+    notes_text = _normalize_text(" | ".join(deduplicated_notes))
+    if notes_text is not None and len(notes_text) > 280:
+        notes_text = notes_text[:280].rstrip()
+
+    return period, organization, role, notes_text
+
+
+def _experience_fact_sort_key(fact: _PromotedFact) -> tuple[int, datetime, str]:
+    ordinal_raw = _metadata_value(fact.metadata, "ordinal")
+    try:
+        ordinal = int(ordinal_raw)
+    except (TypeError, ValueError):
+        ordinal = 10_000
+    return (ordinal, fact.retrieved_at, fact.value)
+
+
+def _append_employment_rows_from_experience_facts(
+    *,
+    person_index_rel: str,
+    person_index_path: Path,
+    promoted_facts: list[_PromotedFact],
+    current_firm: str | None,
+    current_role: str | None,
+) -> int:
+    experience_facts = [fact for fact in promoted_facts if fact.attribute == "experience"]
+    if not experience_facts:
+        return 0
+
+    employment_path = person_index_path.parent / "employment-history.jsonl"
+    existing_rows = _load_employment_history_rows(path=employment_path)
+    seen_signatures = {
+        _employment_row_signature(
+            period=row.period,
+            organization=row.organization,
+            role=row.role,
+        )
+        for row in existing_rows
+    }
+    added_rows = 0
+
+    current_firm_normalized = _normalize_text(current_firm)
+    current_role_normalized = _normalize_text(current_role)
+
+    for fact in sorted(experience_facts, key=_experience_fact_sort_key):
+        parsed = _parse_experience_fact_row(fact.value)
+        if parsed is None:
+            continue
+        period, organization, role, notes = parsed
+
+        if (
+            current_firm_normalized is not None
+            and current_role_normalized is not None
+            and _normalize_signature_text(role) == _normalize_signature_text(current_role_normalized)
+            and _organizations_equivalent(organization, current_firm_normalized)
+        ):
+            continue
+
+        signature = _employment_row_signature(period=period, organization=organization, role=role)
+        if signature in seen_signatures:
+            continue
+
+        next_row = EmploymentHistoryRow(
+            id=_next_employment_row_id(existing_rows),
+            period=period,
+            organization=organization,
+            organization_ref=_guess_organization_ref(
+                existing_rows=existing_rows,
+                organization=organization,
+            ),
+            role=role,
+            notes=notes,
+            source=f"Enrichment experience fact ({fact.source.value}).",
+            source_path=person_index_rel,
+            source_section="enrichment_experience_fact",
+            source_row=_next_source_row_number(existing_rows),
+        )
+        _append_jsonl_row(
+            path=employment_path,
+            payload=next_row.model_dump(mode="json", exclude_none=True),
+        )
+        existing_rows.append(next_row)
+        seen_signatures.add(signature)
+        added_rows += 1
+
+    return added_rows
 
 
 def _load_employment_history_rows(*, path: Path) -> list[EmploymentHistoryRow]:
