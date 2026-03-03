@@ -45,6 +45,7 @@ class FetchRequest(KBBaseModel):
     entity_ref: str
     entity_slug: str
     run_id: str
+    source_url_override: str | None = None
     started_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
 
     @field_validator("entity_ref", "entity_slug", "run_id")
@@ -53,6 +54,16 @@ class FetchRequest(KBBaseModel):
         text = value.strip()
         if not text:
             raise ValueError("must be non-empty")
+        return text
+
+    @field_validator("source_url_override")
+    @classmethod
+    def validate_source_url_override(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip()
+        if not text:
+            raise ValueError("source_url_override must be non-empty when provided")
         return text
 
 

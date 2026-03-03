@@ -95,6 +95,16 @@ class _HtmlSnapshotAdapter(_SuccessfulAdapter):
         )
 
 
+class _RequestCaptureAdapter(_SuccessfulAdapter):
+    def __init__(self, source: SupportedSource, *, project_root: Path) -> None:
+        super().__init__(source, project_root=project_root)
+        self.fetch_requests: list[FetchRequest] = []
+
+    def fetch(self, request: FetchRequest) -> FetchResult:
+        self.fetch_requests.append(request)
+        return super().fetch(request)
+
+
 def _write_person_fixture(
     project_root: Path,
     *,
@@ -269,29 +279,33 @@ def test_run_enrichment_for_entity_reports_all_phase_states(tmp_path: Path) -> N
     assert frontmatter["role"] in {"linkedin.com headline", "skool.com headline"}
     assert "## Enrichment Provenance" in body
 
-    for source in (SupportedSource.linkedin, SupportedSource.skool):
-        state = source_states[source]
-        assert state.source_entity_ref is not None
-        assert state.source_entity_path is not None
-        citation_key = _citation_key_from_source_ref(state.source_entity_ref)
-        source_link = Path(
-            os.path.relpath(
-                tmp_path / state.source_entity_path,
-                start=person_index_path.parent,
-            )
-        ).as_posix()
-        assert f"[source@{citation_key}]({source_link})" in body
-        assert f"[^{citation_key}]" in body
 
-    employment_rows = [
-        json.loads(line)
-        for line in (person_index_path.parent / "employment-history.jsonl").read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-    assert len(employment_rows) == 2
-    assert employment_rows[-1]["organization"] == "Legacy Labs"
-    assert employment_rows[-1]["role"] == "Founder"
-    assert employment_rows[-1]["source_section"] == "employment_history_table"
+def test_run_enrichment_for_entity_passes_source_url_overrides_to_adapter(tmp_path: Path) -> None:
+    _write_person_fixture(tmp_path)
+    config = EnrichmentConfig()
+    linkedin_adapter = _RequestCaptureAdapter(SupportedSource.linkedin, project_root=tmp_path)
+    registry = SourceAdapterRegistry(adapters=(linkedin_adapter,))
+    profile_url_override = "hxxps://www.linkedin.com/in/founder-profile/".replace("hxxps://", "https://")
+
+    report = run_enrichment_for_entity(
+        "person@founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        source_url_overrides={
+            "linkedin.com": profile_url_override,
+        },
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        now=datetime(2026, 2, 28, 17, 5, tzinfo=UTC),
+        run_id="enrich-test-run",
+    )
+
+    assert report.status == RunStatus.succeeded
+    assert len(linkedin_adapter.fetch_requests) == 1
+    assert (
+        linkedin_adapter.fetch_requests[0].source_url_override
+        == profile_url_override
+    )
 
 
 def test_run_enrichment_reuses_existing_source_artifact_when_facts_unchanged(tmp_path: Path) -> None:

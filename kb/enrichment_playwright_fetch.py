@@ -245,6 +245,18 @@ def _require_extract_slug() -> str:
     return slug
 
 
+def _resolve_target_profile_url(*, source: SupportedSource, entity_slug: str) -> str:
+    override = _normalize_optional_text(os.environ.get("KB_ENRICHMENT_EXTRACT_PROFILE_URL"))
+    if override is not None:
+        normalized = _canonical_profile_url(source, override)
+        if normalized is None:
+            raise RuntimeError(
+                "KB_ENRICHMENT_EXTRACT_PROFILE_URL must be a valid profile URL for the selected source"
+            )
+        return normalized
+    return _PROFILE_URLS[source].format(slug=entity_slug)
+
+
 def _require_session_path(*, cwd: Path) -> Path:
     raw_path = _normalize_optional_text(os.environ.get("KB_ENRICHMENT_EXTRACT_SESSION_PATH"))
     if raw_path is None:
@@ -1320,7 +1332,7 @@ def _run_fetch(source: SupportedSource) -> int:
     session_state_path = _require_session_path(cwd=cwd)
     headless = _parse_headless(os.environ.get("KB_ENRICHMENT_EXTRACT_HEADLESS"))
     wait_settings = parse_random_wait_settings()
-    target_url = _PROFILE_URLS[source].format(slug=entity_slug)
+    target_url = _resolve_target_profile_url(source=source, entity_slug=entity_slug)
 
     from playwright.sync_api import sync_playwright
 

@@ -114,6 +114,7 @@ def test_skool_adapter_protocol_fetch_normalize_and_snapshot(tmp_path: Path) -> 
 def test_skool_adapter_fetch_bootstraps_when_session_missing(tmp_path: Path) -> None:
     config = EnrichmentConfig()
     observed: dict[str, Any] = {"bootstrap_calls": 0}
+    profile_url_override = "hxxps://www.skool.com/@founder-profile".replace("hxxps://", "https://")
 
     def bootstrap_runner(source: SupportedSource, **kwargs) -> None:
         observed["bootstrap_calls"] += 1
@@ -130,6 +131,7 @@ def test_skool_adapter_fetch_bootstraps_when_session_missing(tmp_path: Path) -> 
         observed["argv"] = argv
         observed["extract_source"] = env["KB_ENRICHMENT_EXTRACT_SOURCE"]
         observed["extract_slug"] = env["KB_ENRICHMENT_EXTRACT_ENTITY_SLUG"]
+        observed["profile_url"] = env.get("KB_ENRICHMENT_EXTRACT_PROFILE_URL")
         observed["cwd"] = cwd
         payload = {
             "source_url": "https://www.skool.com/founders",
@@ -145,7 +147,12 @@ def test_skool_adapter_fetch_bootstraps_when_session_missing(tmp_path: Path) -> 
         bootstrap_login_runner=bootstrap_runner,
     )
 
-    fetch_result = adapter.fetch(_fetch_request(entity_slug="founder"))
+    fetch_result = adapter.fetch(
+        _fetch_request(
+            entity_slug="founder",
+            source_url_override=profile_url_override,
+        )
+    )
     assert fetch_result.source_url == "https://www.skool.com/founders"
     assert observed["bootstrap_calls"] == 1
     assert observed["bootstrap_source"] == SupportedSource.skool
@@ -153,6 +160,7 @@ def test_skool_adapter_fetch_bootstraps_when_session_missing(tmp_path: Path) -> 
     assert observed["argv"] == ["skool-fetch"]
     assert observed["extract_source"] == "skool.com"
     assert observed["extract_slug"] == "founder"
+    assert observed["profile_url"] == profile_url_override
     assert observed["cwd"] == tmp_path.resolve()
 
 
@@ -268,10 +276,15 @@ def test_skool_authenticate_uses_request_session_path_with_bootstrap_fallback(tm
     assert observed["config_session_path"] == requested_path
 
 
-def _fetch_request(*, entity_slug: str = "example") -> FetchRequest:
+def _fetch_request(
+    *,
+    entity_slug: str = "example",
+    source_url_override: str | None = None,
+) -> FetchRequest:
     return FetchRequest(
         entity_ref="person/test/example.md",
         entity_slug=entity_slug,
         run_id="run-001",
+        source_url_override=source_url_override,
         started_at=datetime(2026, 2, 28, 15, 30, tzinfo=UTC),
     )

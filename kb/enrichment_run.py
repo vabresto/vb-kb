@@ -454,6 +454,7 @@ def run_enrichment_for_entity(
     selected_sources: Iterable[SupportedSource | str] | None,
     config: EnrichmentConfig,
     project_root: Path,
+    source_url_overrides: Mapping[SupportedSource | str, str] | None = None,
     adapter_registry: SourceAdapterRegistry | None = None,
     environ: Mapping[str, str] | None = None,
     now: datetime | None = None,
@@ -462,6 +463,7 @@ def run_enrichment_for_entity(
     resolved_root = project_root.resolve()
     resolved_target = resolve_entity_target(entity_target)
     resolved_sources = _normalize_sources(selected_sources)
+    resolved_source_url_overrides = _normalize_source_url_overrides(source_url_overrides)
     started_at = _normalize_now(now)
     resolved_run_id = run_id or _build_run_id(started_at)
     registry = adapter_registry or build_default_adapter_registry(
@@ -491,6 +493,7 @@ def run_enrichment_for_entity(
             entity_ref=resolved_target.entity_ref,
             entity_slug=resolved_target.entity_slug,
             run_id=resolved_run_id,
+            source_url_override=resolved_source_url_overrides.get(source),
             started_at=started_at,
         )
         try:
@@ -2401,6 +2404,27 @@ def _normalize_sources(selected_sources: Iterable[SupportedSource | str] | None)
     if not normalized:
         return tuple(source for source in SupportedSource)
     return tuple(normalized)
+
+
+def _normalize_source_url_overrides(
+    source_url_overrides: Mapping[SupportedSource | str, str] | None,
+) -> dict[SupportedSource, str]:
+    if source_url_overrides is None:
+        return {}
+
+    normalized: dict[SupportedSource, str] = {}
+    for source, url in source_url_overrides.items():
+        try:
+            resolved_source = source if isinstance(source, SupportedSource) else SupportedSource(str(source).strip())
+        except ValueError as exc:
+            raise EnrichmentRunError(f"unsupported enrichment source '{source}' in source_url_overrides") from exc
+        normalized_url = _normalize_text(url)
+        if normalized_url is None:
+            raise EnrichmentRunError(
+                f"source_url_overrides entry for '{resolved_source.value}' must be a non-empty URL"
+            )
+        normalized[resolved_source] = normalized_url
+    return normalized
 
 
 def _build_snapshot_output_path(

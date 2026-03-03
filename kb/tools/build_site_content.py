@@ -37,6 +37,8 @@ PERSON_FIELDS: list[tuple[str, str]] = [
     ("role", "Current Role"),
     ("location", "Location"),
     ("relationship-status", "Relationship Status"),
+    ("how-we-met", "How We Met"),
+    ("why-added", "Why Added"),
     ("focus-areas", "Focus Areas"),
     ("website", "Website"),
     ("linkedin", "LinkedIn"),

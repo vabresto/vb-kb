@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from kb.enrichment_config import SupportedSource
 from kb.enrichment_playwright_fetch import (
     _canonical_profile_url,
@@ -8,6 +10,7 @@ from kb.enrichment_playwright_fetch import (
     _extract_skool_facts,
     _normalize_linkedin_detail_url,
     _profile_resolution_reason,
+    _resolve_target_profile_url,
     _resolve_source,
     _search_query_from_slug,
     _select_best_profile_candidate,
@@ -217,6 +220,23 @@ def test_profile_resolution_reason_detects_missing_profile_text() -> None:
 
 def test_search_query_from_slug_normalizes_tokens() -> None:
     assert _search_query_from_slug("jose-luis_avilez") == "jose luis avilez"
+
+
+def test_resolve_target_profile_url_uses_env_override_when_present(monkeypatch) -> None:
+    override = "hxxps://www.linkedin.com/in/Jane-Founder/?trk=abc".replace("hxxps://", "https://")
+    expected = "hxxps://www.linkedin.com/in/Jane-Founder/".replace("hxxps://", "https://")
+    monkeypatch.setenv("KB_ENRICHMENT_EXTRACT_PROFILE_URL", override)
+    resolved = _resolve_target_profile_url(source=SupportedSource.linkedin, entity_slug="jane-founder")
+    assert resolved == expected
+
+
+def test_resolve_target_profile_url_rejects_invalid_override(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "KB_ENRICHMENT_EXTRACT_PROFILE_URL",
+        "hxxps://example.com/profile".replace("hxxps://", "https://"),
+    )
+    with pytest.raises(RuntimeError, match="valid profile URL"):
+        _resolve_target_profile_url(source=SupportedSource.skool, entity_slug="jane-founder")
 
 
 def test_unwrap_search_redirect_url_decodes_duckduckgo_target() -> None:

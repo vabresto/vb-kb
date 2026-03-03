@@ -193,6 +193,13 @@ class SkoolSourceAdapter(SourceAdapter):
             auth.used_session_state_path or self._config.sources[self.source].session_state_path
         )
         run_env["KB_ENRICHMENT_EXTRACT_HEADLESS"] = "true" if self._resolve_headless() else "false"
+        if request.source_url_override is not None:
+            run_env["KB_ENRICHMENT_EXTRACT_PROFILE_URL"] = request.source_url_override
+            runtime_log(
+                "skool-adapter",
+                f"using source URL override: {request.source_url_override}",
+                environ=self._environ,
+            )
 
         command_result = self._fetch_runner(argv, run_env, self._project_root)
         if command_result.returncode != 0:
@@ -220,7 +227,11 @@ class SkoolSourceAdapter(SourceAdapter):
                 details=_trim_output(signal_text) or "payload indicated unsupported flow",
             )
 
-        source_url = _resolve_source_url(payload, entity_slug=request.entity_slug)
+        source_url = _resolve_source_url(
+            payload,
+            entity_slug=request.entity_slug,
+            source_url_override=request.source_url_override,
+        )
         retrieved_at = _resolve_retrieved_at(payload, fallback=request.started_at)
         fact_payload = payload.get("facts")
         fact_payload_count = len(fact_payload) if isinstance(fact_payload, list) else 0
@@ -462,10 +473,17 @@ def _parse_confidence_level(value: Any, *, field: str) -> ConfidenceLevel:
         ) from exc
 
 
-def _resolve_source_url(payload: dict[str, Any], *, entity_slug: str) -> str:
+def _resolve_source_url(
+    payload: dict[str, Any],
+    *,
+    entity_slug: str,
+    source_url_override: str | None = None,
+) -> str:
     value = payload.get("source_url")
     if isinstance(value, str) and value.strip():
         return value.strip()
+    if isinstance(source_url_override, str) and source_url_override.strip():
+        return source_url_override.strip()
     return f"https://www.skool.com/@{entity_slug}"
 
 

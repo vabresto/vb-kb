@@ -79,9 +79,13 @@ enrichment-session-import source import_path project_root=".":
 enrichment-run entity args="" project_root=".":
   uv run kb enrich-entity "{{entity}}" --project-root "{{project_root}}" {{args}}
 
+# Initialize a new person record from template and optionally bootstrap enrichment from profile URLs.
+person-init args="" project_root=".":
+  uv run kb person-init --project-root "{{project_root}}" {{args}}
+
 # Run enrichment-focused tests (sessions/bootstrap/adapters/run/CLI).
 test-enrichment:
-  uv run --extra dev python -m pytest -q kb/tests/test_enrichment_*.py kb/tests/test_cli_bootstrap_session.py kb/tests/test_cli_enrich_entity.py kb/tests/test_cli_session_transfer.py
+  uv run --extra dev python -m pytest -q kb/tests/test_enrichment_*.py kb/tests/test_cli_bootstrap_session.py kb/tests/test_cli_enrich_entity.py kb/tests/test_cli_person_init.py kb/tests/test_cli_session_transfer.py
 
 # Derive canonical employment edges from person JSONL rows.
 derive-edges:
