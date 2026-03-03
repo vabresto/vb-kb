@@ -85,6 +85,7 @@ _LINKEDIN_DETAIL_SECTIONS = (
     "experience",
     "education",
     "publications",
+    "recommendations",
     "skills",
     "languages",
     "honors",
@@ -94,6 +95,7 @@ _LINKEDIN_DETAIL_SECTIONS = (
     "volunteering-experiences",
     "patents",
 )
+_LINKEDIN_DETAIL_URL_LIMIT = 10
 _LINKEDIN_MODAL_ROOT_SELECTORS = (
     ".artdeco-modal",
     "div[role='dialog']",
@@ -671,6 +673,13 @@ def _collect_linkedin_detail_urls(page: Any, *, profile_url: str) -> list[str]:
     return urls
 
 
+def _prioritize_linkedin_detail_urls(detail_urls: list[str]) -> list[str]:
+    return sorted(
+        detail_urls,
+        key=lambda url: 0 if "/details/recommendations/" in url.lower() else 1,
+    )
+
+
 def _detail_section_label_from_url(url: str) -> str:
     parsed = urlparse(url)
     parts = [part for part in parsed.path.split("/") if part]
@@ -704,7 +713,7 @@ def _collect_linkedin_detail_entries(
 ) -> list[str]:
     entries: list[str] = []
     seen: set[str] = set()
-    for detail_url in detail_urls[:8]:
+    for detail_url in _prioritize_linkedin_detail_urls(detail_urls)[:_LINKEDIN_DETAIL_URL_LIMIT]:
         try:
             page.goto(detail_url, wait_until="domcontentloaded", timeout=60_000)
             page.wait_for_timeout(900)
@@ -827,10 +836,46 @@ def _deduplicate_fact_rows(facts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return deduplicated
 
 
+def _extract_received_recommendation_entry(entry: str) -> str | None:
+    normalized = _normalize_optional_text(entry)
+    if normalized is None:
+        return None
+    if "recommendation" not in normalized.lower():
+        return None
+
+    segments = [_normalize_optional_text(segment) for segment in normalized.split("|")]
+    parts = [segment for segment in segments if segment is not None]
+    if not parts:
+        return None
+
+    received: list[str] = []
+    for segment in parts:
+        lowered = segment.lower()
+        if "recommendation" in lowered and not received:
+            continue
+        if lowered in {"received", "received received"}:
+            continue
+        if lowered.startswith("given"):
+            return None
+        if lowered.startswith("show all") or lowered.startswith("see all"):
+            continue
+        if lowered.startswith("· "):
+            continue
+        received.append(segment)
+
+    if len(received) < 2:
+        return None
+    candidate = " | ".join(received[:4])
+    if len(candidate) > 520:
+        candidate = candidate[:520].rstrip()
+    return _normalize_optional_text(candidate)
+
+
 def _extract_linkedin_facts(
     *,
     title: str | None,
     description: str | None,
+    profile_image_url: str | None = None,
     profile_headline: str | None = None,
     experience_entries: list[str] | None = None,
     section_entries: list[str] | None = None,
@@ -842,6 +887,13 @@ def _extract_linkedin_facts(
     headline_company: str | None = None
     _append_fact(facts, attribute="headline", value=headline_value, confidence="medium")
     _append_fact(facts, attribute="about", value=description, confidence="low")
+    _append_fact(
+        facts,
+        attribute="profile_image_url",
+        value=profile_image_url,
+        confidence="low",
+        metadata={"source_section": "profile_meta"},
+    )
     if headline_value is not None:
         company_match = _COMPANY_HINT_RE.search(headline_value)
         if company_match is not None:
@@ -895,6 +947,26 @@ def _extract_linkedin_facts(
                 },
             )
     normalized_sections = _deduplicate_text_rows([entry for entry in (section_entries or []) if entry])
+    received_recommendations = _deduplicate_text_rows(
+        [
+            recommendation
+            for recommendation in (
+                _extract_received_recommendation_entry(entry) for entry in normalized_sections
+            )
+            if recommendation is not None
+        ]
+    )
+    for index, entry in enumerate(received_recommendations):
+        _append_fact(
+            facts,
+            attribute="recommendation_received",
+            value=entry,
+            confidence="low",
+            metadata={
+                "source_section": "recommendations",
+                "ordinal": index + 1,
+            },
+        )
     for index, entry in enumerate(normalized_sections):
         _append_fact(
             facts,
@@ -913,12 +985,20 @@ def _extract_skool_facts(
     *,
     title: str | None,
     description: str | None,
+    profile_image_url: str | None = None,
     profile_entries: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     facts: list[dict[str, Any]] = []
     cleaned_title = _normalize_optional_text(_SKOOL_TITLE_SUFFIX_RE.sub("", title or ""))
     _append_fact(facts, attribute="headline", value=cleaned_title, confidence="medium")
     _append_fact(facts, attribute="about", value=description, confidence="low")
+    _append_fact(
+        facts,
+        attribute="profile_image_url",
+        value=profile_image_url,
+        confidence="low",
+        metadata={"source_section": "profile_meta"},
+    )
     if cleaned_title is not None:
         community_hint = cleaned_title.split(" - ")[0].strip()
         _append_fact(facts, attribute="community", value=community_hint, confidence="low")
@@ -1228,6 +1308,7 @@ def _capture_profile_payload(
     source_url = _normalize_optional_text(page.url) or url
     title = _normalize_optional_text(page.title())
     description = _extract_meta_content(page, "description") or _extract_meta_content(page, "og:description")
+    profile_image_url = _extract_meta_content(page, "og:image")
     profile_headline = None
     experience_entries: list[str] = []
     skool_entries: list[str] = []
@@ -1261,6 +1342,7 @@ def _capture_profile_payload(
         "source_url": source_url,
         "title": title,
         "description": description,
+        "profile_image_url": profile_image_url,
         "profile_headline": profile_headline,
         "experience_entries": experience_entries,
         "section_entries": section_entries,
@@ -1353,6 +1435,7 @@ def _run_fetch(source: SupportedSource) -> int:
         source_url = str(profile_payload["source_url"])
         title = _normalize_optional_text(profile_payload.get("title"))
         description = _normalize_optional_text(profile_payload.get("description"))
+        profile_image_url = _normalize_optional_text(profile_payload.get("profile_image_url"))
         profile_headline = _normalize_optional_text(profile_payload.get("profile_headline"))
         experience_entries = list(profile_payload.get("experience_entries") or [])
         section_entries = list(profile_payload.get("section_entries") or [])
@@ -1400,6 +1483,7 @@ def _run_fetch(source: SupportedSource) -> int:
                 source_url = str(profile_payload["source_url"])
                 title = _normalize_optional_text(profile_payload.get("title"))
                 description = _normalize_optional_text(profile_payload.get("description"))
+                profile_image_url = _normalize_optional_text(profile_payload.get("profile_image_url"))
                 profile_headline = _normalize_optional_text(profile_payload.get("profile_headline"))
                 experience_entries = list(profile_payload.get("experience_entries") or [])
                 section_entries = list(profile_payload.get("section_entries") or [])
@@ -1475,6 +1559,7 @@ def _run_fetch(source: SupportedSource) -> int:
         facts = _extract_linkedin_facts(
             title=title,
             description=description,
+            profile_image_url=profile_image_url,
             profile_headline=profile_headline,
             experience_entries=experience_entries,
             section_entries=section_entries,
@@ -1483,6 +1568,7 @@ def _run_fetch(source: SupportedSource) -> int:
         facts = _extract_skool_facts(
             title=title,
             description=description,
+            profile_image_url=profile_image_url,
             profile_entries=skool_entries,
         )
     facts = _deduplicate_fact_rows(facts)

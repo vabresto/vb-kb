@@ -13,6 +13,7 @@ from kb.enrichment_run import (
     PhaseStatus,
     RunPhaseStates,
     RunStatus,
+    SourceExtractionState,
 )
 
 
@@ -53,7 +54,11 @@ def _write_person_template(project_root: Path) -> None:
     )
 
 
-def _stub_report(*, sources: list[SupportedSource]) -> EnrichmentRunReport:
+def _stub_report(
+    *,
+    sources: list[SupportedSource],
+    extraction_sources: list[SourceExtractionState] | None = None,
+) -> EnrichmentRunReport:
     now = datetime(2026, 3, 2, 12, 0, tzinfo=UTC)
     return EnrichmentRunReport(
         run_id="enrich-person-init-stub",
@@ -69,7 +74,7 @@ def _stub_report(*, sources: list[SupportedSource]) -> EnrichmentRunReport:
             extraction=ExtractionPhaseState(
                 status=PhaseStatus.succeeded,
                 message="extraction completed",
-                sources=[],
+                sources=list(extraction_sources or []),
             ),
             source_logging=PhaseState(
                 status=PhaseStatus.succeeded,
@@ -89,6 +94,37 @@ def _stub_report(*, sources: list[SupportedSource]) -> EnrichmentRunReport:
             ),
         ),
     )
+
+
+def _write_facts_artifact(
+    *,
+    tmp_path: Path,
+    source: SupportedSource,
+    slug: str,
+    image_url: str | None,
+) -> str:
+    artifact_dir = tmp_path / "data" / "source" / "en" / f"source@enrichment-{source.value.replace('.', '-')}-{slug}"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    artifact_path = artifact_dir / "facts.json"
+    facts: list[dict[str, object]] = []
+    if image_url is not None:
+        facts.append(
+            {
+                "attribute": "profile_image_url",
+                "value": image_url,
+                "confidence": "low",
+                "metadata": {"source_section": "profile_meta"},
+                "source_url": f"https://{source.value}/in/{slug}",
+                "retrieved_at": "2026-03-02T12:00:00+00:00",
+            }
+        )
+    artifact_payload = {
+        "source": source.value,
+        "entity_slug": slug,
+        "facts": facts,
+    }
+    artifact_path.write_text(json.dumps(artifact_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return artifact_path.relative_to(tmp_path).as_posix()
 
 
 def test_person_init_parser_accepts_profile_url_flags() -> None:
@@ -208,6 +244,189 @@ def test_run_person_init_scaffolds_and_bootstraps_from_both_sources(
         "how-we-met": "met at demo day",
         "why-added": "shared skool community",
     }
+
+
+def test_run_person_init_downloads_profile_image_preferring_linkedin(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    _write_person_template(tmp_path)
+
+    slug = "jose-luis-avilez"
+    linkedin_image_url = _url("hxxps://media.licdn.com/dms/image/v2/abc/profile-displayphoto-shrink_800_800.jpg")
+    skool_image_url = _url("hxxps://cdn.skool.com/profile/jose.png")
+    linkedin_artifact_path = _write_facts_artifact(
+        tmp_path=tmp_path,
+        source=SupportedSource.linkedin,
+        slug=slug,
+        image_url=linkedin_image_url,
+    )
+    skool_artifact_path = _write_facts_artifact(
+        tmp_path=tmp_path,
+        source=SupportedSource.skool,
+        slug=slug,
+        image_url=skool_image_url,
+    )
+
+    def _run_stub(
+        _entity_target: str,
+        *,
+        selected_sources,
+        source_url_overrides,
+        config: EnrichmentConfig,
+        project_root: Path,
+        environ=None,
+    ) -> EnrichmentRunReport:
+        assert list(selected_sources or []) == [SupportedSource.linkedin, SupportedSource.skool]
+        assert dict(source_url_overrides or {})
+        assert isinstance(config, EnrichmentConfig)
+        assert project_root == tmp_path.resolve()
+        assert environ is None
+        return _stub_report(
+            sources=[SupportedSource.linkedin, SupportedSource.skool],
+            extraction_sources=[
+                SourceExtractionState(
+                    source=SupportedSource.linkedin,
+                    status=PhaseStatus.succeeded,
+                    facts_artifact_path=linkedin_artifact_path,
+                ),
+                SourceExtractionState(
+                    source=SupportedSource.skool,
+                    status=PhaseStatus.succeeded,
+                    facts_artifact_path=skool_artifact_path,
+                ),
+            ],
+        )
+
+    observed_download_url: dict[str, str] = {}
+
+    def _download_stub(url: str) -> tuple[bytes, str]:
+        observed_download_url["url"] = url
+        return (b"fake-image-bytes", "jpg")
+
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr("kb.cli.run_enrichment_for_entity", _run_stub)
+    monkeypatch.setattr("kb.cli._download_profile_image", _download_stub)
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "person-init",
+            "--linkedin-url",
+            _url("hxxps://www.linkedin.com/in/jose-luis-avilez/"),
+            "--skool-url",
+            _url("hxxps://www.skool.com/@jose.avilez"),
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_person_init(args)
+
+    assert status_code == 0
+    assert observed_download_url["url"] == linkedin_image_url
+
+    image_path = tmp_path / "data" / "person" / "jo" / "person@jose-luis-avilez" / "images" / "jose-luis-avilez.jpg"
+    assert image_path.exists()
+    assert image_path.read_bytes() == b"fake-image-bytes"
+
+    person_index = tmp_path / "data" / "person" / "jo" / "person@jose-luis-avilez" / "index.md"
+    person_markdown = person_index.read_text(encoding="utf-8")
+    assert "![Headshot of Jose Luis Avilez](./images/jose-luis-avilez.jpg)" in person_markdown
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["profile_image"]["saved"] is True
+    assert payload["profile_image"]["source"] == "linkedin.com"
+    assert payload["profile_image"]["url"] == linkedin_image_url
+
+
+def test_run_person_init_downloads_profile_image_from_skool_when_linkedin_missing(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    _write_person_template(tmp_path)
+
+    slug = "jose-luis-avilez"
+    skool_image_url = _url("hxxps://cdn.skool.com/profile/jose.png")
+    linkedin_artifact_path = _write_facts_artifact(
+        tmp_path=tmp_path,
+        source=SupportedSource.linkedin,
+        slug=slug,
+        image_url=None,
+    )
+    skool_artifact_path = _write_facts_artifact(
+        tmp_path=tmp_path,
+        source=SupportedSource.skool,
+        slug=slug,
+        image_url=skool_image_url,
+    )
+
+    def _run_stub(
+        _entity_target: str,
+        *,
+        selected_sources,
+        source_url_overrides,
+        config: EnrichmentConfig,
+        project_root: Path,
+        environ=None,
+    ) -> EnrichmentRunReport:
+        assert list(selected_sources or []) == [SupportedSource.linkedin, SupportedSource.skool]
+        assert dict(source_url_overrides or {})
+        assert isinstance(config, EnrichmentConfig)
+        assert project_root == tmp_path.resolve()
+        assert environ is None
+        return _stub_report(
+            sources=[SupportedSource.linkedin, SupportedSource.skool],
+            extraction_sources=[
+                SourceExtractionState(
+                    source=SupportedSource.linkedin,
+                    status=PhaseStatus.succeeded,
+                    facts_artifact_path=linkedin_artifact_path,
+                ),
+                SourceExtractionState(
+                    source=SupportedSource.skool,
+                    status=PhaseStatus.succeeded,
+                    facts_artifact_path=skool_artifact_path,
+                ),
+            ],
+        )
+
+    observed_download_url: dict[str, str] = {}
+
+    def _download_stub(url: str) -> tuple[bytes, str]:
+        observed_download_url["url"] = url
+        return (b"fake-image-bytes", "png")
+
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr("kb.cli.run_enrichment_for_entity", _run_stub)
+    monkeypatch.setattr("kb.cli._download_profile_image", _download_stub)
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "person-init",
+            "--linkedin-url",
+            _url("hxxps://www.linkedin.com/in/jose-luis-avilez/"),
+            "--skool-url",
+            _url("hxxps://www.skool.com/@jose.avilez"),
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_person_init(args)
+
+    assert status_code == 0
+    assert observed_download_url["url"] == skool_image_url
+
+    image_path = tmp_path / "data" / "person" / "jo" / "person@jose-luis-avilez" / "images" / "jose-luis-avilez.png"
+    assert image_path.exists()
+    assert image_path.read_bytes() == b"fake-image-bytes"
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["profile_image"]["saved"] is True
+    assert payload["profile_image"]["source"] == "skool.com"
+    assert payload["profile_image"]["url"] == skool_image_url
 
 
 def test_run_person_init_scaffolds_without_enrichment_when_no_profile_urls(

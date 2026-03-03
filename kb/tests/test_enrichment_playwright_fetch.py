@@ -19,6 +19,10 @@ from kb.enrichment_playwright_fetch import (
 )
 
 
+def _url(value: str) -> str:
+    return value.replace("hxxps://", "https://")
+
+
 def test_extract_linkedin_facts_from_title_and_description() -> None:
     facts = _extract_linkedin_facts(
         title="Jane Founder at Future Labs | LinkedIn",
@@ -72,6 +76,35 @@ def test_extract_linkedin_facts_strips_badge_prefix_and_prefers_profile_headline
     ]
 
 
+def test_extract_linkedin_facts_captures_received_recommendations() -> None:
+    facts = _extract_linkedin_facts(
+        title="Jeremy Haug | LinkedIn",
+        description=None,
+        section_entries=[
+            (
+                "Recommendations | Received | Sergio Rodriguez | September 13, 2022, Jeremy was senior to Sergio "
+                "| When you talk to Jeremy, you have to be alert and on the ball."
+            ),
+            (
+                "Recommendations | Received | Sergio Rodriguez | September 13, 2022, Jeremy was senior to Sergio "
+                "| When you talk to Jeremy, you have to be alert and on the ball."
+            ),
+            (
+                "Recommendations | Given | Zeeshan Haider | February 10, 2026 | "
+                "Zeeshan definitely has great technical expertise."
+            ),
+        ],
+    )
+
+    recommendation_values = [fact["value"] for fact in facts if fact["attribute"] == "recommendation_received"]
+    assert recommendation_values == [
+        (
+            "Sergio Rodriguez | September 13, 2022, Jeremy was senior to Sergio | "
+            "When you talk to Jeremy, you have to be alert and on the ball."
+        )
+    ]
+
+
 def test_extract_linkedin_facts_strips_badge_prefix_from_title_fallback() -> None:
     facts = _extract_linkedin_facts(
         title="(7) Jane Founder | LinkedIn",
@@ -79,6 +112,18 @@ def test_extract_linkedin_facts_strips_badge_prefix_from_title_fallback() -> Non
     )
     values_by_attribute = {fact["attribute"]: fact["value"] for fact in facts}
     assert values_by_attribute["headline"] == "Jane Founder"
+
+
+def test_extract_linkedin_facts_emits_profile_image_url_when_available() -> None:
+    profile_image_url = _url("hxxps://media.licdn.com/dms/image/v2/abc/profile.jpg")
+    facts = _extract_linkedin_facts(
+        title="Jane Founder | LinkedIn",
+        description=None,
+        profile_image_url=profile_image_url,
+    )
+    profile_image_fact = next(fact for fact in facts if fact["attribute"] == "profile_image_url")
+    assert profile_image_fact["value"] == profile_image_url
+    assert profile_image_fact["metadata"]["source_section"] == "profile_meta"
 
 
 def test_extract_skool_facts_from_title_and_description() -> None:
@@ -101,6 +146,18 @@ def test_extract_skool_facts_from_title_and_description() -> None:
         "Community: Founders Circle | 4,201 members",
         "Top post: Hiring AI engineers",
     ]
+
+
+def test_extract_skool_facts_emits_profile_image_url_when_available() -> None:
+    profile_image_url = _url("hxxps://cdn.skool.com/profile.png")
+    facts = _extract_skool_facts(
+        title="Founders Circle - Jane Founder | Skool",
+        description="Community for startup builders.",
+        profile_image_url=profile_image_url,
+    )
+    profile_image_fact = next(fact for fact in facts if fact["attribute"] == "profile_image_url")
+    assert profile_image_fact["value"] == profile_image_url
+    assert profile_image_fact["metadata"]["source_section"] == "profile_meta"
 
 
 def test_unsupported_reason_detects_login_and_captcha() -> None:
@@ -261,6 +318,11 @@ def test_normalize_linkedin_detail_url_filters_to_known_sections_for_profile() -
     experience_url = "hxxps://www.linkedin.com/in/Jane-Founder/details/experience/?trk=public_profile".replace(
         "hxxps://", "https://"
     )
+    recommendations_url = (
+        "hxxps://www.linkedin.com/in/Jane-Founder/details/recommendations/?tabIndex=0&detailScreenTabIndex=0".replace(
+            "hxxps://", "https://"
+        )
+    )
     people_also_viewed_url = "hxxps://www.linkedin.com/in/jane-founder/details/people-also-viewed/".replace(
         "hxxps://", "https://"
     )
@@ -270,12 +332,20 @@ def test_normalize_linkedin_detail_url_filters_to_known_sections_for_profile() -
     normalized_expected = "hxxps://www.linkedin.com/in/jane-founder/details/experience/".replace(
         "hxxps://", "https://"
     )
+    recommendations_expected = _url("hxxps://www.linkedin.com/in/jane-founder/details/recommendations/")
     assert (
         _normalize_linkedin_detail_url(
             experience_url,
             profile_slug="jane-founder",
         )
         == normalized_expected
+    )
+    assert (
+        _normalize_linkedin_detail_url(
+            recommendations_url,
+            profile_slug="jane-founder",
+        )
+        == recommendations_expected
     )
     assert (
         _normalize_linkedin_detail_url(

@@ -80,8 +80,21 @@ enrichment-run entity args="" project_root=".":
   uv run kb enrich-entity "{{entity}}" --project-root "{{project_root}}" {{args}}
 
 # Initialize a new person record from template and optionally bootstrap enrichment from profile URLs.
-person-init args="" project_root=".":
-  uv run kb person-init --project-root "{{project_root}}" {{args}}
+# Exposes `kb person-init` flags directly while keeping optional passthrough args.
+person-init slug="" name="" linkedin_url="" skool_url="" intro_note="" how_we_met="" why_added="" headful="false" no_random_waits="false" pretty="false" args="" project_root=".":
+  cmd=(uv run kb person-init --project-root "{{project_root}}")
+  if [ -n "{{slug}}" ]; then cmd+=(--slug "{{slug}}"); fi
+  if [ -n "{{name}}" ]; then cmd+=(--name "{{name}}"); fi
+  if [ -n "{{linkedin_url}}" ]; then cmd+=(--linkedin-url "{{linkedin_url}}"); fi
+  if [ -n "{{skool_url}}" ]; then cmd+=(--skool-url "{{skool_url}}"); fi
+  if [ -n "{{intro_note}}" ]; then cmd+=(--intro-note "{{intro_note}}"); fi
+  if [ -n "{{how_we_met}}" ]; then cmd+=(--how-we-met "{{how_we_met}}"); fi
+  if [ -n "{{why_added}}" ]; then cmd+=(--why-added "{{why_added}}"); fi
+  if [ "{{headful}}" = "true" ]; then cmd+=(--headful); fi
+  if [ "{{no_random_waits}}" = "true" ]; then cmd+=(--no-random-waits); fi
+  if [ "{{pretty}}" = "true" ]; then cmd+=(--pretty); fi
+  if [ -n "{{args}}" ]; then cmd+=({{args}}); fi
+  "${cmd[@]}"
 
 # Run enrichment-focused tests (sessions/bootstrap/adapters/run/CLI).
 test-enrichment:

@@ -623,6 +623,74 @@ class _PersonFactsWithExperienceAdapter(_SuccessfulAdapter):
         )
 
 
+class _PersonFactsWithGroupedExperienceAdapter(_SuccessfulAdapter):
+    def normalize(self, request: NormalizeRequest) -> NormalizeResult:
+        return NormalizeResult(
+            facts=[
+                NormalizedFact(
+                    attribute="current_company",
+                    value="Revenx",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="current_role",
+                    value="Founder",
+                    confidence=ConfidenceLevel.high,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value="Founder | Revenx · Full-time | Feb 2021 - Present · 5 yrs 2 mos",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 1},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value="Advanced Medical Integration | Full-time · 6 yrs 8 mos | Clearwater, FL | Chief Operating Officer/Chief Marketing Officer",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 2},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value="Chief Operating Officer/Chief Marketing Officer | Jul 2018 - Feb 2021 · 2 yrs 8 mos | Jul 2018 to Feb 2021 · 2 yrs 8 mos",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 3},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value=(
+                        "VP over HR, Marketing and Finance | Jul 2014 - Jul 2018 · 4 yrs 1 mo | "
+                        "Jul 2014 to Jul 2018 · 4 yrs 1 mo | "
+                        "I manage the digital and physical marketing for 4 companies including Advanced Medical Integration."
+                    ),
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 4},
+                ),
+                NormalizedFact(
+                    attribute="experience",
+                    value="Hawaiian Moon logo | Sales Representative | Hawaiian Moon | 2012 - 2014 · 2 yrs",
+                    confidence=ConfidenceLevel.medium,
+                    source_url=request.fetch_result.source_url,
+                    retrieved_at=request.fetch_result.retrieved_at,
+                    metadata={"adapter": self.source.value, "ordinal": 5},
+                ),
+            ]
+        )
+
+
 def test_run_enrichment_for_entity_maps_person_with_confidence_gating(tmp_path: Path) -> None:
     person_index_path = _write_person_fixture(tmp_path)
     _, body_before = _read_frontmatter_and_body(person_index_path)
@@ -696,6 +764,41 @@ def test_run_enrichment_maps_experience_facts_into_employment_history_jsonl(tmp_
     assert employment_rows[2]["period"] == "2019 - 2019"
     assert employment_rows[2]["source_section"] == "enrichment_experience_fact"
     assert employment_rows[2]["source"] == "Enrichment experience fact (linkedin.com)."
+
+
+def test_run_enrichment_maps_grouped_experience_rows_with_correct_organization(tmp_path: Path) -> None:
+    person_index_path = _write_person_fixture(tmp_path)
+    config = EnrichmentConfig()
+    registry = SourceAdapterRegistry(
+        adapters=(
+            _PersonFactsWithGroupedExperienceAdapter(SupportedSource.linkedin, project_root=tmp_path),
+        )
+    )
+
+    report = run_enrichment_for_entity(
+        "person@founder-name",
+        selected_sources=[SupportedSource.linkedin],
+        config=config,
+        project_root=tmp_path,
+        adapter_registry=registry,
+        run_id="enrich-person-grouped-experience-history-run",
+    )
+
+    assert report.status == RunStatus.succeeded
+
+    employment_rows = [
+        json.loads(line)
+        for line in (person_index_path.parent / "employment-history.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+    assert len(employment_rows) == 5
+    assert employment_rows[2]["organization"] == "Advanced Medical Integration"
+    assert employment_rows[2]["role"] == "Chief Operating Officer/Chief Marketing Officer"
+    assert employment_rows[3]["organization"] == "Advanced Medical Integration"
+    assert employment_rows[3]["role"] == "VP over HR, Marketing and Finance"
+    assert employment_rows[4]["organization"] == "Hawaiian Moon"
+    assert employment_rows[4]["role"] == "Sales Representative"
 
 
 def test_run_enrichment_for_entity_fails_when_promoted_fact_lacks_source_linkage(

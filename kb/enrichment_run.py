@@ -63,6 +63,11 @@ _EMPLOYMENT_PERIOD_MONTH_RE = re.compile(
 )
 _EMPLOYMENT_PERIOD_YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
 _ALPHANUM_TOKEN_RE = re.compile(r"[a-z0-9]+")
+_EMPLOYMENT_TYPE_HINT_RE = re.compile(
+    r"\b(full-time|part-time|contract|freelance|self-employed|internship|temporary|seasonal)\b",
+    re.IGNORECASE,
+)
+_LOGO_SUFFIX_RE = re.compile(r"\s+logo$", re.IGNORECASE)
 _ORG_TOKEN_STOPWORDS = frozenset(
     {
         "the",
@@ -74,6 +79,39 @@ _ORG_TOKEN_STOPWORDS = frozenset(
         "corp",
         "corporation",
         "limited",
+    }
+)
+_ROLE_HINT_TOKENS = frozenset(
+    {
+        "advisor",
+        "analyst",
+        "ceo",
+        "chief",
+        "cofounder",
+        "consultant",
+        "coo",
+        "cto",
+        "developer",
+        "director",
+        "engineer",
+        "executive",
+        "founder",
+        "head",
+        "intern",
+        "lead",
+        "manager",
+        "marketing",
+        "officer",
+        "operations",
+        "owner",
+        "president",
+        "representative",
+        "researcher",
+        "sales",
+        "specialist",
+        "teacher",
+        "vice",
+        "vp",
     }
 )
 _ROLE_ATTRIBUTE_PRIORITY = {
@@ -2005,21 +2043,89 @@ def _looks_like_experience_period(value: str) -> bool:
     return False
 
 
-def _parse_experience_fact_row(value: str) -> tuple[str, str, str, str | None] | None:
+def _normalize_experience_organization(value: str | None) -> str | None:
+    normalized = _normalize_text(value)
+    if normalized is None:
+        return None
+    cleaned = _LOGO_SUFFIX_RE.sub("", normalized).strip()
+    return _normalize_text(cleaned)
+
+
+def _looks_like_role_text(value: str | None) -> bool:
+    normalized = _normalize_text(value)
+    if normalized is None:
+        return False
+    tokens = {token for token in _ALPHANUM_TOKEN_RE.findall(normalized.lower()) if token}
+    if not tokens:
+        return False
+    return bool(tokens & _ROLE_HINT_TOKENS)
+
+
+def _infer_experience_organization_context(value: str) -> str | None:
+    segments = [_normalize_text(segment) for segment in value.split("|")]
+    parts = [segment for segment in segments if segment is not None]
+    if len(parts) < 2:
+        return None
+
+    organization = _normalize_experience_organization(parts[0])
+    if organization is None:
+        return None
+    if _looks_like_experience_period(organization):
+        return None
+    if _looks_like_role_text(organization):
+        return None
+
+    has_role_in_tail = any(_looks_like_role_text(segment) for segment in parts[1:])
+    has_employment_type_in_tail = any(_EMPLOYMENT_TYPE_HINT_RE.search(segment) for segment in parts[1:])
+    if not has_role_in_tail and not has_employment_type_in_tail:
+        return None
+    return organization
+
+
+def _parse_experience_fact_row(
+    value: str,
+    *,
+    fallback_organization: str | None = None,
+) -> tuple[str, str, str, str | None] | None:
     segments = [_normalize_text(segment) for segment in value.split("|")]
     parts = [segment for segment in segments if segment is not None]
     if len(parts) < 3:
         return None
 
-    role = parts[0]
-    organization_parts = [_normalize_text(part) for part in parts[1].split("·")]
-    organization_tokens = [part for part in organization_parts if part is not None]
-    if role is None or not organization_tokens:
+    fallback_organization_normalized = _normalize_experience_organization(fallback_organization)
+
+    role: str | None
+    organization: str | None
+    organization_parts: list[str | None] = []
+    organization_segment_index = 1
+
+    first_segment = parts[0]
+    if _LOGO_SUFFIX_RE.search(first_segment):
+        role = _normalize_text(parts[1]) if len(parts) > 1 else None
+        organization = _normalize_experience_organization(parts[2]) if len(parts) > 2 else None
+        if organization is None:
+            organization = _normalize_experience_organization(first_segment)
+        organization_segment_index = 2 if len(parts) > 2 else 1
+    else:
+        role = _normalize_text(first_segment)
+        organization_parts = [_normalize_text(part) for part in parts[1].split("·")]
+        organization_tokens = [part for part in organization_parts if part is not None]
+        organization = _normalize_experience_organization(organization_tokens[0]) if organization_tokens else None
+
+    if role is None or organization is None:
         return None
-    organization = organization_tokens[0]
+    if _looks_like_experience_period(organization):
+        if fallback_organization_normalized is None:
+            return None
+        organization = fallback_organization_normalized
+    if _looks_like_role_text(organization):
+        first_segment_as_org = _normalize_experience_organization(first_segment)
+        if first_segment_as_org is not None and not _looks_like_role_text(first_segment_as_org):
+            role = organization
+            organization = first_segment_as_org
 
     period: str | None = None
-    for segment in parts[2:]:
+    for segment in parts[1:]:
         candidate = _normalize_text(segment.split("·", 1)[0])
         if candidate is None:
             continue
@@ -2030,18 +2136,36 @@ def _parse_experience_fact_row(value: str) -> tuple[str, str, str, str | None] |
         return None
 
     notes_parts: list[str] = []
+    organization_tokens = [part for part in organization_parts if part is not None]
     if len(organization_tokens) > 1:
-        notes_parts.append(", ".join(organization_tokens[1:]))
-    for segment in parts[2:]:
-        if segment == period:
-            continue
+        notes_parts.extend(organization_tokens[1:])
+    for index, segment in enumerate(parts[1:], start=1):
         candidate = _normalize_text(segment.split("·", 1)[0])
-        if candidate is not None and _looks_like_experience_period(candidate):
+        if (
+            index == organization_segment_index
+            and candidate is not None
+            and not _looks_like_experience_period(candidate)
+        ):
             continue
-        notes_parts.append(segment)
+        if candidate is not None and _looks_like_experience_period(candidate):
+            if "·" in segment:
+                duration_note = _normalize_text(segment.split("·", 1)[1])
+                if duration_note is not None:
+                    notes_parts.append(duration_note)
+            continue
+        normalized_segment = _normalize_text(segment)
+        if normalized_segment is None:
+            continue
+        signature = _normalize_signature_text(normalized_segment)
+        if signature == _normalize_signature_text(role):
+            continue
+        if signature == _normalize_signature_text(organization):
+            continue
+        notes_parts.append(normalized_segment)
+
     deduplicated_notes: list[str] = []
     for item in notes_parts:
-        if not deduplicated_notes or deduplicated_notes[-1] != item:
+        if not deduplicated_notes or _normalize_signature_text(deduplicated_notes[-1]) != _normalize_signature_text(item):
             deduplicated_notes.append(item)
     notes_text = _normalize_text(" | ".join(deduplicated_notes))
     if notes_text is not None and len(notes_text) > 280:
@@ -2085,9 +2209,17 @@ def _append_employment_rows_from_experience_facts(
 
     current_firm_normalized = _normalize_text(current_firm)
     current_role_normalized = _normalize_text(current_role)
+    organization_context: str | None = None
 
     for fact in sorted(experience_facts, key=_experience_fact_sort_key):
-        parsed = _parse_experience_fact_row(fact.value)
+        inferred_context = _infer_experience_organization_context(fact.value)
+        if inferred_context is not None:
+            organization_context = inferred_context
+
+        parsed = _parse_experience_fact_row(
+            fact.value,
+            fallback_organization=organization_context,
+        )
         if parsed is None:
             continue
         period, organization, role, notes = parsed

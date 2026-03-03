@@ -6,14 +6,16 @@ import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.error import URLError
 from urllib.parse import unquote, urlparse
+import urllib.request
 
 import yaml
 
 from kb.enrichment_adapters import AuthenticationError
 from kb.enrichment_bootstrap import bootstrap_session_login
 from kb.enrichment_config import EnrichmentConfig, SupportedSource, load_enrichment_config_from_env
-from kb.enrichment_run import EnrichmentRunError, RunStatus, run_enrichment_for_entity
+from kb.enrichment_run import EnrichmentRunError, EnrichmentRunReport, RunStatus, run_enrichment_for_entity
 from kb.enrichment_sessions import export_session_state_json, import_session_state_json
 from kb.edges import derive_citation_edges, derive_employment_edges, sync_edge_backlinks
 from kb.mcp_server import EntityUpsertInput, upsert_entity_file, run_server as run_fastmcp_server
@@ -35,6 +37,30 @@ from kb.validate import run_validation, infer_data_root, collect_changed_paths, 
 
 _FRONTMATTER_BLOCK_RE = re.compile(r"\A---\n(?P<frontmatter>.*?)\n---\n?(?P<body>.*)\Z", re.DOTALL)
 _SLUG_SANITIZE_RE = re.compile(r"[^a-z0-9]+")
+_MARKDOWN_IMAGE_LINE_RE = re.compile(r"^!\[[^\]]*\]\(\./images/[^)]+\)(?:\[\^[^\]]+\])?\s*$")
+_PROFILE_IMAGE_FACT_ATTRIBUTES = (
+    "profile_image_url",
+    "profile_image",
+    "avatar_url",
+    "image_url",
+)
+_PROFILE_IMAGE_SOURCE_PRIORITY = (
+    SupportedSource.linkedin,
+    SupportedSource.skool,
+)
+_PROFILE_IMAGE_CONTENT_TYPE_EXTENSIONS = {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/avif": "avif",
+    "image/svg+xml": "svg",
+}
+_PROFILE_IMAGE_ALLOWED_EXTENSIONS = frozenset(
+    {"jpg", "jpeg", "png", "webp", "gif", "avif", "svg"}
+)
+_PROFILE_IMAGE_MAX_BYTES = 10 * 1024 * 1024
 
 
 class PersonInitError(RuntimeError):
@@ -837,6 +863,8 @@ def run_person_init(args: argparse.Namespace) -> int:
         selected_sources = list(source_url_overrides.keys())
 
         report_payload: dict[str, object] | None = None
+        profile_image_result: dict[str, object] | None = None
+        report_obj: EnrichmentRunReport | None = None
         status_code = 0
         if selected_sources:
             config = load_enrichment_config_from_env()
@@ -857,8 +885,16 @@ def run_person_init(args: argparse.Namespace) -> int:
                 project_root=project_root,
                 **run_kwargs,
             )
+            report_obj = report
             report_payload = report.model_dump(mode="json")
             status_code = 0 if report.status not in {RunStatus.failed, RunStatus.blocked} else 1
+            profile_image_result = _attach_person_profile_image_from_report(
+                report=report_obj,
+                project_root=project_root,
+                person_index_path=person_index_path,
+                person_slug=person_slug,
+                person_name=person_name,
+            )
 
         payload: dict[str, object] = {
             "ok": status_code == 0,
@@ -880,6 +916,8 @@ def run_person_init(args: argparse.Namespace) -> int:
         }
         if report_payload is not None:
             payload["enrichment_report"] = report_payload
+        if profile_image_result is not None:
+            payload["profile_image"] = profile_image_result
         if args.pretty:
             print(json.dumps(payload, indent=2, sort_keys=True))
         else:
@@ -1083,6 +1121,201 @@ def _ensure_person_record_support_files(person_dir: Path) -> None:
         path = person_dir / file_name
         if not path.exists():
             path.write_text("", encoding="utf-8")
+
+
+def _attach_person_profile_image_from_report(
+    *,
+    report: EnrichmentRunReport,
+    project_root: Path,
+    person_index_path: Path,
+    person_slug: str,
+    person_name: str,
+) -> dict[str, object]:
+    candidate = _select_profile_image_candidate_from_report(
+        report=report,
+        project_root=project_root,
+    )
+    if candidate is None:
+        return {
+            "saved": False,
+            "reason": "no profile image fact discovered in source artifacts",
+        }
+
+    source, image_url = candidate
+    try:
+        image_bytes, extension = _download_profile_image(image_url)
+        image_rel_path = _persist_person_profile_image(
+            person_index_path=person_index_path,
+            person_slug=person_slug,
+            extension=extension,
+            image_bytes=image_bytes,
+        )
+        inserted_or_updated = _upsert_person_headshot_markdown(
+            person_index_path=person_index_path,
+            person_name=person_name,
+            image_rel_path=image_rel_path,
+        )
+        return {
+            "saved": True,
+            "source": source.value,
+            "url": image_url,
+            "path": image_rel_path,
+            "inserted_or_updated": inserted_or_updated,
+        }
+    except (OSError, ValueError, URLError) as exc:
+        return {
+            "saved": False,
+            "source": source.value,
+            "url": image_url,
+            "reason": str(exc),
+        }
+
+
+def _select_profile_image_candidate_from_report(
+    *,
+    report: EnrichmentRunReport,
+    project_root: Path,
+) -> tuple[SupportedSource, str] | None:
+    source_states = {state.source: state for state in report.phases.extraction.sources}
+    for source in _PROFILE_IMAGE_SOURCE_PRIORITY:
+        state = source_states.get(source)
+        if state is None or state.facts_artifact_path is None:
+            continue
+        image_url = _extract_profile_image_url_from_facts_artifact(
+            project_root=project_root,
+            artifact_path=state.facts_artifact_path,
+        )
+        if image_url is not None:
+            return source, image_url
+    return None
+
+
+def _extract_profile_image_url_from_facts_artifact(*, project_root: Path, artifact_path: str) -> str | None:
+    path = project_root / artifact_path
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    facts = payload.get("facts")
+    if not isinstance(facts, list):
+        return None
+    for fact in facts:
+        if not isinstance(fact, dict):
+            continue
+        attribute = _normalize_optional_text(str(fact.get("attribute", "")))
+        if attribute is None or attribute not in _PROFILE_IMAGE_FACT_ATTRIBUTES:
+            continue
+        raw_value = fact.get("value")
+        if not isinstance(raw_value, str):
+            continue
+        normalized_url = _normalize_profile_image_url(raw_value)
+        if normalized_url is not None:
+            return normalized_url
+    return None
+
+
+def _normalize_profile_image_url(value: str) -> str | None:
+    parsed = urlparse(value.strip())
+    if parsed.scheme.lower() not in {"http", "https"}:
+        return None
+    if not parsed.netloc:
+        return None
+    return parsed.geturl()
+
+
+def _download_profile_image(url: str) -> tuple[bytes, str]:
+    request = urllib.request.Request(
+        url,
+        method="GET",
+        headers={
+            "User-Agent": "Mozilla/5.0 (compatible; vb-kb/1.0)",
+            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=20) as response:
+        content_type = response.headers.get("Content-Type")
+        image_bytes = response.read(_PROFILE_IMAGE_MAX_BYTES + 1)
+    if content_type is not None:
+        normalized_content_type = content_type.split(";", 1)[0].strip().lower()
+        if not normalized_content_type.startswith("image/"):
+            raise ValueError(f"profile image URL returned non-image content type: {normalized_content_type}")
+    if len(image_bytes) > _PROFILE_IMAGE_MAX_BYTES:
+        raise ValueError("profile image exceeds 10MB download limit")
+    if not image_bytes:
+        raise ValueError("profile image download returned empty body")
+    extension = _infer_profile_image_extension(url=url, content_type=content_type)
+    return image_bytes, extension
+
+
+def _infer_profile_image_extension(*, url: str, content_type: str | None) -> str:
+    if content_type is not None:
+        normalized_content_type = content_type.split(";", 1)[0].strip().lower()
+        extension = _PROFILE_IMAGE_CONTENT_TYPE_EXTENSIONS.get(normalized_content_type)
+        if extension is not None:
+            return extension
+    suffix = Path(urlparse(url).path).suffix.lower().lstrip(".")
+    if suffix in _PROFILE_IMAGE_ALLOWED_EXTENSIONS:
+        if suffix == "jpeg":
+            return "jpg"
+        return suffix
+    return "jpg"
+
+
+def _persist_person_profile_image(
+    *,
+    person_index_path: Path,
+    person_slug: str,
+    extension: str,
+    image_bytes: bytes,
+) -> str:
+    images_dir = person_index_path.parent / "images"
+    images_dir.mkdir(parents=True, exist_ok=True)
+    image_filename = f"{person_slug}.{extension}"
+    image_path = images_dir / image_filename
+    image_path.write_bytes(image_bytes)
+    return f"./images/{image_filename}"
+
+
+def _upsert_person_headshot_markdown(
+    *,
+    person_index_path: Path,
+    person_name: str,
+    image_rel_path: str,
+) -> bool:
+    frontmatter, body = _read_markdown_document(person_index_path)
+    lines = body.splitlines()
+    image_line = f"![Headshot of {person_name}]({image_rel_path})"
+
+    for index, line in enumerate(lines):
+        if not _MARKDOWN_IMAGE_LINE_RE.match(line.strip()):
+            continue
+        if lines[index] == image_line:
+            return False
+        lines[index] = image_line
+        person_index_path.write_text(
+            _render_markdown_document(frontmatter=frontmatter, body="\n".join(lines)),
+            encoding="utf-8",
+        )
+        return True
+
+    bio_index = next((idx for idx, line in enumerate(lines) if line.strip() == "## Bio"), None)
+    if bio_index is None:
+        if lines and lines[-1].strip():
+            lines.append("")
+        lines.extend(["## Bio", "", image_line, ""])
+    else:
+        insert_block = ["", image_line, ""]
+        lines[bio_index + 1:bio_index + 1] = insert_block
+
+    person_index_path.write_text(
+        _render_markdown_document(frontmatter=frontmatter, body="\n".join(lines)),
+        encoding="utf-8",
+    )
+    return True
 
 
 def main() -> int:
