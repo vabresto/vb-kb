@@ -1,1 +1,1 @@
-data/person/victor-brestoiu.md
+data/person/vi/person@victor-brestoiu/index.md

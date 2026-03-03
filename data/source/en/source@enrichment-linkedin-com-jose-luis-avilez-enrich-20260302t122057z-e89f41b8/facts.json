@@ -1,0 +1,3177 @@
+{
+  "entity_ref": "person@jose-luis-avilez",
+  "entity_slug": "jose-luis-avilez",
+  "facts": [
+    {
+      "attribute": "current_company",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "inferred": true,
+        "source_section": "experience"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Squarepoint"
+    },
+    {
+      "attribute": "current_company",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "inferred": true,
+        "source_section": "headline"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Squarepoint Capital"
+    },
+    {
+      "attribute": "current_role",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "inferred": true,
+        "source_section": "experience"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Quantitative Researcher"
+    },
+    {
+      "attribute": "experience",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "ordinal": 2,
+        "source_section": "experience"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Doctoral Student | Princeton University \u00b7 Full-time | Aug 2021 - Jun 2023 \u00b7 1 yr 11 mos | Aug 2021 to Jun 2023 \u00b7 1 yr 11 mos"
+    },
+    {
+      "attribute": "experience",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "ordinal": 3,
+        "source_section": "experience"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Machine Learning Engineer | LinkedIn \u00b7 Internship | May 2022 - Aug 2022 \u00b7 4 mos | May 2022 to Aug 2022 \u00b7 4 mos"
+    },
+    {
+      "attribute": "experience",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "ordinal": 4,
+        "source_section": "experience"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Machine Learning, Deep Learning and +3 skills"
+    },
+    {
+      "attribute": "experience",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "ordinal": 5,
+        "source_section": "experience"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Quantitative Developer | GWN Capital Management Ltd | Sep 2019 - Aug 2020 \u00b7 1 yr | Sep 2019 to Aug 2020 \u00b7 1 yr"
+    },
+    {
+      "attribute": "experience",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "ordinal": 1,
+        "source_section": "experience"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Quantitative Researcher | Squarepoint \u00b7 Full-time | Jul 2023 - Present \u00b7 2 yrs 9 mos | Jul 2023 to Present \u00b7 2 yrs 9 mos"
+    },
+    {
+      "attribute": "experience",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default",
+        "ordinal": 6,
+        "source_section": "experience"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Undergraduate Research Assistant | University of Waterloo | May 2019 - Aug 2019 \u00b7 4 mos | May 2019 to Aug 2019 \u00b7 4 mos"
+    },
+    {
+      "attribute": "headline",
+      "confidence": "medium",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "medium",
+        "extractor": "playwright-default"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Quantitative Researcher at Squarepoint Capital"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 10,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education Education | Coursework: Probability Theory, Statistics, Optimisation, Stochastic Calculus, Stochastic Optimal Control, Machine Learning, French."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 12,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education Education | Grade: GPA: 96%"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 9,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education Education | Princeton University | Operations Research and Financial Engineering | Sep 2021 - May 2023 | Coursework: Probability Theory, Statistics, Optimisation, Stochastic Calculus, Stochastic Optimal Control, Machine Learning, French."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 13,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education Education | Relevant coursework: Deep Learning, Monte Carlo Simulation, Estimation and Inference, Mathematical Finance, High-Dimensional Probability. | Thesis: On the roughness of paths and processes | Relevant coursework: Deep Learning, Monte Carlo Simulation, Estimation and Inference, Mathematical Finance, High-Dimensional Probability. Thesis: On the roughness of paths and processes"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 11,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education Education | University of Waterloo | Master of Mathematics, Statistics | Sep 2020 - Aug 2021 | Grade: GPA: 96% | Relevant coursework: Deep Learning, Monte Carlo Simulation, Estimation and Inference, Mathematical Finance, High-Dimensional Probability. | Thesis: On the roughness of paths and processes"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 67,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Coursework: Probability Theory, Statistics, Optimisation, Stochastic Calculus, Stochastic Optimal Control, Machine Learning, French."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 72,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Grade: GPA: 94%"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 69,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Grade: GPA: 96%"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 76,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Grade: IB Score: 45"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 75,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | International Baccalaureate | 2012 - 2013 | Grade: IB Score: 45"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 77,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Markham College | 2000 - 2013"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 66,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Princeton University | Operations Research and Financial Engineering | Sep 2021 - May 2023 | Coursework: Probability Theory, Statistics, Optimisation, Stochastic Calculus, Stochastic Optimal Control, Machine Learning, French."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 73,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Pure Mathematics Silver Medal | Major: Mathematical Finance. Minors: Pure Mathematics, Statistics. | Relevant coursework: Probability Theory, Stochastic Calculus, Markov Processes, Time Series Analysis, Machine Learning, Quantitative Risk Management, Derivative Pricing, Measure Theory, Functional Analysis, Fourier Analysis, Harmonic Analysis. | Pure Mathematics Silver Medal Major: Mathematical Finance. Minors: Pure Mathematics, Statistics. Relevant coursework: Probability Theory, Stochastic Calculus, Markov Process"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 70,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Relevant coursework: Deep Learning, Monte Carlo Simulation, Estimation and Inference, Mathematical Finance, High-Dimensional Probability. | Thesis: On the roughness of paths and processes | Relevant coursework: Deep Learning, Monte Carlo Simulation, Estimation and Inference, Mathematical Finance, High-Dimensional Probability. Thesis: On the roughness of paths and processes"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 74,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | Universidad Peruana Cayetano Heredia | Former MD Student, Medicine | 2014 - 2015"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 71,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | University of Waterloo | Bachelor\u2019s Degree, Honours Mathematics | Jan 2017 - Apr 2020 | Grade: GPA: 94% | Pure Mathematics Silver Medal | Major: Mathematical Finance. Minors: Pure Mathematics, Statistics. | Relevant coursework: Probability Theory, Stochastic Calculus, Markov Processes, Time Series Analysis, Machine Learning, Quantitative Risk Management, Derivative Pricing, Measure Theory, Functional Analysis, Fourier Analysis, Harmonic Analysis. | Pure Mathematics Silver Medal Major: Mathematical Finance. Minors:"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 68,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Education | University of Waterloo | Master of Mathematics, Statistics | Sep 2020 - Aug 2021 | Grade: GPA: 96% | Relevant coursework: Deep Learning, Monte Carlo Simulation, Estimation and Inference, Mathematical Finance, High-Dimensional Probability. | Thesis: On the roughness of paths and processes | Relevant coursework: Deep Learning, Monte Carlo Simulation, Estimation and Inference, Mathematical Finance, High-Dimensional Probability. Thesis: On the roughness of paths and processes"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 4,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience Experience | Doctoral Student | Princeton University \u00b7 Full-time | Aug 2021 - Jun 2023 \u00b7 1 yr 11 mos | Aug 2021 to Jun 2023 \u00b7 1 yr 11 mos | Princeton, New Jersey, United States"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 5,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience Experience | Machine Learning Engineer | LinkedIn \u00b7 Internship | May 2022 - Aug 2022 \u00b7 4 mos | May 2022 to Aug 2022 \u00b7 4 mos | Sunnyvale, California, United States | Machine Learning, Deep Learning and +3 skills"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 6,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience Experience | Machine Learning, Deep Learning and +3 skills"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 7,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience Experience | Quantitative Developer | GWN Capital Management Ltd | Sep 2019 - Aug 2020 \u00b7 1 yr | Sep 2019 to Aug 2020 \u00b7 1 yr | Toronto, Canada Area"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 3,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience Experience | Quantitative Researcher | Squarepoint \u00b7 Full-time | Jul 2023 - Present \u00b7 2 yrs 9 mos | Jul 2023 to Present \u00b7 2 yrs 9 mos | New York, New York, United States"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 8,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience Experience | Undergraduate Research Assistant | University of Waterloo | May 2019 - Aug 2019 \u00b7 4 mos | May 2019 to Aug 2019 \u00b7 4 mos | Waterloo, Ontario"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 57,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | 2018 Cohort at Creative Destruction Lab"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 63,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Assistant Director - Unidad de Investigaci\u00f3n, Ciencia y Tecnolog\u00eda | May 2016 - Dec 2016 \u00b7 8 mos | May 2016 to Dec 2016 \u00b7 8 mos"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 62,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Assistant Director - Unidad de Investigaci\u00f3n, Ciencia y Tecnolog\u00eda | May 2016 - Dec 2016 \u00b7 8 mos | May 2016 to Dec 2016 \u00b7 8 mos | Researcher | May 2014 - Dec 2016 \u00b7 2 yrs 8 mos | May 2014 to Dec 2016 \u00b7 2 yrs 8 mos | CRONICAS - Centro de Excelencia de Enfermedades Cr\u00f3nicas (https://cronicas-upch.pe/)"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 65,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | CRONICAS - Centro de Excelencia de Enfermedades Cr\u00f3nicas (https://cronicas-upch.pe/)"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 56,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Co-Founder and Chief Research Officer | DataX.one | Jul 2018 - Aug 2019 \u00b7 1 yr 2 mos | Jul 2018 to Aug 2019 \u00b7 1 yr 2 mos | Toronto, Ontario, Canada | 2018 Cohort at Creative Destruction Lab"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 51,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Doctoral Student | Princeton University \u00b7 Full-time | Aug 2021 - Jun 2023 \u00b7 1 yr 11 mos | Aug 2021 to Jun 2023 \u00b7 1 yr 11 mos | Princeton, New Jersey, United States"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 58,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Insurance Modelling and Analytics Specialist | Oliver Wyman \u00b7 Internship | Sep 2018 - Dec 2018 \u00b7 4 mos | Sep 2018 to Dec 2018 \u00b7 4 mos | Toronto, Canada Area"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 60,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Junior Data Scientist | Flipp \u00b7 Internship | May 2017 - Aug 2017 \u00b7 4 mos | May 2017 to Aug 2017 \u00b7 4 mos | Toronto"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 52,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Machine Learning Engineer | LinkedIn \u00b7 Internship | May 2022 - Aug 2022 \u00b7 4 mos | May 2022 to Aug 2022 \u00b7 4 mos | Sunnyvale, California, United States | Skills: Machine Learning \u00b7 Deep Learning \u00b7 Python (Programming Language) \u00b7 Data Science \u00b7 Data Visualization"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 54,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Quantitative Developer | GWN Capital Management Ltd | Sep 2019 - Aug 2020 \u00b7 1 yr | Sep 2019 to Aug 2020 \u00b7 1 yr | Toronto, Canada Area"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 50,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Quantitative Researcher | Squarepoint \u00b7 Full-time | Jul 2023 - Present \u00b7 2 yrs 9 mos | Jul 2023 to Present \u00b7 2 yrs 9 mos | New York, New York, United States"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 64,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Researcher | May 2014 - Dec 2016 \u00b7 2 yrs 8 mos | May 2014 to Dec 2016 \u00b7 2 yrs 8 mos | CRONICAS - Centro de Excelencia de Enfermedades Cr\u00f3nicas (https://cronicas-upch.pe/)"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 53,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Skills: Machine Learning \u00b7 Deep Learning \u00b7 Python (Programming Language) \u00b7 Data Science \u00b7 Data Visualization"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 59,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Statistical Data Scientist | Capital One \u00b7 Internship | Jan 2018 - Apr 2018 \u00b7 4 mos | Jan 2018 to Apr 2018 \u00b7 4 mos | Toronto, Ontario, Canada"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 55,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Undergraduate Research Assistant | University of Waterloo | May 2019 - Aug 2019 \u00b7 4 mos | May 2019 to Aug 2019 \u00b7 4 mos | Waterloo, Ontario"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 61,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Experience | Universidad Peruana Cayetano Heredia | 2 yrs 8 mos | Lima, Peru | Assistant Director - Unidad de Investigaci\u00f3n, Ciencia y Tecnolog\u00eda | May 2016 - Dec 2016 \u00b7 8 mos | May 2016 to Dec 2016 \u00b7 8 mos | Researcher | May 2014 - Dec 2016 \u00b7 2 yrs 8 mos"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 2,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Highlights Highlights | 1 mutual group | You and Jose Luis are both in High Frequency Trading"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 1,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Highlights Highlights | You both studied at University of Waterloo | You both studied at University of Waterloo from 2020 to 2021 | Message"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 26,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards Honors & awards | Associated with Princeton University"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 28,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards Honors & awards | Associated with University of Waterloo"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 29,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards Honors & awards | Declined (moved to Princeton ORFE) | https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/internal-waterloo-awards/presidents-graduate-scholarship | Declined (moved to Princeton ORFE) https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/internal-waterloo-awards/presidents-graduate-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 27,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards Honors & awards | President's Graduate Scholarship | Issued by University of Waterloo \u00b7 Apr 2021 | Associated with University of Waterloo | Declined (moved to Princeton ORFE) | https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/internal-waterloo-awards/presidents-graduate-scholarship | Declined (moved to Princeton ORFE) https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/internal-waterl"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 25,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards Honors & awards | The Gordon B. and Nancy R. Stewart, Jr. Fellowship | Issued by Princeton University \u00b7 Feb 2022 | Associated with Princeton University"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 199,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | 1st Place at University of Toronto Ethereum Hackathon | Issued by University of Toronto \u00b7 Mar 2018 | Associated with University of Waterloo | Competition at the University of Toronto which led to the birth of DataX. | See: https://devpost.com/software/datax | Competition at the University of Toronto which led to the birth of DataX. See: https://devpost.com/software/datax"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 198,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | 2nd Place at Citadel's East Coast Invitational Datathon | Issued by Citadel Securities \u00b7 Jul 2018 | Associated with University of Waterloo"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 203,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | 2nd Place at Google Games Waterloo | Issued by Google \u00b7 Sep 2017 | Associated with University of Waterloo"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 183,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | 2nd place at AARMS-CMS Student Poster Session at the 2020 CMS Winter Meeting. See: https://cms.math.ca/wp-content/uploads/2021/06/CMS-2020-Annual-Report.pdf"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 207,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Associated with CRONICAS - Centro de Excelencia de Enfermedades Cr\u00f3nicas, Universidad Peruana Cayetano Heredia"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 212,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Associated with Markham College"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 177,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Associated with Princeton University"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 179,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Associated with University of Waterloo"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 195,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Award for best work term report in the Fall 2018 term for the paper \"Do not drink and derive, smoke adjoints and fly!\". See: https://uwaterloo.ca/math/work-report-awards"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 206,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Beca Anual de Medicina \"Francisco Tejada y Sem\u00edramis Re\u00e1tegui\" | Issued by Universidad Peruana Cayetano Heredia \u00b7 Sep 2015 | Associated with CRONICAS - Centro de Excelencia de Enfermedades Cr\u00f3nicas, Universidad Peruana Cayetano Heredia | Grant awarded for project on NCDs and Climate Change."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 209,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Best Delegate at Harvard National MUN 2015 | Issued by Harvard National Model United Nations 2015 \u00b7 Feb 2015 | Best Delegate award granted at the Harvard National Model United Nations (HNMUN) in the Global Health Cluster committee which debated on Efficient Health Care Systems of the World. HNMUN brings together 3000 delegates from more than 70 countries to discuss the most critical global challenges."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 204,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Best Delegate at Harvard National MUN 2016 | Issued by Harvard National Model United Nations 2016 \u00b7 Feb 2016 | Best Delegate award granted at the Harvard National Model United Nations (HNMUN) in the World Health Organization committee which debated on Institutionalising Pandemic and Epidemic Management. HNMUN brings together 3000 delegates from more than 70 countries to discuss the most critical global challenges."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 210,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Best Delegate award granted at the Harvard National Model United Nations (HNMUN) in the Global Health Cluster committee which debated on Efficient Health Care Systems of the World. HNMUN brings together 3000 delegates from more than 70 countries to discuss the most critical global challenges."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 205,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Best Delegate award granted at the Harvard National Model United Nations (HNMUN) in the World Health Organization committee which debated on Institutionalising Pandemic and Epidemic Management. HNMUN brings together 3000 delegates from more than 70 countries to discuss the most critical global challenges."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 182,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | CMS President's Prize | Issued by Canadian Mathematical Society \u00b7 Dec 2020 | Associated with University of Waterloo | 2nd place at AARMS-CMS Student Poster Session at the 2020 CMS Winter Meeting. See: https://cms.math.ca/wp-content/uploads/2021/06/CMS-2020-Annual-Report.pdf"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 200,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Competition at the University of Toronto which led to the birth of DataX. | See: https://devpost.com/software/datax | Competition at the University of Toronto which led to the birth of DataX. See: https://devpost.com/software/datax"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 196,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | David Shepherd Upper-Year Scholarship in Mathematics | Issued by Faculty of Mathematics, University of Waterloo \u00b7 Nov 2018 | Associated with University of Waterloo | See: https://uwaterloo.ca/student-awards-financial-aid/awards/david-shepherd-upper-year-scholarship-mathematics"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 185,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Declined (moved to Princeton ORFE) | https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/external-awards/ontario-graduate-scholarship-ogs-and-queen-elizabeth-ii | Declined (moved to Princeton ORFE) https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/external-awards/ontario-graduate-scholarship-ogs-and-queen-elizabeth-ii"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 180,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Declined (moved to Princeton ORFE) | https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/internal-waterloo-awards/presidents-graduate-scholarship | Declined (moved to Princeton ORFE) https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/internal-waterloo-awards/presidents-graduate-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 208,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Grant awarded for project on NCDs and Climate Change."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 184,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | International Ontario Graduate Scholarship | Issued by University of Waterloo/Government of Ontario \u00b7 Dec 2020 | Associated with University of Waterloo | Declined (moved to Princeton ORFE) | https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/external-awards/ontario-graduate-scholarship-ogs-and-queen-elizabeth-ii | Declined (moved to Princeton ORFE) https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/external-awards/ontario-graduate-scholarship-ogs-and-queen-elizabeth"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 201,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Joe C. Lee Mathematics Entrepreneurial Scholarship | Issued by Faculty of Mathematics, University of Waterloo \u00b7 Dec 2017 | Associated with University of Waterloo | See: https://uwaterloo.ca/student-awards-financial-aid/awards/joe-c-lee-math-entrepreneurial-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 192,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Konrad Group Digital Technology Scholarship | Issued by Faculty of Mathematics, University of Waterloo \u00b7 Dec 2019 | Associated with University of Waterloo | See: https://uwaterloo.ca/student-awards-financial-aid/awards/konrad-group-digital-technology-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 213,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Latin American record for most A* grades."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 186,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Mathematics International Master's Award of Excellence | Issued by Faculty of Mathematics, University of Waterloo \u00b7 Oct 2020 | Associated with University of Waterloo | See: https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/awards/international-masters-award-excellence-imae"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 178,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | President's Graduate Scholarship | Issued by University of Waterloo \u00b7 Apr 2021 | Associated with University of Waterloo | Declined (moved to Princeton ORFE) | https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/internal-waterloo-awards/presidents-graduate-scholarship | Declined (moved to Princeton ORFE) https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/current-students/internal-waterloo-awards/presidents-graduate-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 190,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Pure Mathematics Silver Medal | Issued by Pure Mathematics Department \u00b7 Jun 2020 | Associated with University of Waterloo | See: https://uwaterloo.ca/pure-mathematics/news/pure-math-silver-award-winners-announced"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 187,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | See: https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/awards/international-masters-award-excellence-imae"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 191,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | See: https://uwaterloo.ca/pure-mathematics/news/pure-math-silver-award-winners-announced"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 197,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | See: https://uwaterloo.ca/student-awards-financial-aid/awards/david-shepherd-upper-year-scholarship-mathematics"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 202,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | See: https://uwaterloo.ca/student-awards-financial-aid/awards/joe-c-lee-math-entrepreneurial-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 193,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | See: https://uwaterloo.ca/student-awards-financial-aid/awards/konrad-group-digital-technology-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 181,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Statistics & Actuarial Science Chair's Award | Issued by University of Waterloo \u00b7 Apr 2021 | Associated with University of Waterloo"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 176,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | The Gordon B. and Nancy R. Stewart, Jr. Fellowship | Issued by Princeton University \u00b7 Feb 2022 | Associated with Princeton University"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 211,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | The XXXIII Promotion Perpetual Trophy for Best IGCSE Certificates | Issued by Markham College \u00b7 Dec 2012 | Associated with Markham College | Latin American record for most A* grades."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 188,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | University of Waterloo Graduate Scholarship | Issued by University of Waterloo \u00b7 Sep 2020 | Associated with University of Waterloo | https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/awards/university-waterloo-graduate-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 194,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | Work Term Report Award | Issued by Faculty of Mathematics, University of Waterloo \u00b7 Mar 2019 | Associated with University of Waterloo | Award for best work term report in the Fall 2018 term for the paper \"Do not drink and derive, smoke adjoints and fly!\". See: https://uwaterloo.ca/math/work-report-awards"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 189,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Honors & awards | https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/awards/university-waterloo-graduate-scholarship"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 48,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | CaltechCaltech | 196,542 followers196,542 followers | Follow"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 41,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Comunidad EducaComunidad Educa | 141 members141 members | Join | Join Comunidad Educa group"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 38,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Goldman Sachs | 5,699,586 followers5,699,586 followers | Follow"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 46,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Greg Zuckerman's NewsGreg Zuckerman's News | The latest and hopefully greatest from Gregory Zuckerman, author and WSJ investigative reporterThe latest and hopefully greatest from Gregory Zuckerman, author and WSJ investigative reporter | Published biweeklyPublished biweekly | Gregory ZuckermanGregory Zuckerman | Subscribe"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 47,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Gregory ZuckermanGregory Zuckerman"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 35,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Jeff Weiner | \u00b7 3rd | Third degree connection | Executive Chairman at LinkedIn / Founding Partner Next Play Ventures | 10,390,338 followers | Follow"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 42,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Join | Join Comunidad Educa group"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 40,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Join | Join OMA Global group"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 37,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | LinkedIn | 33,217,884 followers33,217,884 followers | Following"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 36,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Lucie Basch | \u00b7 3rd | Third degree connection | Co-Founder @Poppins I @Too Good To Go l @Climate House l Forbes 30 under 30 | 183,988 followers | Follow"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 39,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | OMA GlobalOMA Global | 26 members26 members | Join | Join OMA Global group"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 49,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Princeton UniversityPrinceton University | 364,936 followers364,936 followers | Follow"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 45,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Subscribe"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 44,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | University of Waterloo"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 43,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Interests Interests | Waterloo Innovation InsiderWaterloo Innovation Insider | Top innovation stories from the University of Waterloo community. Top innovation stories from the University of Waterloo community. | Published monthlyPublished monthly | University of Waterloo | Subscribe"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 33,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Languages Languages | English | Native or bilingual proficiency"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 34,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Languages Languages | French | Professional working proficiency"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 214,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Languages | English | Native or bilingual proficiency"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 215,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Languages | French | Professional working proficiency"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 216,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Languages | Spanish | Native or bilingual proficiency"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 15,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Licenses & certifications Licenses & certifications | Show credential"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 14,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Licenses & certifications Licenses & certifications | edX Honor Code Certificate for Lessons from Ebola: Preventing the Next Pandemic | edX | Credential ID 321b38a4a5094798a41e39b584690d99 | Show credential"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 24,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications Publications | Prevalencia y factores de riesgo de neuropat\u00eda diab\u00e9tica perif\u00e9rica en pacientes recientemente diagnosticados de diabetes mellitus tipo 2 en un hospital nacional | Revista de la Sociedad Peruana de Medicina Interna \u00b7 Jan 1, 2019 | Show publication"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 23,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications Publications | Show publication"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 22,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications Publications | The effect of early-stage public health policies in the transmission of COVID-19 for South American countries | Pan American Journal of Public Health \u00b7 Nov 1, 2020 | Show publication"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 159,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | 4"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 156,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | 5"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 153,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | A Case Study of Justice in \u201cDeath and the Maiden\u201d | Adorans: The Agora Institute's Undergraduate Academic Journal \u00b7 May 1, 2017 | Show publication"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 174,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | A spectrophotometric comparison of three native Peruvian plant species in the uptake of hexavalent chromium ions | Markham College/International Baccalaureate \u00b7 Nov 1, 2013 | Show publication | In light of the environmental problems caused by the growth of the Peruvian economy, a potential method of treating chromium contaminated waters, phytoremediation, was investigated. The experiment was focused to answer the research question: \u201cWhich plant, Pistia stratiotes, Nasturtium officinale or Bambusa multiplex, acts as"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 172,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Adopting healthy eating habits in Peru's community kitchens: the comedores populares experience | World Obesity Federation \u00b7 Jun 23, 2015 | Show publication | Even though Comedores Populares provide food at an affordable price for low-income families, it is tough to align them with WHO recommendations. At CRONICAS, we challenged ourselves to create healthier menus for Comedores. \u00bfCould we break the myth that poor people can\u2019t afford to eat healthily?"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 151,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Childhood obesity is emerging as a major public health problem worldwide. To date, most studies of obesity and overweight in Peru are focused on adults, with few of them involving children, a population at a critical stage of development. The trend in overweight and obesity prevalence in Peruvian children under the age of five has not yet been determined. Thus, the objective of the present study is to evaluate the prevalence rates of overweight and obesity between 2010 and 2015 in children under the age of five, st"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 152,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Chronic Bronchitis, but Not Emphysema, Related to Gastroesophageal Reflux Disease Is Associated with Biomass Exposure in a High Altitude Rural Setting | American Journal of Respiratory and Critical Care Medicine \u00b7 May 14, 2017 | Show publication"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 173,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Even though Comedores Populares provide food at an affordable price for low-income families, it is tough to align them with WHO recommendations. At CRONICAS, we challenged ourselves to create healthier menus for Comedores. \u00bfCould we break the myth that poor people can\u2019t afford to eat healthily?"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 150,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Geographic differences in overweight and obesity prevalence in Peruvian children, 2010-2015. | BMC Public Health \u00b7 Mar 14, 2018 | Show publication | Childhood obesity is emerging as a major public health problem worldwide. To date, most studies of obesity and overweight in Peru are focused on adults, with few of them involving children, a population at a critical stage of development. The trend in overweight and obesity prevalence in Peruvian children under the age of five has not yet been determined. Thus, the obj"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 154,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Human papillomavirus-associated oropharyngeal cancer: Prioritizing preventive policies in males | Oral Oncology \u00b7 Apr 27, 2017 | Show publication | Other authors | 5"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 175,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | In light of the environmental problems caused by the growth of the Peruvian economy, a potential method of treating chromium contaminated waters, phytoremediation, was investigated. The experiment was focused to answer the research question: \u201cWhich plant, Pistia stratiotes, Nasturtium officinale or Bambusa multiplex, acts as the best phytoremediator to water systems contaminated with hexavalent chromium?\u201d The investigation focused on rhizofiltration, namely, the adsorption of contaminants by plant roots exposed to"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 164,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Level of knowledge and frequency of breast self-exam in medical students | Revista M\u00e9dica Herediana \u00b7 Jan 21, 2016 | Show publication | The World Health Organisation has reported cancer as the second leading cause of death among non-communicable diseases. Although there are several kinds of cancer, breast cancer is particularly relevant due to its high incidence (second for both genders in Peru), progressive decrease in the age of onset, and the possibility of better management if early detected."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 171,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Mental health disorders are a huge burden for health systems, particularly in low and middle income countries. A new research hub based in Sao Paulo and Lima is exploring the opportunity to use technology to tackle these disorders."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 167,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Obesity acts as a pathway for having several non-communicable diseases, such as cardiovascular disease, which is a leading cause of death across the world. Therefore, obesity prevention is needed if we are to slow down, or even to stop, the increasing incidence of non-communicable diseases and its consequences."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 161,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Other authors"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 158,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Other authors | 4"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 155,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Other authors | 5"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 168,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Patterns and Determinants of Physical Inactivity in Rural and Urban Areas in Peru: A Population-Based Study | Journal of Physical Activity and Health \u00b7 Dec 20, 2015 | Show publication | Physical inactivity and sedentary behaviors have been linked with impaired health outcomes. Establishing the physical inactivity profiles of a given population is needed to establish program targets and to contribute to international monitoring efforts."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 162,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Peru, climate change, and noncommunicable diseases: where are we and where are we heading? | Revista Peruana de Medicina Experimental y Salud P\u00fablica \u00b7 Mar 24, 2016 | Show publication | The world is facing a crisis of noncommunicable diseases alongside a state of climate volatility. Of the total health burden attributable to climate change, 99% will be assumed by developing countries. In light of climate change, Peru\u2019s best opportunity is to create mitigation and adaptation policies focused on developing health co"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 169,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Physical inactivity and sedentary behaviors have been linked with impaired health outcomes. Establishing the physical inactivity profiles of a given population is needed to establish program targets and to contribute to international monitoring efforts."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 149,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Prevalencia y factores de riesgo de neuropat\u00eda diab\u00e9tica perif\u00e9rica en pacientes recientemente diagnosticados de diabetes mellitus tipo 2 en un hospital nacional | Revista de la Sociedad Peruana de Medicina Interna \u00b7 Jan 1, 2019 | Show publication"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 170,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Rethinking Mental Health in Latin America | Global Health, Epidemiology and Genomics Journal - Cambridge University Press \u00b7 Oct 10, 2015 | Show publication | Mental health disorders are a huge burden for health systems, particularly in low and middle income countries. A new research hub based in Sao Paulo and Lima is exploring the opportunity to use technology to tackle these disorders."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 166,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Should I stay or should I go? Rural-to-urban migration and risk of developing obesity in Peru | World Obesity Federation \u00b7 Jan 15, 2016 | Show publication | Obesity acts as a pathway for having several non-communicable diseases, such as cardiovascular disease, which is a leading cause of death across the world. Therefore, obesity prevention is needed if we are to slow down, or even to stop, the increasing incidence of non-communicable diseases and its consequences."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 148,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Show publication"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 165,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | The World Health Organisation has reported cancer as the second leading cause of death among non-communicable diseases. Although there are several kinds of cancer, breast cancer is particularly relevant due to its high incidence (second for both genders in Peru), progressive decrease in the age of onset, and the possibility of better management if early detected."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 157,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | The double burden of malnutrition: a threat for Peruvian childhood | Gaceta Sanitaria \u00b7 Apr 11, 2017 | Show publication | Other authors | 4"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 147,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | The effect of early-stage public health policies in the transmission of COVID-19 for South American countries | Pan American Journal of Public Health \u00b7 Nov 1, 2020 | Show publication"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 163,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | The world is facing a crisis of noncommunicable diseases alongside a state of climate volatility. Of the total health burden attributable to climate change, 99% will be assumed by developing countries. In light of climate change, Peru\u2019s best opportunity is to create mitigation and adaptation policies focused on developing health co -benefits, which will improve the state of noncommunicable diseases and the climate system. This article presents Peru\u2019s compromises in terms of mitigation of greenhouse gas emissions; i"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 160,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Publications | Use of enhancement drugs amongst athletes and television celebrities and public interest in androgenic anabolic steroids. Exploring two Peruvian cases with Google Trends. | Public Health \u00b7 Feb 3, 2017 | Show publication | Other authors"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 21,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills Skills | 3 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 18,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills Skills | 4 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 16,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills Skills | Data Science | Machine Learning Engineer at LinkedIn | 4 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 20,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills Skills | Data Visualization | Machine Learning Engineer at LinkedIn | 3 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 19,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills Skills | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 17,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills Skills | Machine Learning Engineer at LinkedIn"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 116,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 10 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 120,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 11 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 100,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 12 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 144,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 12 endorsements12 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 109,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 13 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 102,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 15 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 96,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 17 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 98,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 19 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 142,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 19 endorsements19 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 127,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 2 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 94,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 20 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 92,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 28 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 83,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 3 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 136,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 3 endorsements3 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 90,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 32 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 88,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 36 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 140,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 36 endorsements36 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 80,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 4 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 134,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 4 endorsements4 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 124,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 5 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 104,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 6 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 146,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 6 endorsements6 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 114,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | 9 endorsements"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 105,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Abstraction | 6 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 101,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Analytical Skills | 15 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 128,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | C | 4 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 131,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | C# | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 78,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Data Science | Machine Learning Engineer at LinkedIn | 4 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 132,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Data ScienceData Science | Machine Learning Engineer at LinkedInMachine Learning Engineer at LinkedIn | 4 endorsements4 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 82,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Data Visualization | Machine Learning Engineer at LinkedIn | 3 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 135,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Data VisualizationData Visualization | Machine Learning Engineer at LinkedInMachine Learning Engineer at LinkedIn | 3 endorsements3 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 93,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Debate | 20 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 85,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Deep Learning | Machine Learning Engineer at LinkedIn | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 138,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Deep LearningDeep Learning | Machine Learning Engineer at LinkedInMachine Learning Engineer at LinkedIn | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 112,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Economics | 12 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 81,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 118,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | English | 9 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 111,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Environmental Chemistry | 4 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 113,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Health Policy | 9 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 106,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Interdisciplinary Collaboration | 6 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 91,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Leadership | 28 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 79,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Machine Learning Engineer at LinkedIn"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 133,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Machine Learning Engineer at LinkedInMachine Learning Engineer at LinkedIn"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 84,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Machine Learning | Machine Learning Engineer at LinkedIn | 3 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 137,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Machine LearningMachine Learning | Machine Learning Engineer at LinkedInMachine Learning Engineer at LinkedIn | 3 endorsements3 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 110,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Management | 12 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 97,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Mathematics | 19 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 141,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | MathematicsMathematics | 19 endorsements19 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 115,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Microsoft Excel | 10 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 95,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Microsoft Office | 17 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 117,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Microsoft Word | 6 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 99,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Model United Nations | 12 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 143,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Model United NationsModel United Nations | 12 endorsements12 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 122,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | PowerPoint | 6 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 89,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Public Speaking | 32 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 86,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Python (Programming Language) | Machine Learning Engineer at LinkedIn | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 125,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Python | 4 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 130,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | R | 3 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 87,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Research | 36 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 139,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | ResearchResearch | 36 endorsements36 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 126,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | SQL | 2 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 103,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Scientific Communications | 6 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 145,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Scientific CommunicationsScientific Communications | 6 endorsements6 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 121,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Social Media | 6 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 119,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Spanish | 11 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 129,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Stata | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 108,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Teamwork | 13 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 123,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Tutoring | 5 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 107,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Skills | Youth Mentoring | 6 endorsements | Endorse"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 31,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Test scores Test scores | Associated with Markham College"
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 30,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Test scores Test scores | International General Certificate of Secondary Education (IGCSE) | Score: 12 A* \u00b7 Nov 2011 | Associated with Markham College | Subjects: Additional Mathematics, Biology, Business Studies, Chemistry, English (Language), English (Literature), History, Mathematics, Physical Education, Physics, Spanish (Language), and Spanish (Literature)."
+    },
+    {
+      "attribute": "section_entry",
+      "confidence": "low",
+      "metadata": {
+        "adapter": "linkedin.com",
+        "confidence_level": "low",
+        "extractor": "playwright-default",
+        "ordinal": 32,
+        "source_section": "profile_sections"
+      },
+      "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+      "source_url": "https://www.linkedin.com/in/jose-luis-avilez/",
+      "value": "Test scores Test scores | Subjects: Additional Mathematics, Biology, Business Studies, Chemistry, English (Language), English (Literature), History, Mathematics, Physical Education, Physics, Spanish (Language), and Spanish (Literature)."
+    }
+  ],
+  "retrieved_at": "2026-03-02T12:22:25.755795+00:00",
+  "run_id": "enrich-20260302T122057Z-e89f41b8",
+  "snapshot": {
+    "content_type": "text/html",
+    "path": ".build/enrichment/source-evidence/linkedin.com/enrich-20260302T122057Z-e89f41b8/jose-luis-avilez.json"
+  },
+  "source": "linkedin.com",
+  "source_ref": "source/en/source@enrichment-linkedin-com-jose-luis-avilez-enrich-20260302t122057z-e89f41b8",
+  "source_url": "https://www.linkedin.com/in/jose-luis-avilez/"
+}

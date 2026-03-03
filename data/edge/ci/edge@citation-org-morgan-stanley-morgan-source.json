@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "org/mo/org@morgan-stanley",
+  "id": "citation-org-morgan-stanley-morgan-source",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^morgan-source] in org/mo/org@morgan-stanley",
+  "relation": "cites",
+  "sources": [
+    "source/mo/source@morgan-source"
+  ],
+  "strength": null,
+  "to": "source/mo/source@morgan-source",
+  "valid_from": null,
+  "valid_to": null
+}

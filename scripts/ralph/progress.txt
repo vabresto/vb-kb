@@ -1,0 +1,657 @@
+# Ralph Progress Log
+Started: Sat Feb 28 09:59:22 EST 2026
+
+## Codebase Patterns
+- Use `KBBaseModel` from `kb.schemas` for new typed configuration models so unknown fields are rejected consistently.
+- Keep generated runtime artifacts under `.build/`; the repo already ignores this tree.
+- Enrichment source selection should go through `SourceAdapterRegistry.get(...)` so unsupported sources consistently raise `AdapterNotFoundError` instead of ad-hoc `ValueError`s.
+- Run `lookup_session_state(...)` before authenticated extraction. It returns actionable missing/expired diagnostics and keeps session preflight deterministic.
+- Treat malformed session payloads as auth failures by raising typed `AuthenticationError` subclasses before adapter fetch/normalize phases.
+- Session bootstrap commands should emit JSON storageState (`cookies` + `origins`) or `{ "storage_state": ... }`; `kb bootstrap-session` injects source/headless/session-path context via `KB_ENRICHMENT_BOOTSTRAP_*` env vars and maps challenge signals to typed MFA/anti-bot errors.
+- Adapter response models enforce relative path tokens for `used_session_state_path` and `snapshot_path`; keep absolute paths internal for filesystem I/O and return relative config/output paths in typed results.
+- Command-backed adapters should keep per-source fetch command env vars but reuse shared `KB_ENRICHMENT_EXTRACT_*` runtime env keys so source adapters stay interchangeable.
+- `run_enrichment_for_entity(...)` should remain the canonical kickoff orchestrator: it accepts exactly one entity target, runs one or more selected sources in a single invocation, and always emits explicit phase-state keys (`extraction`, `source_logging`, `mapping`, `validation`, `reporting`) in `EnrichmentRunReport`.
+- Source logging should write deterministic source entities under `data/source/<shard>/source@enrichment-.../` with both canonical `index.md` and structured `facts.json`; preserve these paths on `SourceExtractionState` for downstream provenance/mapping phases.
+- Person mapping should only promote facts meeting `confidence_policy.minimum_promotion_level`; update person frontmatter (`firm`, `role`, `location`) without rewriting narrative sections, and archive replaced current role values into `employment-history.jsonl`.
+- Organization mapping should target canonical `data/org/<shard>/org@<slug>/index.md`, keep narrative body sections unchanged, and merge `known-people` entries using canonical person links with required relationship/date fields.
+- Promoted enrichment facts must carry source-entity provenance (`source_entity_ref`, `source_entity_path`, citation key) before mapping writes; mapping should fail fast when linkage is missing and should upsert a managed `## Enrichment Provenance` markdown section with source-entity links + `[^citation-key]` tokens.
+- Validation gating should call `run_validation(..., scope_label="changed")` after mapping/source writes; if it fails, run one remediation pass (`derive-employment-edges`, `derive-citation-edges`, `sync-edge-backlinks`), rerun validation once, and escalate as `blocked` with failing check codes + affected paths when unresolved.
+- Enrichment operator flows should be surfaced both as `kb` CLI subcommands and root `just` targets, with parser/runner coverage in `kb/tests/test_cli_*.py`.
+
+## [2026-02-28 10:02:42 EST] - US-001
+- What was implemented
+  - Added `kb/enrichment_config.py` with typed enrichment settings: headless default, run report path, confidence threshold policy, secret-provider policy with env-var fallback, and source-specific settings for `linkedin.com` and `skool.com`.
+  - Added `load_enrichment_config_from_env(...)` to apply deterministic environment overrides, including per-source session/evidence paths and secret/env token mappings.
+  - Added validation for required supported sources, relative artifact paths, and monotonic confidence thresholds.
+- Files changed
+  - `kb/enrichment_config.py`
+  - `kb/tests/test_enrichment_config.py`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - New schema/config models should inherit from `KBBaseModel` to keep `extra="forbid"` behavior aligned across modules.
+    - Artifact defaults should be rooted under `.build/` with deterministic per-source subpaths.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - In this environment, `just check` can fail unless `UV_CACHE_DIR` points to a writable location; use `UV_CACHE_DIR=/tmp/uv-cache just check`.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - The current quality gate is `just check` (`validate-changed`, `pytest`, then `mkdocs build`).
+---
+
+## Codex Output - Iteration 1 (2026-02-28 10:04:14)
+Implemented `US-001` and committed it as `a26c7f0` with message:
+
+`feat: [US-001] - [Add enrichment configuration, confidence policy, and artifact paths]`
+
+Changed files:
+- [kb/enrichment_config.py](/Users/victor/ws/vb-kb/kb/enrichment_config.py)
+- [kb/tests/test_enrichment_config.py](/Users/victor/ws/vb-kb/kb/tests/test_enrichment_config.py)
+- [scripts/ralph/prd.json](/Users/victor/ws/vb-kb/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/Users/victor/ws/vb-kb/scripts/ralph/progress.txt)
+
+Quality checks run:
+- `uv run --extra dev python -m pytest -q` (passed, `42 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (passed: `validate-changed`, `test`, `site-build`)
+
+PRD/progress updates:
+- Set `US-001` to `"passes": true` in `scripts/ralph/prd.json`.
+- Appended progress entry and added `## Codebase Patterns` in `scripts/ralph/progress.txt`.
+
+Branch note:
+- I could not create/switch to `ralph/playwright-kb-enrichment` in this environment because writes under `.git/refs/heads` are blocked (`Operation not permitted`), so the commit is currently on `vbrestoiu/feature/structured-data`.
+
+1. If you want the commit on the PRD branch, run:
+`git checkout master && git checkout -b ralph/playwright-kb-enrichment && git cherry-pick a26c7f0`
+---
+
+## [2026-02-28 10:08:47 EST] - US-002
+- What was implemented
+  - Added `kb/enrichment_adapters.py` with a typed source adapter contract covering `authenticate`, `fetch`, `normalize`, and `snapshot`.
+  - Added typed request/result models for each adapter phase using `KBBaseModel`.
+  - Implemented explicit typed errors for adapter lookup and auth challenges: `AdapterNotFoundError`, `AntiBotChallengeError`, and `MFAChallengeError`.
+  - Implemented `SourceAdapterRegistry` with typed registration/lookup and explicit adapter-not-found behavior for unsupported or unregistered sources.
+  - Added tests validating contract shape, registry lookup semantics, and typed challenge errors.
+- Files changed
+  - `kb/enrichment_adapters.py`
+  - `kb/tests/test_enrichment_adapters.py`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Treat source selection as a first-class typed operation via `SourceAdapterRegistry` and `SupportedSource` to keep orchestration behavior deterministic.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - In Python enum subclasses, `str(enum_member)` may return `EnumClass.member`; use `.value` for user-facing source identifiers in errors and logs.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - The adapter contract is intentionally transport-agnostic: it can be used by future Playwright adapters without committing to sync vs async orchestration yet.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 10:10:55)
+Implemented `US-002` and committed it.
+
+**What I changed**
+- Added typed adapter contract + models + registry + typed errors in [kb/enrichment_adapters.py](/Users/victor/ws/vb-kb/kb/enrichment_adapters.py)
+- Added tests for contract shape, registry behavior, and challenge errors in [kb/tests/test_enrichment_adapters.py](/Users/victor/ws/vb-kb/kb/tests/test_enrichment_adapters.py)
+- Marked `US-002` as passing in [scripts/ralph/prd.json](/Users/victor/ws/vb-kb/scripts/ralph/prd.json)
+- Appended progress entry and updated codebase patterns in [scripts/ralph/progress.txt](/Users/victor/ws/vb-kb/scripts/ralph/progress.txt)
+
+**Quality checks**
+- `uv run --extra dev python -m pytest -q` passed (`46 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` passed (`validate-changed`, `test`, `site-build`)
+
+**Commit**
+- `c0d454f`
+- Message: `feat: [US-002] - [Define source adapter contract and registry]`
+- Includes tracked pre-existing change in [scripts/ralph/.last-codex-output.md](/Users/victor/ws/vb-kb/scripts/ralph/.last-codex-output.md)
+
+**Branch status**
+- Could not create/switch to `ralph/playwright-kb-enrichment` due repo ref lock permission error:
+  - `cannot lock ref 'refs/heads/ralph/playwright-kb-enrichment': unable to create directory ...`
+
+There are still stories with `passes: false` in the PRD (11 remaining).
+---
+
+## [2026-02-28 15:18:17 UTC] - US-003
+- What was implemented
+  - Added `kb/enrichment_sessions.py` with typed session utilities to resolve per-source storageState paths, save/load Playwright storageState JSON, and run preflight lookup with explicit missing/expired diagnostics.
+  - Added typed authentication errors for session preflight: `SessionStateMissingError`, `SessionStateExpiredError`, and `InvalidSessionStateError` so invalid session artifacts fail before extraction starts.
+  - Added JSON export/import utilities for portable session transfer: `export_session_state_json(...)` and `import_session_state_json(...)`, with source mismatch protection via `SessionTransferPayload`.
+  - Added `kb/tests/test_enrichment_sessions.py` covering save/load round trips, missing and expired diagnostics, invalid JSON/shape handling, and export/import source-guard behavior.
+- Files changed
+  - `kb/enrichment_sessions.py`
+  - `kb/tests/test_enrichment_sessions.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Session preflight should run through `lookup_session_state(...)` so orchestration can report actionable missing/expired status before adapter execution.
+    - Portable session transfer should include source metadata (`source`, `exported_at`, `expires_at`) to prevent importing artifacts into the wrong adapter source.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - `uv` commands in this environment require a writable cache path; use `UV_CACHE_DIR=/tmp/uv-cache` for tests/checks.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `import_session_state_json(...)` accepts either raw Playwright storageState JSON or the transfer-envelope format, enabling local bootstrap export and headless import workflows without extra conversion steps.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 15:19:32)
+Implemented `US-003` on branch `ralph/playwright-kb-enrichment` and committed it.
+
+Commit:
+- `7352f57`
+- `feat: [US-003] - [Implement session storage plus import/export utilities]`
+
+Changed files:
+- [kb/enrichment_sessions.py](/root/ws/vb-kb2/kb/enrichment_sessions.py)
+- [kb/tests/test_enrichment_sessions.py](/root/ws/vb-kb2/kb/tests/test_enrichment_sessions.py)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+
+What was implemented:
+- Added per-source Playwright `storageState` save/load utilities.
+- Added JSON export/import utilities for portable session transfer.
+- Added missing/expired session lookup diagnostics.
+- Added typed auth errors for invalid/missing/expired session state before extraction.
+- Added comprehensive unit tests for session utilities and transfer flow.
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q` (`54 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, `test`, `site-build` all passed)
+
+PRD/progress updates completed:
+- Set `US-003` to `"passes": true` in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended the required progress log entry and updated `## Codebase Patterns` in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+There are still stories with `passes: false` (`US-004` onward), so this iteration is complete but not final project completion.
+---
+
+## [2026-02-28 15:34:18 UTC] - US-004
+- What was implemented
+  - Added `kb/enrichment_bootstrap.py` with typed session-bootstrap orchestration that runs source-specific bootstrap commands, persists Playwright storageState via `save_session_state(...)`, optionally exports transfer JSON, and returns structured bootstrap results.
+  - Added challenge-aware bootstrap failure handling with actionable remediation using typed errors (`MFAChallengeError` and `AntiBotChallengeError`), plus explicit errors for missing/invalid bootstrap command output.
+  - Added new CLI workflow `kb bootstrap-session <source>` with `--headful` support and automatic headful export path fallback under `.build/enrichment/sessions/<source>/headful-export.json`.
+  - Extended enrichment config source settings with optional `bootstrap_command` and env overrides (`KB_ENRICHMENT_LINKEDIN_BOOTSTRAP_COMMAND`, `KB_ENRICHMENT_SKOOL_BOOTSTRAP_COMMAND`).
+  - Added `just` targets for the bootstrap workflow: `enrichment-bootstrap` and `enrichment-bootstrap-headful`.
+  - Added focused tests for bootstrap orchestration, challenge detection, CLI parsing, and config env overrides.
+- Files changed
+  - `kb/enrichment_bootstrap.py`
+  - `kb/cli.py`
+  - `kb/enrichment_config.py`
+  - `kb/tests/test_enrichment_bootstrap.py`
+  - `kb/tests/test_cli_bootstrap_session.py`
+  - `kb/tests/test_enrichment_config.py`
+  - `justfile`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Keep source-specific bootstrap commands in `SourceSettings.bootstrap_command` with env overrides so operators can swap login scripts without code edits.
+    - Treat bootstrap command output as a strict JSON contract (`storage_state` envelope or raw storageState object) before persisting sessions.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - CLI headful bootstrap should auto-generate an export path when none is provided so local interactive runs always produce a portable session artifact.
+    - Continue using `UV_CACHE_DIR=/tmp/uv-cache` when running `just check` in this environment.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `kb bootstrap-session` injects runtime context for bootstrap scripts through `KB_ENRICHMENT_BOOTSTRAP_SOURCE`, `KB_ENRICHMENT_BOOTSTRAP_HEADLESS`, `KB_ENRICHMENT_BOOTSTRAP_SESSION_PATH`, and `KB_ENRICHMENT_BOOTSTRAP_EVIDENCE_PATH`.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 15:36:30)
+Implemented `US-004` on `ralph/playwright-kb-enrichment` and committed it.
+
+Commit:
+- `6f6f5fb`
+- `feat: [US-004] - [Add login bootstrap commands for headless and local headful flows]`
+
+Key changes:
+- Added bootstrap orchestration with typed challenge handling and session persistence/export in [kb/enrichment_bootstrap.py](/root/ws/vb-kb2/kb/enrichment_bootstrap.py)
+- Added `bootstrap-session` CLI command in [kb/cli.py](/root/ws/vb-kb2/kb/cli.py)
+- Extended source config with `bootstrap_command` + env overrides in [kb/enrichment_config.py](/root/ws/vb-kb2/kb/enrichment_config.py)
+- Added bootstrap + CLI tests in [kb/tests/test_enrichment_bootstrap.py](/root/ws/vb-kb2/kb/tests/test_enrichment_bootstrap.py) and [kb/tests/test_cli_bootstrap_session.py](/root/ws/vb-kb2/kb/tests/test_cli_bootstrap_session.py)
+- Added just workflows in [justfile](/root/ws/vb-kb2/justfile)
+- Added reusable enrichment bootstrap guidance in [agents.md](/root/ws/vb-kb2/agents.md)
+
+Tracking updates:
+- Set `US-004` to `passes: true` in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended required progress entry and updated `Codebase Patterns` in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks passed:
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, `pytest`, `mkdocs build`) with `61 passed`.
+
+There are still stories with `passes: false` (`US-005` through `US-013`).
+---
+
+## [2026-02-28 15:43:27 UTC] - US-005
+- What was implemented
+  - Added `kb/enrichment_linkedin_adapter.py` implementing `LinkedInSourceAdapter` with typed authenticate/fetch/normalize/snapshot flows.
+  - Adapter now preflights session state via `load_session_state(...)` and automatically runs bootstrap fallback when session is missing/expired before extraction.
+  - Added command-driven LinkedIn fetch flow (`KB_ENRICHMENT_LINKEDIN_FETCH_COMMAND` / `fetch_command`) with challenge detection that raises typed `AntiBotChallengeError`/`MFAChallengeError`.
+  - Added normalization logic that emits `NormalizedFact` records with source URL, retrieval timestamp, confidence level, and metadata; added snapshot persistence for html/json payloads.
+  - Added extraction error handling with typed `LinkedInExtractionError` for unsupported or malformed flows.
+- Files changed
+  - `kb/enrichment_linkedin_adapter.py`
+  - `kb/tests/test_enrichment_linkedin_adapter.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+  - `README.md`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - For adapter outputs, typed models expect relative path tokens, so keep resolved absolute paths internal for file I/O only.
+    - Command-backed adapters should parse stdout as a strict JSON object and map challenge hints to typed auth errors before normalization.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Returning absolute paths in `AuthenticationResult` or `SnapshotResult` fails pydantic validation because `normalize_path_token` rejects them.
+    - Keep using `UV_CACHE_DIR=/tmp/uv-cache` when running `just check` in this environment.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `LinkedInSourceAdapter` supports dependency injection for `fetch_runner` and `bootstrap_login_runner`, which keeps adapter tests deterministic without browser runtime.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 15:45:12)
+Implemented `US-005` on branch `ralph/playwright-kb-enrichment` and committed all changes.
+
+Commit:
+- `54fbf24`
+- `feat: [US-005] - [Implement LinkedIn adapter extraction]`
+
+What was implemented:
+- Added LinkedIn adapter implementation with typed auth/fetch/normalize/snapshot flow, session preflight, bootstrap fallback, command-driven extraction, challenge detection, and typed extraction errors in [kb/enrichment_linkedin_adapter.py](/root/ws/vb-kb2/kb/enrichment_linkedin_adapter.py)
+- Added focused adapter tests (protocol conformance, bootstrap fallback, normalized facts, anti-bot error, unsupported flow error) in [kb/tests/test_enrichment_linkedin_adapter.py](/root/ws/vb-kb2/kb/tests/test_enrichment_linkedin_adapter.py)
+- Updated reusable agent guidance in [agents.md](/root/ws/vb-kb2/agents.md)
+- Updated enrichment layout docs in [README.md](/root/ws/vb-kb2/README.md)
+- Marked `US-005` as passing in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended required progress entry and updated Codebase Patterns in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_linkedin_adapter.py` (`5 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, `pytest`, `mkdocs build`; `66 passed`)
+
+There are still stories with `passes: false` (`US-006` through `US-013`).
+---
+
+## [2026-02-28 15:58:36 UTC] - US-006
+- What was implemented
+  - Added `kb/enrichment_skool_adapter.py` implementing `SkoolSourceAdapter` with typed authenticate/fetch/normalize/snapshot flows that conform to the shared `SourceAdapter` contract.
+  - Adapter now preflights session state and triggers bootstrap fallback when session artifacts are missing or expired before extraction.
+  - Added command-driven Skool fetch flow (`KB_ENRICHMENT_SKOOL_FETCH_COMMAND` / `fetch_command`) with challenge detection that raises typed `AntiBotChallengeError`/`MFAChallengeError`.
+  - Added normalization logic producing `NormalizedFact` records with source URL, retrieval timestamp, confidence metadata, plus snapshot persistence for html/json payloads.
+  - Added extraction error handling with typed `SkoolExtractionError` for malformed payloads and unsupported flows.
+- Files changed
+  - `kb/enrichment_skool_adapter.py`
+  - `kb/tests/test_enrichment_skool_adapter.py`
+  - `README.md`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Source-specific adapters should keep the same extraction runtime env contract (`KB_ENRICHMENT_EXTRACT_*`) while varying only source command env vars for deterministic orchestration.
+    - Adapter constructors should continue supporting injected `fetch_runner` and `bootstrap_login_runner` callables for deterministic tests without browser dependencies.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Skool blocked flows often surface as Cloudflare/captcha strings; map those signals to typed anti-bot errors before treating failures as generic extraction errors.
+    - Keep using `UV_CACHE_DIR=/tmp/uv-cache` when running `just check` in this environment.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `SkoolSourceAdapter` mirrors LinkedIn adapter behavior, so future adapter changes should keep both files aligned on auth preflight, challenge parsing, and path-token validation semantics.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 15:59:56)
+Implemented `US-006` on `ralph/playwright-kb-enrichment` and committed all changes.
+
+Changed files:
+- [kb/enrichment_skool_adapter.py](/root/ws/vb-kb2/kb/enrichment_skool_adapter.py)
+- [kb/tests/test_enrichment_skool_adapter.py](/root/ws/vb-kb2/kb/tests/test_enrichment_skool_adapter.py)
+- [README.md](/root/ws/vb-kb2/README.md)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+- [scripts/ralph/.last-codex-output.md](/root/ws/vb-kb2/scripts/ralph/.last-codex-output.md)
+
+What I completed:
+- Added `SkoolSourceAdapter` with typed `authenticate`/`fetch`/`normalize`/`snapshot` flow.
+- Added session preflight + bootstrap fallback for missing/expired sessions.
+- Added command-driven Skool extraction via `KB_ENRICHMENT_SKOOL_FETCH_COMMAND`.
+- Added typed anti-bot/MFA challenge mapping and `SkoolExtractionError`.
+- Added focused Skool adapter tests (protocol, bootstrap fallback, normalization metadata, anti-bot, unsupported flow, session-path override).
+- Marked `US-006` as `passes: true` in PRD.
+- Appended the required progress entry and updated Codebase Patterns.
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_skool_adapter.py` (`5 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, `pytest`, `mkdocs build`; `71 passed`)
+
+Commit:
+- `35a00dc`
+- `feat: [US-006] - [Implement Skool adapter extraction]`
+
+There are still stories with `passes: false` (`US-007` onward).
+---
+## [2026-02-28 16:06:00 UTC] - US-007
+- What was implemented
+  - Added `kb/enrichment_run.py` with a manual kickoff orchestrator (`run_enrichment_for_entity`) that resolves a single entity slug/path, runs selected adapters in one invocation, executes extraction (`fetch`/`normalize`/`snapshot`), and persists a structured run report.
+  - Added typed run reporting models (`EnrichmentRunReport`, `RunPhaseStates`, `ExtractionPhaseState`) so output always includes explicit phase states for `extraction`, `source_logging`, `mapping`, `validation`, and `reporting`.
+  - Added `kb enrich-entity <entity>` CLI workflow with repeated `--source` support for multi-source runs and JSON success/failure payloads.
+  - Added focused tests for orchestrator phase-state behavior, single-target enforcement, CLI wiring, and autonomous no-prompt execution expectations.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/cli.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `kb/tests/test_cli_enrich_entity.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Keep run output contract centralized in `EnrichmentRunReport`; later stories should advance phase statuses in-place rather than introducing ad-hoc report keys.
+    - Multi-source kickoff should be modeled as repeated `--source` flags while keeping a single positional entity target for deterministic one-entity runs.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Snapshot output paths passed through adapter models must remain relative path tokens (absolute paths fail model validation).
+    - For unfinished downstream phases, use explicit `pending`/`skipped` phase states instead of omitting phases from output.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `kb enrich-entity` writes its structured report to `EnrichmentConfig.run_report_path` (default `.build/enrichment/reports/latest-run.json`), which makes each kickoff auditable even before mapping/validation stories land.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:07:08)
+Implemented `US-007` on `ralph/playwright-kb-enrichment` and committed all changes.
+
+Commit:
+- `73578df`
+- `feat: [US-007] - [Add manual kickoff command and autonomous orchestrator]`
+
+Key changes:
+- Added one-entity enrichment kickoff/orchestrator with structured phase-state reporting in [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py).
+- Added CLI command `kb enrich-entity <entity>` (single target, repeated `--source` support, structured JSON output) in [kb/cli.py](/root/ws/vb-kb2/kb/cli.py).
+- Added orchestration tests in [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py).
+- Added CLI tests in [kb/tests/test_cli_enrich_entity.py](/root/ws/vb-kb2/kb/tests/test_cli_enrich_entity.py).
+- Added reusable orchestration guidance in [agents.md](/root/ws/vb-kb2/agents.md).
+
+Tracking updates:
+- Set `US-007` to `"passes": true` in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json).
+- Appended required progress entry and updated `Codebase Patterns` in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt).
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py kb/tests/test_cli_enrich_entity.py` (`9 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; `80 passed`)
+
+There are still stories with `passes: false` (`US-008` through `US-013`).
+---
+## [2026-02-28 16:13:17 UTC] - US-008
+- What was implemented
+  - Implemented source-logging persistence in `run_enrichment_for_entity(...)` so successful extractions now write canonical source entities under `data/source/...` instead of leaving the phase pending.
+  - Added deterministic source-entity writes per `(run_id, source, entity)` including canonical `index.md`, `edges/.gitkeep`, and a structured `facts.json` artifact containing all normalized facts with confidence tags.
+  - Source records now link snapshot artifacts and the structured facts artifact from markdown body content; when snapshot content is HTML, `html-capture-path` is populated in frontmatter.
+  - Extended extraction state reporting with `source_entity_ref`, `source_entity_path`, and `facts_artifact_path`; source logging now runs for successful sources even when other sources fail extraction.
+  - Added/updated orchestration tests to verify source logging success states, generated artifact content, and retention of low-confidence facts.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Use deterministic enrichment-source slugs (`enrichment-<source>-<entity>-<run-id>`) so source entity paths are stable and auditable across reruns.
+    - Keep full extracted facts in `facts.json` (sorted with stable keys) and treat `index.md` as the human-readable citation entrypoint.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - `SourceRecord` frontmatter is strict (`extra="forbid"`), so arbitrary metadata must live in body content or sidecar artifacts like `facts.json`.
+    - Source frontmatter date fields (`retrieved-at`) must be partial-date format (`YYYY-MM-DD`), not full timestamps.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - Source logging phase now succeeds when at least one source is logged, even if another source failed extraction; mapping/validation phases remain skipped when extraction is not fully successful.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:14:28)
+Implemented `US-008` on branch `ralph/playwright-kb-enrichment` and committed it.
+
+- Commit: `f87470d`
+- Message: `feat: [US-008] - [Persist source entities with snapshots and full fact logs]`
+
+Changed files:
+- [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py)
+- [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+What was implemented:
+- Source logging phase now persists canonical source entities under `data/source/<shard>/source@enrichment-.../`.
+- Each successful source writes deterministic `index.md` + `facts.json` (all extracted facts including low-confidence) and links snapshot artifacts.
+- Extraction state now carries source artifact provenance fields (`source_entity_ref`, `source_entity_path`, `facts_artifact_path`).
+- Source logging runs for successful sources even when another source fails extraction.
+
+Quality checks passed:
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py` (`6 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; all passed)
+
+Tracking updates completed:
+- Set `US-008` to `"passes": true` in PRD.
+- Appended the required progress entry and updated Codebase Patterns.
+
+There are still stories with `passes: false` (`US-009` to `US-013`).
+---
+## [2026-02-28 16:21:45 UTC] - US-009
+- What was implemented
+  - Implemented person-mapping execution in `run_enrichment_for_entity(...)`: when extraction succeeds, mapping now runs against canonical `data/person/<shard>/person@<slug>/index.md` instead of returning a placeholder pending phase.
+  - Added confidence-gated promotion for person facts using `confidence_policy.minimum_promotion_level` (default `medium`) and deterministic field selection for mapped frontmatter fields (`firm`, `role`, `location`).
+  - Added canonical person write behavior that updates frontmatter while preserving narrative markdown body sections, then archives replaced current-role values into `employment-history.jsonl` as the next `employment-###` row.
+  - Added robust JSONL/frontmatter parsing and error handling for mapping writes plus updated run-status handling so mapping failures produce a failed run status.
+  - Expanded enrichment run tests to cover mapping phase success, confidence gating, preserved narrative body behavior, and prior-role archival to employment history.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Treat person mapping as frontmatter + structured JSONL updates: keep `index.md` narrative sections stable, and express historical role changes through appended `employment-history.jsonl` rows.
+    - Use canonical person paths derived from slug + shard (`data/person/<shard>/person@<slug>/index.md`) for deterministic mapping targets even when kickoff input is just a slug.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Re-rendering frontmatter can normalize blank lines around body content; compare normalized/stripped body content in tests when verifying first-mention narrative preservation.
+    - Keep `employment-history.jsonl` row IDs and `source_row` values monotonic (`employment-###`, incrementing row numbers) to avoid schema/consistency drift.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - Current mapper handles person targets only; non-person targets continue to surface mapping as pending for `US-010` organization mapping.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:22:58)
+Implemented `US-009` on branch `ralph/playwright-kb-enrichment` and committed all changes.
+
+- Commit: `c3a540a`
+- Message: `feat: [US-009] - [Implement person mapping with confidence-gated promotion]`
+
+What I changed:
+- Added confidence-gated person mapping in [enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py):
+  - Promotes only facts at/above `minimum_promotion_level`
+  - Maps promoted person facts into canonical `data/person/<shard>/person@<slug>/index.md` frontmatter (`firm`, `role`, `location`)
+  - Preserves narrative body sections while updating frontmatter
+  - Archives replaced current role into `employment-history.jsonl` as the next `employment-###` row
+  - Marks run as failed if mapping fails
+- Expanded mapping tests in [test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py) for:
+  - Mapping phase success
+  - Confidence gating behavior
+  - Narrative-body preservation
+  - Employment-history archival behavior
+- Added reusable mapper patterns to [agents.md](/root/ws/vb-kb2/agents.md)
+- Set `US-009` to passing in [prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended the required progress entry and codebase pattern update in [progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_cli_enrich_entity.py kb/tests/test_enrichment_run.py`
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`)
+
+Remaining `passes: false` stories:
+- `US-010`, `US-011`, `US-012`, `US-013`
+---
+
+## [2026-02-28 16:29:52 UTC] - US-010
+- What was implemented
+  - Implemented organization mapping in `kb/enrichment_run.py` so org targets no longer stay pending; org runs now promote confidence-qualified facts into canonical `data/org/<shard>/org@<slug>/index.md` frontmatter.
+  - Added confidence-gated organization field mapping for `org`, `website`, `hq-location`, and `thesis`, including deterministic report messaging for promoted vs non-promoted outcomes.
+  - Added `known-people` merge logic that normalizes/merges entries by canonical person reference and writes required relationship/date fields with person file-path markdown links.
+  - Preserved organization narrative body sections during mapping writes (frontmatter-only edits), matching first-mention-link preservation expectations.
+  - Added organization mapping test coverage in `kb/tests/test_enrichment_run.py` for confidence gating, canonical org writes, `known-people` object structure, and body preservation.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Treat org enrichment writes as frontmatter updates only; preserving markdown body sections avoids regressing first-mention links already curated in narrative content.
+    - `known-people` entries should be merged by canonical person ref, then rendered as relative markdown links with required relationship/date keys for deterministic structure.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - A promoted `known_person` fact can still be non-actionable if the referenced person page is missing; skip unresolved refs to avoid writing broken links.
+    - Relationship/date metadata can arrive in mixed key styles (`snake_case` vs `kebab-case`); normalize both when mapping metadata into frontmatter.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - Mapping flow now branches by entity kind: person and organization targets are implemented, while source targets remain explicitly skipped.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:30:44)
+Implemented `US-010` on branch `ralph/playwright-kb-enrichment` and committed it.
+
+- Commit: `7f96263`
+- Message: `feat: [US-010] - [Implement organization mapping with confidence-gated promotion]`
+- Skill note: I did not use the `ralph` conversion skill because this turn was implementation against an existing `prd.json`, not PRD conversion.
+
+Changed files:
+- [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py)
+- [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks run and passed:
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py` (`8 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; all passed)
+
+Tracking updates completed:
+- Set `US-010` to `passes: true` in `scripts/ralph/prd.json`.
+- Appended the required progress entry and updated `## Codebase Patterns` in `scripts/ralph/progress.txt`.
+- Added reusable org-mapping guidance to `agents.md`.
+
+There are still stories with `passes: false` (`US-011`, `US-012`, `US-013`), so this iteration is complete but not final project completion.
+---
+## [2026-02-28 16:36:59 UTC] - US-011
+- What was implemented
+  - Added provenance-enforced mapping in `kb/enrichment_run.py`: promoted facts now require source-entity linkage (`source_entity_ref`, `source_entity_path`, citation key) and mapping fails fast with `PromotedFactProvenanceError` when provenance is missing.
+  - Added deterministic run-report fact-to-source output via `EnrichmentRunReport.fact_to_source_mappings`, including per-entity mapping rows with source identifier, citation key, source entity path/ref, retrieval timestamp, and optional location pointers.
+  - Added managed markdown citation output for mapped entities: person/org mapping now upserts a `## Enrichment Provenance` section that links to KB source entities and emits `[^citation-key]` references (no URL-only citations).
+  - Updated mapping phase reporting messages to include fact-to-source mapping counts for successful person/org writes.
+  - Expanded enrichment run tests to validate provenance report payloads, citation section writes for person/org mapping, and failure behavior when source logging prevents required provenance linkage.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Treat promoted-fact provenance as a hard precondition for mapping writes, not best-effort metadata: report summary and markdown citations should both derive from the same validated promoted-fact set.
+    - Keep enrichment citation output in a managed markdown block (`## Enrichment Provenance` with start/end markers) so reruns can replace stale provenance deterministically.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Source logging and mapping are separate phases; if source logging partially fails, mapping can still receive promoted facts without source artifacts unless provenance checks explicitly gate it.
+    - Continue using `UV_CACHE_DIR=/tmp/uv-cache` for local `uv`/`just` quality checks in this environment.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `fact_to_source_mappings` is now the canonical run-report surface for audit trails from promoted facts to source entities and should be kept stable for future validation/reporting stories.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:37:59)
+Implemented `US-011` on branch `ralph/playwright-kb-enrichment` and completed the full iteration flow.
+
+- Commit: `0e3315a`
+- Message: `feat: [US-011] - [Enforce provenance and source-entity citation requirements]`
+
+Files changed:
+- [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py)
+- [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py)
+- [agents.md](/root/ws/vb-kb2/agents.md)
+- [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+What was implemented:
+- Enforced promoted-fact provenance gating (missing source-entity linkage now fails mapping).
+- Added structured run-report fact-to-source summaries (`fact_to_source_mappings`).
+- Added deterministic `## Enrichment Provenance` markdown section upsert for person/org writes with KB source-entity citations (`[^citation-key]`) and source links.
+- Added tests for provenance report content, citation output, and failure on missing provenance.
+- Marked `US-011` as `passes: true` in PRD.
+- Appended required progress entry and updated `## Codebase Patterns`.
+- Added reusable provenance guidance to `agents.md`.
+
+Quality checks run and passed:
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py` (`9 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_cli_enrich_entity.py` (`4 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; all passed)
+
+There are still stories with `passes: false` (`US-012`, `US-013`).
+---
+
+## [2026-02-28 16:43:16 UTC] - US-012
+- What was implemented
+  - Implemented real validation gating in `kb/enrichment_run.py`: enrichment now runs `validate-changed` automatically after write phases (when extraction and mapping are not failed).
+  - Added one-shot automated remediation flow for validation failures using `derive-employment-edges`, `derive-citation-edges`, and `sync-edge-backlinks`, then reruns validation exactly once.
+  - Added blocked escalation semantics with `RunStatus.blocked`; unresolved validation now produces a human-intervention message listing failing check codes and affected files.
+  - Updated CLI success/failure semantics so blocked runs return non-zero and emit `"ok": false`.
+  - Expanded tests to cover validation success, remediation retry behavior, blocked escalation, and CLI blocked-status handling.
+- Files changed
+  - `kb/enrichment_run.py`
+  - `kb/cli.py`
+  - `kb/tests/test_enrichment_run.py`
+  - `kb/tests/test_cli_enrich_entity.py`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - Keep validation/remediation orchestration inside `run_enrichment_for_entity(...)` via helper functions (`_run_validate_changed`, `_run_validation_auto_remediation`) so status and phase reporting stay deterministic.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - When adding new run terminal states (like `blocked`), update CLI `ok`/exit-code logic and tests so automation surfaces treat blocked runs as failures.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - In non-git temp test roots, `collect_changed_paths(...)` returns an empty scope and validation is effectively a no-op unless tests monkeypatch validation helpers to simulate failures.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:44:34)
+Implemented `US-012` on branch `ralph/playwright-kb-enrichment` and committed all changes.
+
+- Commit: `d9cde08`
+- Message: `feat: [US-012] - [Add validation gating with auto-remediation and human escalation]`
+
+What changed:
+- Added validation gating + one-shot auto-remediation + blocked escalation in [kb/enrichment_run.py](/root/ws/vb-kb2/kb/enrichment_run.py)
+- Updated CLI blocked-run exit/`ok` behavior in [kb/cli.py](/root/ws/vb-kb2/kb/cli.py)
+- Added/updated validation-remediation tests in [kb/tests/test_enrichment_run.py](/root/ws/vb-kb2/kb/tests/test_enrichment_run.py)
+- Added CLI blocked-status test in [kb/tests/test_cli_enrich_entity.py](/root/ws/vb-kb2/kb/tests/test_cli_enrich_entity.py)
+- Added reusable pattern note in [agents.md](/root/ws/vb-kb2/agents.md)
+- Marked `US-012` as passing in [scripts/ralph/prd.json](/root/ws/vb-kb2/scripts/ralph/prd.json)
+- Appended progress entry + codebase pattern update in [scripts/ralph/progress.txt](/root/ws/vb-kb2/scripts/ralph/progress.txt)
+
+Quality checks run (passed):
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra dev python -m pytest -q kb/tests/test_enrichment_run.py kb/tests/test_cli_enrich_entity.py` (`16 passed`)
+- `UV_CACHE_DIR=/tmp/uv-cache just check` (`validate-changed`, full `pytest`, `mkdocs build`; all passed)
+
+`US-013` remains with `passes: false`, so the project is not complete yet.
+---
+
+## [2026-02-28 16:48:19 UTC] - US-013
+- What was implemented
+  - Added `kb export-session` and `kb import-session` CLI commands with structured JSON success/error payloads and typed authentication-error handling.
+  - Added root `just` targets for session export/import (`enrichment-session-export`, `enrichment-session-import`), one-entity run kickoff (`enrichment-run`), and enrichment-focused checks (`test-enrichment`).
+  - Updated README enrichment docs with command coverage, v1 manual kickoff + autonomous execution behavior, and secret-provider/env-fallback configuration guidance.
+  - Added CLI session-transfer tests for parser coverage plus success/error runtime behavior.
+- Files changed
+  - `kb/cli.py`
+  - `kb/tests/test_cli_session_transfer.py`
+  - `justfile`
+  - `README.md`
+  - `agents.md`
+  - `scripts/ralph/prd.json`
+  - `scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered (e.g., "this codebase uses X for Y")
+    - New enrichment operator capabilities should ship as both `kb` CLI subcommands and documented `just` wrappers so local execution stays discoverable and scriptable.
+    - Keep parser/command handler tests together in `kb/tests/test_cli_*.py` whenever CLI surfaces expand.
+  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
+    - Adding a new CLI subcommand requires updates in three places: parser registration, `run_*` handler, and `main()` dispatch.
+  - Useful context (e.g., "the evaluation panel is in component X")
+    - `test-enrichment` now provides a focused verification lane for enrichment sessions/bootstrap/adapters/orchestration CLI coverage without running unrelated suites.
+---
+
+## Codex Output - Iteration 1 (2026-02-28 16:49:04)
+<promise>COMPLETE</promise>
+---

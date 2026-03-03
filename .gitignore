@@ -1,8 +1,4 @@
-site/
-site_docs/
-!site_docs/
-site_docs/*
-!site_docs/.gitkeep
+.build/
 __pycache__/
 *.egg-info/
 

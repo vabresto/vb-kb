@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "org/ci/org@citadel-securities",
+  "id": "citation-org-citadel-securities-jonathan-linkedin",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^jonathan-linkedin] in org/ci/org@citadel-securities",
+  "relation": "cites",
+  "sources": [
+    "source/jo/source@jonathan-linkedin"
+  ],
+  "strength": null,
+  "to": "source/jo/source@jonathan-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

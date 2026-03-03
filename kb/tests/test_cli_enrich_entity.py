@@ -1,0 +1,382 @@
+from __future__ import annotations
+
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
+
+from kb.cli import build_parser, run_enrich_entity
+from kb.enrichment_config import EnrichmentConfig, SupportedSource
+from kb.enrichment_run import (
+    EnrichmentRunReport,
+    ExtractionPhaseState,
+    PhaseState,
+    PhaseStatus,
+    RunPhaseStates,
+    RunStatus,
+    EntityTargetResolutionError,
+)
+
+
+def _stub_report(
+    *,
+    sources: list[SupportedSource],
+    status: RunStatus = RunStatus.partial,
+    validation_status: PhaseStatus = PhaseStatus.pending,
+) -> EnrichmentRunReport:
+    now = datetime(2026, 2, 28, 18, 0, tzinfo=UTC)
+    return EnrichmentRunReport(
+        run_id="enrich-stub-run",
+        entity_ref="person@founder-name",
+        entity_slug="founder-name",
+        selected_sources=sources,
+        status=status,
+        started_at=now,
+        completed_at=now,
+        facts_extracted_total=2,
+        report_path=".build/enrichment/reports/latest-run.json",
+        phases=RunPhaseStates(
+            extraction=ExtractionPhaseState(
+                status=PhaseStatus.succeeded,
+                message="extraction completed",
+                sources=[],
+            ),
+            source_logging=PhaseState(
+                status=PhaseStatus.pending,
+                message="pending source logging",
+            ),
+            mapping=PhaseState(
+                status=PhaseStatus.pending,
+                message="pending mapping",
+            ),
+            validation=PhaseState(
+                status=validation_status,
+                message="stub validation phase",
+            ),
+            reporting=PhaseState(
+                status=PhaseStatus.succeeded,
+                message="report written",
+            ),
+        ),
+    )
+
+
+def test_enrich_entity_parser_accepts_single_entity_with_multiple_sources() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--source",
+            "linkedin.com",
+            "--source",
+            "skool.com",
+        ]
+    )
+
+    assert args.command == "enrich-entity"
+    assert args.entity == "person@founder-name"
+    assert args.sources == ["linkedin.com", "skool.com"]
+    assert args.headful is False
+    assert args.no_random_waits is False
+
+
+def test_enrich_entity_parser_accepts_headful_flag() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--source",
+            "linkedin.com",
+            "--headful",
+        ]
+    )
+
+    assert args.command == "enrich-entity"
+    assert args.entity == "person@founder-name"
+    assert args.sources == ["linkedin.com"]
+    assert args.headful is True
+    assert args.no_random_waits is False
+
+
+def test_enrich_entity_parser_accepts_no_random_waits_flag() -> None:
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--no-random-waits",
+        ]
+    )
+
+    assert args.command == "enrich-entity"
+    assert args.entity == "person@founder-name"
+    assert args.no_random_waits is True
+
+
+def test_enrich_entity_parser_rejects_multiple_entity_arguments() -> None:
+    parser = build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(["enrich-entity", "person@founder-name", "extra-entity"])
+
+
+def test_run_enrich_entity_reports_structured_payload(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    observed: dict[str, object] = {}
+
+    def _run_stub(
+        entity_target: str,
+        *,
+        selected_sources,
+        config: EnrichmentConfig,
+        project_root: Path,
+    ) -> EnrichmentRunReport:
+        observed["entity_target"] = entity_target
+        observed["selected_sources"] = list(selected_sources or [])
+        observed["project_root"] = project_root
+        assert isinstance(config, EnrichmentConfig)
+        return _stub_report(sources=[SupportedSource.linkedin, SupportedSource.skool])
+
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr("kb.cli.run_enrichment_for_entity", _run_stub)
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--source",
+            "linkedin.com",
+            "--source",
+            "skool.com",
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 0
+    assert observed["entity_target"] == "person@founder-name"
+    assert observed["selected_sources"] == ["linkedin.com", "skool.com"]
+    assert observed["project_root"] == tmp_path.resolve()
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["status"] == "partial"
+    assert payload["phases"]["extraction"]["status"] == "succeeded"
+    assert payload["phases"]["validation"]["status"] == "pending"
+
+
+def test_run_enrich_entity_no_random_waits_sets_env(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    observed: dict[str, object] = {}
+
+    def _run_stub(
+        entity_target: str,
+        *,
+        selected_sources,
+        config: EnrichmentConfig,
+        project_root: Path,
+        environ=None,
+    ) -> EnrichmentRunReport:
+        observed["entity_target"] = entity_target
+        observed["selected_sources"] = list(selected_sources or [])
+        observed["project_root"] = project_root
+        observed["random_waits"] = (environ or {}).get("KB_ENRICHMENT_ACTION_RANDOM_WAITS")
+        assert isinstance(config, EnrichmentConfig)
+        return _stub_report(sources=[SupportedSource.linkedin])
+
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr("kb.cli.run_enrichment_for_entity", _run_stub)
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--source",
+            "linkedin.com",
+            "--project-root",
+            str(tmp_path),
+            "--no-random-waits",
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 0
+    assert observed["entity_target"] == "person@founder-name"
+    assert observed["selected_sources"] == ["linkedin.com"]
+    assert observed["project_root"] == tmp_path.resolve()
+    assert observed["random_waits"] == "false"
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+
+
+def test_run_enrich_entity_headful_forces_non_headless_sources(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    observed: dict[str, object] = {}
+    base_config = EnrichmentConfig.model_validate(
+        {
+            "headless_default": True,
+            "sources": {
+                SupportedSource.linkedin: {
+                    "session_state_path": ".build/enrichment/sessions/linkedin.com/storage-state.json",
+                    "evidence_path": ".build/enrichment/source-evidence/linkedin.com",
+                    "headless_override": True,
+                },
+                SupportedSource.skool: {
+                    "session_state_path": ".build/enrichment/sessions/skool.com/storage-state.json",
+                    "evidence_path": ".build/enrichment/source-evidence/skool.com",
+                    "headless_override": True,
+                },
+            },
+        }
+    )
+
+    def _run_stub(
+        entity_target: str,
+        *,
+        selected_sources,
+        config: EnrichmentConfig,
+        project_root: Path,
+    ) -> EnrichmentRunReport:
+        observed["entity_target"] = entity_target
+        observed["selected_sources"] = list(selected_sources or [])
+        observed["project_root"] = project_root
+        observed["headless_default"] = config.headless_default
+        observed["linkedin_headless"] = config.sources[SupportedSource.linkedin].headless_override
+        observed["skool_headless"] = config.sources[SupportedSource.skool].headless_override
+        return _stub_report(sources=[SupportedSource.linkedin])
+
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: base_config)
+    monkeypatch.setattr("kb.cli.run_enrichment_for_entity", _run_stub)
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--source",
+            "linkedin.com",
+            "--headful",
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 0
+    assert observed["entity_target"] == "person@founder-name"
+    assert observed["selected_sources"] == ["linkedin.com"]
+    assert observed["project_root"] == tmp_path.resolve()
+    assert observed["headless_default"] is False
+    assert observed["linkedin_headless"] is False
+    assert observed["skool_headless"] is False
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+
+
+def test_run_enrich_entity_reports_resolution_error(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr(
+        "kb.cli.run_enrichment_for_entity",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            EntityTargetResolutionError(
+                entity_target="bad target",
+                details="target must be '<kind>@<slug>'",
+            )
+        ),
+    )
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "bad target",
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "EntityTargetResolutionError"
+    assert "bad target" in payload["message"]
+
+
+def test_run_enrich_entity_rejects_untyped_slug(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr(
+        "kb.cli.run_enrichment_for_entity",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            EntityTargetResolutionError(
+                entity_target="founder-name",
+                details="target must be '<kind>@<slug>'",
+            )
+        ),
+    )
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "founder-name",
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "EntityTargetResolutionError"
+    assert "founder-name" in payload["message"]
+    assert "<kind>@<slug>" in payload["message"]
+
+
+def test_run_enrich_entity_reports_blocked_validation_status(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    monkeypatch.setattr("kb.cli.load_enrichment_config_from_env", lambda: EnrichmentConfig())
+    monkeypatch.setattr(
+        "kb.cli.run_enrichment_for_entity",
+        lambda *_args, **_kwargs: _stub_report(
+            sources=[SupportedSource.linkedin],
+            status=RunStatus.blocked,
+            validation_status=PhaseStatus.failed,
+        ),
+    )
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "enrich-entity",
+            "person@founder-name",
+            "--project-root",
+            str(tmp_path),
+        ]
+    )
+    status_code = run_enrich_entity(args)
+
+    assert status_code == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["status"] == "blocked"
+    assert payload["phases"]["validation"]["status"] == "failed"

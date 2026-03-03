@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "org/wi/org@wing-venture-capital",
+  "id": "citation-org-wing-venture-capital-wing-source",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^wing-source] in org/wi/org@wing-venture-capital",
+  "relation": "cites",
+  "sources": [
+    "source/wi/source@wing-source"
+  ],
+  "strength": null,
+  "to": "source/wi/source@wing-source",
+  "valid_from": null,
+  "valid_to": null
+}

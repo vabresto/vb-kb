@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "person/be/person@benjamin-siu",
+  "id": "citation-person-benjamin-siu-benjamin-headshot",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^benjamin-headshot] in person/be/person@benjamin-siu",
+  "relation": "cites",
+  "sources": [
+    "source/be/source@benjamin-headshot"
+  ],
+  "strength": null,
+  "to": "source/be/source@benjamin-headshot",
+  "valid_from": null,
+  "valid_to": null
+}

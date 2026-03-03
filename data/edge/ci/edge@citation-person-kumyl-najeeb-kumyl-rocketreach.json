@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "person/ku/person@kumyl-najeeb",
+  "id": "citation-person-kumyl-najeeb-kumyl-rocketreach",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^kumyl-rocketreach] in person/ku/person@kumyl-najeeb",
+  "relation": "cites",
+  "sources": [
+    "source/ku/source@kumyl-rocketreach"
+  ],
+  "strength": null,
+  "to": "source/ku/source@kumyl-rocketreach",
+  "valid_from": null,
+  "valid_to": null
+}

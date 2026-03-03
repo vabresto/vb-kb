@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "person/jo/person@jonathan-chow",
+  "id": "citation-person-jonathan-chow-jonathan-linkedin",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^jonathan-linkedin] in person/jo/person@jonathan-chow",
+  "relation": "cites",
+  "sources": [
+    "source/jo/source@jonathan-linkedin"
+  ],
+  "strength": null,
+  "to": "source/jo/source@jonathan-linkedin",
+  "valid_from": null,
+  "valid_to": null
+}

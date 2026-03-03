@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "org/un/org@university-of-waterloo",
+  "id": "citation-org-university-of-waterloo-uw-source",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^uw-source] in org/un/org@university-of-waterloo",
+  "relation": "cites",
+  "sources": [
+    "source/uw/source@uw-source"
+  ],
+  "strength": null,
+  "to": "source/uw/source@uw-source",
+  "valid_from": null,
+  "valid_to": null
+}

@@ -1,0 +1,42 @@
+---
+org: Boosted.ai
+alias: null
+website: https://www.boosted.ai
+hq-location: null
+stages: []
+check-size: null
+thesis: Builds AI software tools for investment professionals.
+focus-sectors:
+- investment technology
+- artificial intelligence
+portfolio-examples: []
+created-at: 2026-02-16
+updated-at: 2026-02-16
+relationship-status: research
+known-people:
+- person: '[Victor Brestoiu](../../../person/vi/person@victor-brestoiu/index.md)'
+  relationship: former
+  relationship-details: Former AI Software Engineer role.
+  relationship-start-date: 2020-09
+  relationship-end-date: 2020-12
+  first-noted-at: 2026-02-16
+  last-verified-at: 2026-02-16
+intro-paths: []
+last-updated-from-source: 2026-02-16
+---
+
+# Boosted.ai
+
+## Snapshot
+
+- Why this org matters: Prior employer in [Victor Brestoiu](../../../person/vi/person@victor-brestoiu/index.md)'s experience timeline.
+- What they do: AI software platform for investment workflows.
+- Best way to approach: Discuss applied ML for portfolio and research teams.
+
+## Bio
+
+Boosted.ai describes itself as an AI-powered investment platform built for investment professionals.[^boosted-source]
+
+## Notes
+
+- [2026-02-16] Organization page created to support linked employment history references.

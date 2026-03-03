@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "person/jo/person@john-huang",
+  "id": "employment-john-huang-employment-001",
+  "last_verified_at": "2026-02-28",
+  "notes": "Role: Vice President (Research) | Period: Sep 2025 - Present | Details: Student-run club role; profile location listed as New York, NY.",
+  "relation": "works_at",
+  "sources": [
+    "source/jo/source@john-linkedin"
+  ],
+  "strength": null,
+  "to": "org/wa/org@waterloo-quant-club",
+  "valid_from": null,
+  "valid_to": null
+}

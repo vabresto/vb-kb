@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "first_noted_at": "2026-02-28",
+  "from": "org/gt/org@gts",
+  "id": "citation-org-gts-gts-source",
+  "last_verified_at": "2026-02-28",
+  "notes": "Derived citation edge from footnote [^gts-source] in org/gt/org@gts",
+  "relation": "cites",
+  "sources": [
+    "source/gt/source@gts-source"
+  ],
+  "strength": null,
+  "to": "source/gt/source@gts-source",
+  "valid_from": null,
+  "valid_to": null
+}
