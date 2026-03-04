@@ -91,6 +91,12 @@ linkedin-nyc-icp target_count="50" output="linkedin_nyc_insurance_icp_2nd_degree
   if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
   "${cmd[@]}"
 
+# Authenticate LinkedIn with username/password + TOTP secret and persist storage state.
+linkedin-auth username password totp_secret output_path=".build/enrichment/sessions/linkedin.com/storage-state.json" headed="false":
+  cmd=(uv run --with playwright python scripts/linkedin_auth_with_totp.py --username "{{username}}" --password "{{password}}" --totp-secret "{{totp_secret}}" --output-path "{{output_path}}")
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  "${cmd[@]}"
+
 # Initialize a new person record from template and optionally bootstrap enrichment from profile URLs.
 # Exposes `kb person-init` flags directly while keeping optional passthrough args.
 person-init slug="" name="" linkedin_url="" skool_url="" intro_note="" how_we_met="" why_added="" headful="false" no_random_waits="false" pretty="false" args="" project_root=".":
