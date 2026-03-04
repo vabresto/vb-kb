@@ -23,12 +23,16 @@ SKIPPED_HOSTS = {
     "example.com",
     "example.net",
     "example.org",
+    # LinkedIn profile pages commonly return anti-bot statuses (e.g. 999/429)
+    # to unauthenticated automated requests, so reachability checks are noisy.
+    "linkedin.com",
 }
 SKIPPED_HOST_SUFFIXES = (
     ".localhost",
     ".example",
     ".invalid",
     ".test",
+    ".linkedin.com",
 )
 
 
