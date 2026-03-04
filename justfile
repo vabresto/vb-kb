@@ -79,6 +79,18 @@ enrichment-session-import source import_path project_root=".":
 enrichment-run entity args="" project_root=".":
   uv run kb enrich-entity "{{entity}}" --project-root "{{project_root}}" {{args}}
 
+# Start a long-running LinkedIn Playwright daemon (stdin/stdout JSON protocol).
+linkedin-daemon session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" headed="false":
+  cmd=(uv run --with playwright python scripts/linkedin_playwright_daemon.py --session-state "{{session_state}}")
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  "${cmd[@]}"
+
+# Build NYC 2nd-degree insurance ICP list via long-running LinkedIn daemon.
+linkedin-nyc-icp target_count="50" output="linkedin_nyc_insurance_icp_2nd_degree.csv" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" max_pages_per_query="6" headed="false":
+  cmd=(uv run --with playwright python scripts/linkedin_nyc_icp_second_degree.py --target-count "{{target_count}}" --output "{{output}}" --session-state "{{session_state}}" --max-pages-per-query "{{max_pages_per_query}}")
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  "${cmd[@]}"
+
 # Initialize a new person record from template and optionally bootstrap enrichment from profile URLs.
 # Exposes `kb person-init` flags directly while keeping optional passthrough args.
 person-init slug="" name="" linkedin_url="" skool_url="" intro_note="" how_we_met="" why_added="" headful="false" no_random_waits="false" pretty="false" args="" project_root=".":
