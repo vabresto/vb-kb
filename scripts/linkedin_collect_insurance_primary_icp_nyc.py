@@ -371,7 +371,7 @@ def main() -> int:
         print(f"progress_log={progress_path}")
         return 0
 
-    client = LinkedInDaemonClient(base_url=args.daemon_url)
+    client = LinkedInDaemonClient(base_url=args.daemon_url, timeout_seconds=120.0)
     client.wait_until_ready(timeout_seconds=20.0)
     auth = client.command(cmd="assert_authenticated")
     if not bool(auth.get("authenticated")):
