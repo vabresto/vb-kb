@@ -77,6 +77,14 @@ stop_process() {
   echo "force-killed $name (pid=$pid)"
 }
 
+start_detached() {
+  local pid_file="$1"
+  local log_file="$2"
+  shift 2
+  nohup "$@" >"$log_file" 2>&1 </dev/null &
+  echo $! >"$pid_file"
+}
+
 find_novnc_web_dir() {
   if [[ -n "${NOVNC_WEB_DIR:-}" && -d "${NOVNC_WEB_DIR}" ]]; then
     echo "${NOVNC_WEB_DIR}"
@@ -101,6 +109,7 @@ start_stack() {
   require_command x11vnc
   require_command websockify
   require_command uv
+  require_command curl
 
   local novnc_web_dir
   novnc_web_dir="$(find_novnc_web_dir)"
@@ -122,27 +131,39 @@ start_stack() {
   local daemon_pid_file="${PID_DIR}/daemon.pid"
 
   if ! pid_is_running "$xvfb_pid_file"; then
-    Xvfb "$DISPLAY_ID" -screen 0 1920x1080x24 -nolisten tcp >"${LOG_DIR}/xvfb.log" 2>&1 &
-    echo $! >"$xvfb_pid_file"
+    start_detached "$xvfb_pid_file" "${LOG_DIR}/xvfb.log" \
+      Xvfb "$DISPLAY_ID" -screen 0 1920x1080x24 -nolisten tcp
     sleep 0.3
+  fi
+  if ! pid_is_running "$xvfb_pid_file"; then
+    echo "failed to start Xvfb; see ${LOG_DIR}/xvfb.log" >&2
+    return 1
   fi
 
   if ! pid_is_running "$vnc_pid_file"; then
-    DISPLAY="$DISPLAY_ID" x11vnc \
+    start_detached "$vnc_pid_file" "${LOG_DIR}/x11vnc.log" \
+      env DISPLAY="$DISPLAY_ID" x11vnc \
       -display "$DISPLAY_ID" \
       -localhost \
       -rfbport "$VNC_PORT" \
       -shared \
       -forever \
-      -nopw >"${LOG_DIR}/x11vnc.log" 2>&1 &
-    echo $! >"$vnc_pid_file"
+      -nopw
     sleep 0.3
+  fi
+  if ! pid_is_running "$vnc_pid_file"; then
+    echo "failed to start x11vnc; see ${LOG_DIR}/x11vnc.log" >&2
+    return 1
   fi
 
   if ! pid_is_running "$novnc_pid_file"; then
-    websockify --web "$novnc_web_dir" "127.0.0.1:${NOVNC_PORT}" "127.0.0.1:${VNC_PORT}" >"${LOG_DIR}/websockify.log" 2>&1 &
-    echo $! >"$novnc_pid_file"
+    start_detached "$novnc_pid_file" "${LOG_DIR}/websockify.log" \
+      websockify --web "$novnc_web_dir" "127.0.0.1:${NOVNC_PORT}" "127.0.0.1:${VNC_PORT}"
     sleep 0.3
+  fi
+  if ! pid_is_running "$novnc_pid_file"; then
+    echo "failed to start websockify; see ${LOG_DIR}/websockify.log" >&2
+    return 1
   fi
 
   if ! pid_is_running "$daemon_pid_file"; then
@@ -157,9 +178,27 @@ start_stack() {
     if [[ "$OPEN_CONTROL_TAB" != "true" ]]; then
       daemon_cmd+=(--no-control-tab)
     fi
-    DISPLAY="$DISPLAY_ID" "${daemon_cmd[@]}" >"${LOG_DIR}/daemon.log" 2>&1 &
-    echo $! >"$daemon_pid_file"
+    start_detached "$daemon_pid_file" "${LOG_DIR}/daemon.log" \
+      env DISPLAY="$DISPLAY_ID" "${daemon_cmd[@]}"
     sleep 0.5
+  fi
+  if ! pid_is_running "$daemon_pid_file"; then
+    echo "failed to start daemon; see ${LOG_DIR}/daemon.log" >&2
+    return 1
+  fi
+
+  local health_url="http://${DAEMON_HOST}:${DAEMON_PORT}/health"
+  local ready="false"
+  for _ in $(seq 1 40); do
+    if curl -fsS "$health_url" >/dev/null 2>&1; then
+      ready="true"
+      break
+    fi
+    sleep 0.25
+  done
+  if [[ "$ready" != "true" ]]; then
+    echo "daemon health check failed at ${health_url}; see ${LOG_DIR}/daemon.log" >&2
+    return 1
   fi
 
   echo "remote inspection stack started"
@@ -249,4 +288,3 @@ fi
 echo "unknown subcommand: $SUBCOMMAND" >&2
 usage
 exit 1
-
