@@ -57,6 +57,14 @@ check:
 ralph max_iterations="10":
   ./scripts/ralph/ralph.sh {{max_iterations}}
 
+# Scrape Waterloo alumni first-degree connections from LinkedIn search results.
+linkedin-scrape-waterloo output="waterloo_first_degree_results.csv" max_pages="20" project_root="." surface="surface:2":
+  ./scripts/linkedin_scrape/scrape_waterloo_first_degree.sh "{{output}}" "{{max_pages}}" "{{project_root}}" "{{surface}}"
+
+# Scrape insurance operations 2nd-degree candidates with role heuristics.
+linkedin-scrape-insurance-ops target="100" output="insurance_second_degree_icp_results.csv" max_pages="120" project_root="." surface="surface:2":
+  ./scripts/linkedin_scrape/scrape_insurance_ops.sh "{{target}}" "{{output}}" "{{max_pages}}" "{{project_root}}" "{{surface}}"
+
 # Bootstrap source login and persist Playwright storageState session.
 # Exposes full `kb bootstrap-session` flag surface via just.
 enrichment-bootstrap source args="" project_root=".":
