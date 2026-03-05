@@ -115,27 +115,7 @@ def _is_target_role(*, title: str, org: str, all_text: str) -> bool:
 
     is_leadership = bool(re.search(r"\b(?:director|vp|vice president|head)\b", text))
     has_ops = bool(re.search(r"\b(?:operations?|ops|operational)\b", text))
-    has_claims = bool(re.search(r"\bclaims?\b", text))
-    has_policy = bool(re.search(r"\bpolicy\b", text))
-    has_service = bool(re.search(r"\bservice\b", text))
-    has_excellence = bool(re.search(r"\b(?:excellence|operations?\s+excellence|operational\s+excellence)\b", text))
-    has_transform = bool(re.search(r"\btransform(?:ation|ational)?\b", text))
-    has_regulatory = bool(re.search(r"\bregulatory\b", text))
-    has_reporting = bool(re.search(r"\breporting\b", text))
-    insurance_context = bool(
-        re.search(r"\b(?:insurance|insurer|carrier|tpa|third[- ]party administrator|reinsur|underwrit)\b", text)
-    )
-
-    return is_leadership and has_ops and (
-        insurance_context
-        or has_claims
-        or has_policy
-        or has_service
-        or has_excellence
-        or has_transform
-        or has_regulatory
-        or has_reporting
-    )
+    return is_leadership and has_ops
 
 
 def _is_bot_challenge(url: str, title: str) -> bool:
