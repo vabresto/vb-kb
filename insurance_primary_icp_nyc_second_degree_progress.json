@@ -1,5 +1,5 @@
 {
-  "collected_count": 47,
+  "collected_count": 49,
   "commits": [
     {
       "at": "2026-03-05T14:52:59.667638Z",
@@ -424,13 +424,21 @@
       "query_index": 4,
       "sha": "a2b758ffbddde8f668d7f6e0db83d581fafd72cb",
       "total_rows": 42
+    },
+    {
+      "at": "2026-03-05T16:07:23.969450Z",
+      "new_rows": 5,
+      "page_in_query": 6,
+      "query_index": 4,
+      "sha": "7eac0dc11745622a0717657864dc8a8fffb663ec",
+      "total_rows": 47
     }
   ],
-  "last_page_new_rows": 5,
-  "last_wait_seconds": 61,
+  "last_page_new_rows": 2,
+  "last_wait_seconds": 63,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 6,
-  "pages_scanned": 54,
+  "page_in_query": 7,
+  "pages_scanned": 55,
   "parse_errors": [],
   "people_processed": [
     {
@@ -4752,14 +4760,94 @@
       "name": "Jacqueline Legrand",
       "page_in_query": 6,
       "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:08:39.660585Z",
+      "linkedin_url": "https://www.linkedin.com/in/harold-cockburn/",
+      "name": "Harold Cockburn",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T16:08:39.660671Z",
+      "linkedin_url": "https://www.linkedin.com/in/emilythorsen/",
+      "name": "Emily Thorsen",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:08:39.660767Z",
+      "linkedin_url": "https://www.linkedin.com/in/catalinaguerra/",
+      "name": "Catalina Guerra",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:08:39.660962Z",
+      "linkedin_url": "https://www.linkedin.com/in/serena-helou/",
+      "name": "Serena Helou",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:08:39.661074Z",
+      "linkedin_url": "https://www.linkedin.com/in/giovanni-fiorentino-1122a273/",
+      "name": "Giovanni Fiorentino",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:08:39.661155Z",
+      "linkedin_url": "https://www.linkedin.com/in/helenegcohen/",
+      "name": "Helene Cohen",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:08:39.661213Z",
+      "linkedin_url": "https://www.linkedin.com/in/david-keyser-3817413/",
+      "name": "David Keyser",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T16:08:39.661245Z",
+      "linkedin_url": "https://www.linkedin.com/in/danielle-montagnesi-997979116/",
+      "name": "Danielle Montagnesi",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:08:39.661294Z",
+      "linkedin_url": "https://www.linkedin.com/in/maria-sauer-22017a17/",
+      "name": "Maria Sauer",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:08:39.661348Z",
+      "linkedin_url": "https://www.linkedin.com/in/manchandasandeep/",
+      "name": "Sandeep Manchanda",
+      "page_in_query": 7,
+      "query": "insurance director service operations"
     }
   ],
   "query": "insurance director service operations",
   "query_index": 4,
   "search_title": "(6) \"insurance director service operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20service%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=6&sid=_KL",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20service%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=7&sid=%3Aox",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T16:07:22.330302Z"
+  "updated_at": "2026-03-05T16:08:39.661640Z"
 }
