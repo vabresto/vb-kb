@@ -160,13 +160,21 @@
       "query_index": 1,
       "sha": "cdbb0eb2f84fef8903b28f4effe029f4ae32c26f",
       "total_rows": 5
+    },
+    {
+      "at": "2026-03-05T15:21:24.836046Z",
+      "new_rows": 1,
+      "page_in_query": 9,
+      "query_index": 1,
+      "sha": "510ece4afec6d3cbc2442920b7a6d7cd24330b35",
+      "total_rows": 6
     }
   ],
-  "last_page_new_rows": 1,
-  "last_wait_seconds": 64,
+  "last_page_new_rows": 0,
+  "last_wait_seconds": 65,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 9,
-  "pages_scanned": 21,
+  "page_in_query": 10,
+  "pages_scanned": 22,
   "parse_errors": [],
   "people_processed": [
     {
@@ -1848,14 +1856,94 @@
       "name": "Kevin Jordan-Deen",
       "page_in_query": 9,
       "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:22:42.519601Z",
+      "linkedin_url": "https://www.linkedin.com/in/lauren-poletsky-70244961/",
+      "name": "Lauren Poletsky",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:22:42.519718Z",
+      "linkedin_url": "https://www.linkedin.com/in/amy-polan-clarke-53b73a/",
+      "name": "Amy Polan-Clarke",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:22:42.519874Z",
+      "linkedin_url": "https://www.linkedin.com/in/bob-radvanski/",
+      "name": "Bob Radvanski, MPA",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:22:42.519996Z",
+      "linkedin_url": "https://www.linkedin.com/in/kathryn-lalonde/",
+      "name": "Kathryn Yablansky",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:22:42.520105Z",
+      "linkedin_url": "https://www.linkedin.com/in/william-ryan-972573a/",
+      "name": "William Ryan",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:22:42.520236Z",
+      "linkedin_url": "https://www.linkedin.com/in/tamara-musulbes-9a2b9a232/",
+      "name": "Tamara Musulbes",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:22:42.520340Z",
+      "linkedin_url": "https://www.linkedin.com/in/utkarsh-mishra-41014211/",
+      "name": "Utkarsh Mishra",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:22:42.520397Z",
+      "linkedin_url": "https://www.linkedin.com/in/richard-phipps/",
+      "name": "Richard Phipps",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:22:42.520563Z",
+      "linkedin_url": "https://www.linkedin.com/in/chrischiappetti/",
+      "name": "Chris Chiappetti, MBA",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:22:42.520666Z",
+      "linkedin_url": "https://www.linkedin.com/in/ingebeintrexler/",
+      "name": "Inge Beintrexler",
+      "page_in_query": 10,
+      "query": "insurance vp claims operations"
     }
   ],
   "query": "insurance vp claims operations",
   "query_index": 1,
   "search_title": "(6) \"insurance vp claims operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=9&sid=qru",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=10&sid=oaK",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:21:23.160537Z"
+  "updated_at": "2026-03-05T15:22:42.520832Z"
 }
