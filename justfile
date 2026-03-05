@@ -86,10 +86,18 @@ linkedin-daemon session_state=".build/enrichment/sessions/linkedin.com/storage-s
   if [ "{{open_control_tab}}" != "true" ]; then cmd+=(--no-control-tab); fi
   "${cmd[@]}"
 
-# Build NYC 2nd-degree insurance ICP list via long-running LinkedIn daemon.
-linkedin-nyc-icp target_count="50" output="linkedin_nyc_insurance_icp_2nd_degree.csv" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" max_pages_per_query="6" headed="false":
-  cmd=(uv run --with playwright python scripts/linkedin_nyc_icp_second_degree.py --target-count "{{target_count}}" --output "{{output}}" --session-state "{{session_state}}" --max-pages-per-query "{{max_pages_per_query}}")
+# Build NYC 2nd-degree insurance ICP list via daemon HTTP API.
+linkedin-nyc-icp target_count="50" output="linkedin_nyc_insurance_icp_2nd_degree.csv" daemon_url="http://127.0.0.1:8771" max_pages_per_query="6" spawn_daemon="false" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" daemon_state_path=".build/enrichment/daemon/linkedin-daemon-state.json" headed="false" leave_daemon_running="false":
+  cmd=(uv run --with playwright python scripts/linkedin_nyc_icp_second_degree.py --target-count "{{target_count}}" --output "{{output}}" --daemon-url "{{daemon_url}}" --max-pages-per-query "{{max_pages_per_query}}")
+  if [ "{{spawn_daemon}}" = "true" ]; then cmd+=(--spawn-daemon --session-state "{{session_state}}" --daemon-state-path "{{daemon_state_path}}"); fi
   if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  if [ "{{leave_daemon_running}}" = "true" ]; then cmd+=(--leave-daemon-running); fi
+  "${cmd[@]}"
+
+# Send control/inspection commands to running LinkedIn daemon.
+linkedin-daemon-client daemon_url="http://127.0.0.1:8771" subcommand="state" args="":
+  cmd=(uv run python scripts/linkedin_daemon_client.py --daemon-url "{{daemon_url}}" {{subcommand}})
+  if [ -n "{{args}}" ]; then cmd+=({{args}}); fi
   "${cmd[@]}"
 
 # Authenticate LinkedIn with username/password + TOTP secret and persist storage state.

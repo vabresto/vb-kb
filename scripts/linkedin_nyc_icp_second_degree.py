@@ -8,7 +8,9 @@ import random
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
+from kb.linkedin_daemon_client import LinkedInDaemonClient
 from kb.linkedin_people_search import (
     SEARCH_QUERIES,
     canonical_profile_url,
@@ -19,99 +21,106 @@ from kb.linkedin_people_search import (
     parse_org,
 )
 
-DEFAULT_SESSION_STATE = Path(".build/enrichment/sessions/linkedin.com/storage-state.json")
 DEFAULT_OUTPUT_PATH = Path("linkedin_nyc_insurance_icp_2nd_degree.csv")
 DEFAULT_TARGET_COUNT = 50
 DEFAULT_MAX_PAGES_PER_QUERY = 6
 DEFAULT_DAEMON_SCRIPT = Path("scripts/linkedin_playwright_daemon.py")
-
-
-class DaemonClient:
-    def __init__(self, *, daemon_script: Path, session_state: Path, headed: bool) -> None:
-        cmd: list[str] = [sys.executable, str(daemon_script.resolve()), "--session-state", str(session_state.resolve())]
-        if headed:
-            cmd.append("--headed")
-        self._proc = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            cwd=str(Path.cwd()),
-            bufsize=1,
-        )
-        self._next_id = 1
-        startup = self._read_response()
-        if not startup.get("ok"):
-            raise RuntimeError(f"daemon failed to start: {startup.get('error')}")
-        if startup.get("event") != "ready":
-            raise RuntimeError(f"unexpected daemon startup payload: {startup}")
-
-    def _read_response(self) -> dict[str, object]:
-        if self._proc.stdout is None:
-            raise RuntimeError("daemon stdout unavailable")
-        line = self._proc.stdout.readline()
-        if not line:
-            stderr = ""
-            if self._proc.stderr is not None:
-                stderr = self._proc.stderr.read().strip()
-            raise RuntimeError(f"daemon exited unexpectedly; stderr={stderr}")
-        payload = json.loads(line)
-        if not isinstance(payload, dict):
-            raise RuntimeError("invalid daemon payload")
-        return payload
-
-    def send(self, cmd: str, params: dict[str, object] | None = None) -> dict[str, object]:
-        if self._proc.stdin is None:
-            raise RuntimeError("daemon stdin unavailable")
-        request_id = self._next_id
-        self._next_id += 1
-        payload = {
-            "id": request_id,
-            "cmd": cmd,
-            "params": params or {},
-        }
-        self._proc.stdin.write(json.dumps(payload) + "\n")
-        self._proc.stdin.flush()
-        response = self._read_response()
-        if response.get("id") != request_id:
-            raise RuntimeError(f"daemon response id mismatch: expected {request_id}, got {response.get('id')}")
-        if not response.get("ok"):
-            raise RuntimeError(f"daemon command '{cmd}' failed: {response.get('error')}")
-        result = response.get("result")
-        if not isinstance(result, dict):
-            raise RuntimeError(f"daemon command '{cmd}' returned invalid result payload")
-        return result
-
-    def close(self) -> None:
-        try:
-            self.send("shutdown")
-        except Exception:
-            pass
-        if self._proc.poll() is None:
-            self._proc.terminate()
-        try:
-            self._proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            self._proc.kill()
+DEFAULT_DAEMON_URL = "http://127.0.0.1:8771"
+DEFAULT_SESSION_STATE = Path(".build/enrichment/sessions/linkedin.com/storage-state.json")
+DEFAULT_DAEMON_STATE_PATH = Path(".build/enrichment/daemon/linkedin-daemon-state.json")
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Collect NYC second-degree insurance ICP LinkedIn people search results into CSV."
     )
-    parser.add_argument("--session-state", type=Path, default=DEFAULT_SESSION_STATE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH)
     parser.add_argument("--target-count", type=int, default=DEFAULT_TARGET_COUNT)
     parser.add_argument("--max-pages-per-query", type=int, default=DEFAULT_MAX_PAGES_PER_QUERY)
+    parser.add_argument("--daemon-url", default=DEFAULT_DAEMON_URL)
+    parser.add_argument("--spawn-daemon", action="store_true", help="Spawn daemon locally if not already running.")
     parser.add_argument("--daemon-script", type=Path, default=DEFAULT_DAEMON_SCRIPT)
-    parser.add_argument("--headed", action="store_true", help="Run headed daemon browser (requires X server).")
+    parser.add_argument("--session-state", type=Path, default=DEFAULT_SESSION_STATE)
+    parser.add_argument("--daemon-state-path", type=Path, default=DEFAULT_DAEMON_STATE_PATH)
+    parser.add_argument("--headed", action="store_true", help="Only applies when --spawn-daemon is set.")
+    parser.add_argument(
+        "--leave-daemon-running",
+        action="store_true",
+        help="Only applies when --spawn-daemon is set. Do not request daemon shutdown at end.",
+    )
     return parser.parse_args()
+
+
+def _write_csv(output_path: Path, rows: list[dict[str, str | int]]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=(
+                "name",
+                "org",
+                "connection_degree",
+                "linkedin_url",
+                "mutual_names",
+                "total_mutuals",
+            ),
+        )
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
+def _spawn_daemon(args: argparse.Namespace) -> subprocess.Popen[str]:
+    if not args.daemon_script.exists():
+        raise RuntimeError(f"daemon script not found: {args.daemon_script}")
+    if not args.session_state.exists():
+        raise RuntimeError(f"session state file not found: {args.session_state}")
+
+    parsed = urlparse(args.daemon_url)
+    host = parsed.hostname or "127.0.0.1"
+    port = parsed.port or 8771
+    cmd = [
+        sys.executable,
+        str(args.daemon_script.resolve()),
+        "--session-state",
+        str(args.session_state.resolve()),
+        "--state-path",
+        str(args.daemon_state_path.resolve()),
+        "--host",
+        host,
+        "--port",
+        str(port),
+    ]
+    if args.headed:
+        cmd.append("--headed")
+
+    proc = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=str(Path.cwd()),
+        bufsize=1,
+    )
+    if proc.stdout is None:
+        raise RuntimeError("failed to capture daemon stdout")
+    first_line = proc.stdout.readline().strip()
+    if not first_line:
+        stderr = proc.stderr.read().strip() if proc.stderr is not None else ""
+        raise RuntimeError(f"daemon startup failed (no startup payload): {stderr}")
+    try:
+        payload = json.loads(first_line)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"invalid daemon startup payload: {first_line}") from exc
+    if not isinstance(payload, dict) or not bool(payload.get("ok")):
+        raise RuntimeError(f"daemon startup failed: {payload}")
+    return proc
 
 
 def _collect_profiles(
     *,
-    client: DaemonClient,
+    client: LinkedInDaemonClient,
     target_count: int,
     max_pages_per_query: int,
 ) -> tuple[list[dict[str, str | int]], int]:
@@ -119,7 +128,7 @@ def _collect_profiles(
     rows: list[dict[str, str | int]] = []
     pages_visited = 0
 
-    auth = client.send("assert_authenticated")
+    auth = client.command(cmd="assert_authenticated")
     if not bool(auth.get("authenticated")):
         raise RuntimeError(
             "LinkedIn session state is not authenticated (redirected to login). "
@@ -130,11 +139,11 @@ def _collect_profiles(
         if len(rows) >= target_count:
             break
         composed_query = f"{query} New York City Metropolitan Area"
-        client.send("open_people_search", {"query": composed_query})
+        client.command(cmd="open_people_search", params={"query": composed_query})
 
         for _ in range(max_pages_per_query):
             pages_visited += 1
-            payload = client.send("scrape_people_cards")
+            payload = client.command(cmd="scrape_people_cards")
             cards = payload.get("cards")
             if not isinstance(cards, list):
                 cards = []
@@ -177,50 +186,28 @@ def _collect_profiles(
                 break
 
             sleep_seconds = random.uniform(3.0, 6.0)
-            client.send("sleep", {"seconds": sleep_seconds})
-            moved = client.send("next_page")
+            client.command(cmd="sleep", params={"seconds": sleep_seconds})
+            moved = client.command(cmd="next_page")
             if not bool(moved.get("moved")):
                 break
 
     return rows, pages_visited
 
 
-def _write_csv(output_path: Path, rows: list[dict[str, str | int]]) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(
-            handle,
-            fieldnames=(
-                "name",
-                "org",
-                "connection_degree",
-                "linkedin_url",
-                "mutual_names",
-                "total_mutuals",
-            ),
-        )
-        writer.writeheader()
-        for row in rows:
-            writer.writerow(row)
-
-
 def main() -> int:
     args = _parse_args()
-    if not args.session_state.exists():
-        raise SystemExit(f"session state file not found: {args.session_state}")
-    if not args.daemon_script.exists():
-        raise SystemExit(f"daemon script not found: {args.daemon_script}")
     if args.target_count <= 0:
         raise SystemExit("target-count must be > 0")
     if args.max_pages_per_query <= 0:
         raise SystemExit("max-pages-per-query must be > 0")
 
-    client = DaemonClient(
-        daemon_script=args.daemon_script,
-        session_state=args.session_state,
-        headed=args.headed,
-    )
+    daemon_proc: subprocess.Popen[str] | None = None
+    if args.spawn_daemon:
+        daemon_proc = _spawn_daemon(args)
+
+    client = LinkedInDaemonClient(base_url=args.daemon_url)
     try:
+        client.wait_until_ready(timeout_seconds=20.0)
         rows, pages_visited = _collect_profiles(
             client=client,
             target_count=args.target_count,
@@ -230,7 +217,15 @@ def main() -> int:
         print(f"error={exc}")
         return 2
     finally:
-        client.close()
+        if daemon_proc is not None and not args.leave_daemon_running:
+            try:
+                client.shutdown()
+            except Exception:
+                pass
+            try:
+                daemon_proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                daemon_proc.kill()
 
     output_path = args.output.resolve()
     _write_csv(output_path, rows)
@@ -242,3 +237,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
