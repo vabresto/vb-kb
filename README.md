@@ -98,6 +98,7 @@ Related runnable workflows:
   - `autonomous`: agent commands execute.
   - `human_control`: automation commands are blocked until resumed.
 - Control page is auto-opened in a separate browser context and auto-reopened if closed.
+- Control page includes **Save Session State JSON**, which writes current Playwright `storageState` back to the configured path (or an override path you provide in the input field).
 - Use `scripts/linkedin_daemon_client.py` (or `just linkedin-daemon-client`) for CLI control:
   - `health`, `state`
   - `mode autonomous|human_control`

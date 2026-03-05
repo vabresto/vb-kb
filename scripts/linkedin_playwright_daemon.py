@@ -7,6 +7,7 @@ import queue
 import threading
 import time
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -111,6 +112,7 @@ CONTROL_HTML = """<!doctype html>
     .human { color: var(--warn); }
     .mono { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 13px; color: var(--muted); }
     .status { margin-top: 8px; color: var(--muted); }
+    input[type='text'] { background:#0b1220; color:var(--fg); border:1px solid #374151; border-radius:8px; padding:8px 10px; min-width: 360px; }
   </style>
 </head>
 <body>
@@ -132,6 +134,14 @@ CONTROL_HTML = """<!doctype html>
       <div id="pageTitle" class="mono"></div>
       <div id="authState" class="mono"></div>
     </div>
+    <div class="panel">
+      <h3>Session State</h3>
+      <div class="row">
+        <input id="sessionPathInput" type="text" />
+        <button id="btnSaveState">Save Session State JSON</button>
+      </div>
+      <div id="sessionInfo" class="mono"></div>
+    </div>
   </div>
   <script>
     async function getState() {
@@ -150,12 +160,24 @@ CONTROL_HTML = """<!doctype html>
       return await response.json();
     }
 
+    async function saveSessionState(path) {
+      const response = await fetch('/api/save-session-state', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ path }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return await response.json();
+    }
+
     function render(state) {
       const modeLine = document.getElementById('modeLine');
       const updatedLine = document.getElementById('updatedLine');
       const pageUrl = document.getElementById('pageUrl');
       const pageTitle = document.getElementById('pageTitle');
       const authState = document.getElementById('authState');
+      const sessionPathInput = document.getElementById('sessionPathInput');
+      const sessionInfo = document.getElementById('sessionInfo');
 
       const mode = state.mode || 'unknown';
       modeLine.textContent = `Mode: ${mode}`;
@@ -164,6 +186,10 @@ CONTROL_HTML = """<!doctype html>
       pageUrl.textContent = `url=${state.automation_url || ''}`;
       pageTitle.textContent = `title=${state.automation_title || ''}`;
       authState.textContent = `authenticated=${state.authenticated} | control_page_open=${state.control_page_open}`;
+      if (!sessionPathInput.value) {
+        sessionPathInput.value = state.session_state_path || '';
+      }
+      sessionInfo.textContent = `configured_path=${state.session_state_path || ''} | last_saved_at=${state.last_saved_at || ''}`;
     }
 
     async function refresh() {
@@ -196,6 +222,17 @@ CONTROL_HTML = """<!doctype html>
     });
 
     document.getElementById('btnRefresh').addEventListener('click', refresh);
+    document.getElementById('btnSaveState').addEventListener('click', async () => {
+      const input = document.getElementById('sessionPathInput');
+      const chosenPath = (input.value || '').trim();
+      try {
+        const payload = await saveSessionState(chosenPath);
+        document.getElementById('actionStatus').textContent = `Saved session state to ${payload.saved_path}`;
+        await refresh();
+      } catch (err) {
+        document.getElementById('actionStatus').textContent = `save failed: ${String(err)}`;
+      }
+    });
     refresh();
     setInterval(refresh, 3000);
   </script>
@@ -339,7 +376,10 @@ class LinkedInPlaywrightWorker:
                             try:
                                 automation_url = automation_page.url
                                 automation_title = automation_page.title()
-                                authenticated = not self._is_login_redirect(automation_url)
+                                if "linkedin.com" in automation_url.lower():
+                                    authenticated = not self._is_login_redirect(automation_url)
+                                else:
+                                    authenticated = None
                             except Exception:
                                 authenticated = None
                         payload = {
@@ -347,6 +387,7 @@ class LinkedInPlaywrightWorker:
                             "automation_title": automation_title,
                             "authenticated": authenticated,
                             "control_page_open": bool(control_page is not None and not control_page.is_closed()),
+                            "session_state_path": str(self._session_state_path.resolve()),
                         }
                         task.response_queue.put((True, payload))
                         continue
@@ -449,6 +490,23 @@ class LinkedInPlaywrightWorker:
                         )
                         continue
 
+                    if cmd == "save_session_state":
+                        raw_path = str(params.get("path") or "").strip()
+                        destination = Path(raw_path) if raw_path else self._session_state_path
+                        destination = destination.expanduser().resolve()
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        automation_context.storage_state(path=str(destination))
+                        task.response_queue.put(
+                            (
+                                True,
+                                {
+                                    "saved_path": str(destination),
+                                    "saved_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                                },
+                            )
+                        )
+                        continue
+
                     raise RuntimeError(f"unknown command: {cmd}")
                 except Exception as exc:  # noqa: PERF203
                     task.response_queue.put((False, str(exc)))
@@ -499,6 +557,7 @@ class LinkedInPlaywrightDaemon:
             headless=headless,
             open_control_tab=open_control_tab,
         )
+        self._last_saved_at: str | None = None
 
     def start(self) -> None:
         self._worker.start()
@@ -525,6 +584,7 @@ class LinkedInPlaywrightDaemon:
         runtime = self._worker.call(cmd="state_snapshot")
         base.update(runtime)
         base["shutdown_requested"] = self._shutdown_requested.is_set()
+        base["last_saved_at"] = self._last_saved_at
         return base
 
     def request_shutdown(self) -> None:
@@ -544,11 +604,20 @@ class LinkedInPlaywrightDaemon:
         if cmd == "shutdown":
             self.request_shutdown()
             return {"closing": True}
+        if cmd == "save_session_state":
+            result = self._worker.call(cmd=cmd, params=params)
+            self._last_saved_at = str(result.get("saved_at") or "")
+            return result
 
         mode = self.mode()
         if not command_allowed_in_mode(mode=mode, cmd=cmd):
             raise RuntimeError("daemon is in human_control mode; command is blocked until autonomous mode resumes")
         return self._worker.call(cmd=cmd, params=params)
+
+    def save_session_state(self, *, path: str | None) -> dict[str, object]:
+        result = self._worker.call(cmd="save_session_state", params={"path": path or ""})
+        self._last_saved_at = str(result.get("saved_at") or "")
+        return result
 
 
 def _parse_json_body(handler: BaseHTTPRequestHandler) -> dict[str, object]:
@@ -626,6 +695,15 @@ def _build_handler(daemon: LinkedInPlaywrightDaemon, shutdown_server: callable):
                     _write_json(self, HTTPStatus.OK, {"ok": True, "result": result})
                 except Exception as exc:
                     _write_json(self, HTTPStatus.CONFLICT, {"ok": False, "error": str(exc), "cmd": cmd})
+                return
+
+            if path == "/api/save-session-state":
+                try:
+                    selected = str(payload.get("path") or "")
+                    result = daemon.save_session_state(path=selected)
+                    _write_json(self, HTTPStatus.OK, {"ok": True, **result})
+                except Exception as exc:
+                    _write_json(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": str(exc)})
                 return
 
             if path == "/api/shutdown":
@@ -715,4 +793,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
