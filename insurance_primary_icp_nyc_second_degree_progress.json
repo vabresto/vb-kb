@@ -1,5 +1,5 @@
 {
-  "collected_count": 15,
+  "collected_count": 16,
   "commits": [
     {
       "at": "2026-03-05T14:52:59.667638Z",
@@ -264,13 +264,21 @@
       "query_index": 2,
       "sha": "49b7c494643e006ae818711f2a93a67f41f9acc1",
       "total_rows": 15
+    },
+    {
+      "at": "2026-03-05T15:38:53.084094Z",
+      "new_rows": 0,
+      "page_in_query": 10,
+      "query_index": 2,
+      "sha": "643da79241aa8d64b6e5175025094d3383faff0d",
+      "total_rows": 15
     }
   ],
-  "last_page_new_rows": 0,
+  "last_page_new_rows": 1,
   "last_wait_seconds": 63,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 10,
-  "pages_scanned": 34,
+  "page_in_query": 11,
+  "pages_scanned": 35,
   "parse_errors": [],
   "people_processed": [
     {
@@ -2992,14 +3000,94 @@
       "name": "Fr\u00e9d\u00e9ric Rose",
       "page_in_query": 10,
       "query": "insurance director policy administration"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T15:40:08.793075Z",
+      "linkedin_url": "https://www.linkedin.com/in/ruslansl/",
+      "name": "Ruslan Slutskiy/Slootskiy",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T15:40:08.793465Z",
+      "linkedin_url": "https://www.linkedin.com/in/erin-k-cavanaugh/",
+      "name": "Erin K. Cavanaugh",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:40:08.793922Z",
+      "linkedin_url": "https://www.linkedin.com/in/michelletenzyk/",
+      "name": "Michelle Tenzyk, NACD.DC",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:40:08.794150Z",
+      "linkedin_url": "https://www.linkedin.com/in/stephensunderland/",
+      "name": "Stephen Sunderland",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:40:08.794403Z",
+      "linkedin_url": "https://www.linkedin.com/in/rahzal-r-80125023b/",
+      "name": "Rahzal R.",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:40:08.794643Z",
+      "linkedin_url": "https://www.linkedin.com/in/oscar-bleetstein-72274/",
+      "name": "Oscar Bleetstein",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:40:08.794915Z",
+      "linkedin_url": "https://www.linkedin.com/in/anthony-palmieri-7677a164/",
+      "name": "Anthony Palmieri",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:40:08.795109Z",
+      "linkedin_url": "https://www.linkedin.com/in/julissavillalona/",
+      "name": "Julissa V.",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:40:08.795464Z",
+      "linkedin_url": "https://www.linkedin.com/in/adaezenwachuku/",
+      "name": "Adaeze Nwachuku",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:40:08.795536Z",
+      "linkedin_url": "https://www.linkedin.com/in/shmuelwaldman/",
+      "name": "Shmuel Waldman DSW LMSW",
+      "page_in_query": 11,
+      "query": "insurance director policy administration"
     }
   ],
   "query": "insurance director policy administration",
   "query_index": 2,
   "search_title": "(6) \"insurance director policy administration New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20policy%20administration%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=10&sid=JXz",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20policy%20administration%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=11&sid=ZWv",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:38:51.537008Z"
+  "updated_at": "2026-03-05T15:40:08.796184Z"
 }
