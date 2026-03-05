@@ -89,23 +89,23 @@ enrichment-run entity args="" project_root=".":
 
 # Start a long-running LinkedIn Playwright daemon HTTP server + control UI.
 linkedin-daemon session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" state_path=".build/enrichment/daemon/linkedin-daemon-state.json" host="127.0.0.1" port="8771" headed="false" open_control_tab="true":
-  set -- uv run --with playwright python scripts/linkedin_playwright_daemon.py --session-state "{{session_state}}" --state-path "{{state_path}}" --host "{{host}}" --port "{{port}}"
-  if [ "{{headed}}" = "true" ]; then set -- "$@" --headed; fi
-  if [ "{{open_control_tab}}" != "true" ]; then set -- "$@" --no-control-tab; fi
-  "$@"
+  @cmd=(uv run --with playwright python scripts/linkedin_playwright_daemon.py --session-state "{{session_state}}" --state-path "{{state_path}}" --host "{{host}}" --port "{{port}}"); \
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi; \
+  if [ "{{open_control_tab}}" != "true" ]; then cmd+=(--no-control-tab); fi; \
+  "${cmd[@]}"
 
 # Build NYC 2nd-degree insurance ICP list via daemon HTTP API.
 linkedin-nyc-icp target_count="50" output="linkedin_nyc_insurance_icp_2nd_degree.csv" daemon_url="http://127.0.0.1:8771" max_pages_per_query="6" spawn_daemon="false" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" daemon_state_path=".build/enrichment/daemon/linkedin-daemon-state.json" headed="false" leave_daemon_running="false":
-  cmd=(uv run --with playwright python scripts/linkedin_nyc_icp_second_degree.py --target-count "{{target_count}}" --output "{{output}}" --daemon-url "{{daemon_url}}" --max-pages-per-query "{{max_pages_per_query}}")
-  if [ "{{spawn_daemon}}" = "true" ]; then cmd+=(--spawn-daemon --session-state "{{session_state}}" --daemon-state-path "{{daemon_state_path}}"); fi
-  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
-  if [ "{{leave_daemon_running}}" = "true" ]; then cmd+=(--leave-daemon-running); fi
+  @cmd=(uv run --with playwright python scripts/linkedin_nyc_icp_second_degree.py --target-count "{{target_count}}" --output "{{output}}" --daemon-url "{{daemon_url}}" --max-pages-per-query "{{max_pages_per_query}}"); \
+  if [ "{{spawn_daemon}}" = "true" ]; then cmd+=(--spawn-daemon --session-state "{{session_state}}" --daemon-state-path "{{daemon_state_path}}"); fi; \
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi; \
+  if [ "{{leave_daemon_running}}" = "true" ]; then cmd+=(--leave-daemon-running); fi; \
   "${cmd[@]}"
 
 # Send control/inspection commands to running LinkedIn daemon.
 linkedin-daemon-client daemon_url="http://127.0.0.1:8771" subcommand="state" args="":
-  cmd=(uv run python scripts/linkedin_daemon_client.py --daemon-url "{{daemon_url}}" {{subcommand}})
-  if [ -n "{{args}}" ]; then cmd+=({{args}}); fi
+  @cmd=(uv run python scripts/linkedin_daemon_client.py --daemon-url "{{daemon_url}}" {{subcommand}}); \
+  if [ -n "{{args}}" ]; then cmd+=({{args}}); fi; \
   "${cmd[@]}"
 
 # Start remote inspection stack (Xvfb + x11vnc + noVNC + headed daemon).
@@ -122,25 +122,25 @@ linkedin-remote-status:
 
 # Authenticate LinkedIn with username/password + TOTP secret and persist storage state.
 linkedin-auth username password totp_secret output_path=".build/enrichment/sessions/linkedin.com/storage-state.json" headed="false":
-  cmd=(uv run --with playwright python scripts/linkedin_auth_with_totp.py --username "{{username}}" --password "{{password}}" --totp-secret "{{totp_secret}}" --output-path "{{output_path}}")
-  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  @cmd=(uv run --with playwright python scripts/linkedin_auth_with_totp.py --username "{{username}}" --password "{{password}}" --totp-secret "{{totp_secret}}" --output-path "{{output_path}}"); \
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi; \
   "${cmd[@]}"
 
 # Initialize a new person record from template and optionally bootstrap enrichment from profile URLs.
 # Exposes `kb person-init` flags directly while keeping optional passthrough args.
 person-init slug="" name="" linkedin_url="" skool_url="" intro_note="" how_we_met="" why_added="" headful="false" no_random_waits="false" pretty="false" args="" project_root=".":
-  cmd=(uv run kb person-init --project-root "{{project_root}}")
-  if [ -n "{{slug}}" ]; then cmd+=(--slug "{{slug}}"); fi
-  if [ -n "{{name}}" ]; then cmd+=(--name "{{name}}"); fi
-  if [ -n "{{linkedin_url}}" ]; then cmd+=(--linkedin-url "{{linkedin_url}}"); fi
-  if [ -n "{{skool_url}}" ]; then cmd+=(--skool-url "{{skool_url}}"); fi
-  if [ -n "{{intro_note}}" ]; then cmd+=(--intro-note "{{intro_note}}"); fi
-  if [ -n "{{how_we_met}}" ]; then cmd+=(--how-we-met "{{how_we_met}}"); fi
-  if [ -n "{{why_added}}" ]; then cmd+=(--why-added "{{why_added}}"); fi
-  if [ "{{headful}}" = "true" ]; then cmd+=(--headful); fi
-  if [ "{{no_random_waits}}" = "true" ]; then cmd+=(--no-random-waits); fi
-  if [ "{{pretty}}" = "true" ]; then cmd+=(--pretty); fi
-  if [ -n "{{args}}" ]; then cmd+=({{args}}); fi
+  @cmd=(uv run kb person-init --project-root "{{project_root}}"); \
+  if [ -n "{{slug}}" ]; then cmd+=(--slug "{{slug}}"); fi; \
+  if [ -n "{{name}}" ]; then cmd+=(--name "{{name}}"); fi; \
+  if [ -n "{{linkedin_url}}" ]; then cmd+=(--linkedin-url "{{linkedin_url}}"); fi; \
+  if [ -n "{{skool_url}}" ]; then cmd+=(--skool-url "{{skool_url}}"); fi; \
+  if [ -n "{{intro_note}}" ]; then cmd+=(--intro-note "{{intro_note}}"); fi; \
+  if [ -n "{{how_we_met}}" ]; then cmd+=(--how-we-met "{{how_we_met}}"); fi; \
+  if [ -n "{{why_added}}" ]; then cmd+=(--why-added "{{why_added}}"); fi; \
+  if [ "{{headful}}" = "true" ]; then cmd+=(--headful); fi; \
+  if [ "{{no_random_waits}}" = "true" ]; then cmd+=(--no-random-waits); fi; \
+  if [ "{{pretty}}" = "true" ]; then cmd+=(--pretty); fi; \
+  if [ -n "{{args}}" ]; then cmd+=({{args}}); fi; \
   "${cmd[@]}"
 
 # Run enrichment-focused tests (sessions/bootstrap/adapters/run/CLI).
