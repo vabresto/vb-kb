@@ -157,7 +157,11 @@ def _commit_and_push(
     message: str,
     retry_count: int,
 ) -> str:
-    add_args = ["add", *[str(path.relative_to(repo_root)) for path in files_to_add]]
+    existing_paths = [path for path in files_to_add if path.exists()]
+    if not existing_paths:
+        return _run_git(repo_root, ["rev-parse", "HEAD"])
+
+    add_args = ["add", *[str(path.relative_to(repo_root)) for path in existing_paths]]
     _run_git(repo_root, add_args)
 
     cached_diff = subprocess.run(
@@ -226,6 +230,15 @@ def _append_rows(output_path: Path, rows: list[dict[str, str]]) -> None:
             writer.writeheader()
         for row in rows:
             writer.writerow(row)
+
+
+def _ensure_csv_exists(output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if output_path.exists() and output_path.stat().st_size > 0:
+        return
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
+        writer.writeheader()
 
 
 def _default_progress(*, output_path: Path, target_count: int) -> dict[str, Any]:
@@ -332,6 +345,7 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     output_path = args.output.expanduser().resolve()
     progress_path = args.progress_log.expanduser().resolve()
+    _ensure_csv_exists(output_path)
 
     seen_urls, _ = _load_existing_rows(output_path)
     progress = _load_progress(progress_path, output_path=output_path, target_count=args.target_count)
