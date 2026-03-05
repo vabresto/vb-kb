@@ -79,10 +79,11 @@ enrichment-session-import source import_path project_root=".":
 enrichment-run entity args="" project_root=".":
   uv run kb enrich-entity "{{entity}}" --project-root "{{project_root}}" {{args}}
 
-# Start a long-running LinkedIn Playwright daemon (stdin/stdout JSON protocol).
-linkedin-daemon session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" headed="false":
-  cmd=(uv run --with playwright python scripts/linkedin_playwright_daemon.py --session-state "{{session_state}}")
+# Start a long-running LinkedIn Playwright daemon HTTP server + control UI.
+linkedin-daemon session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" state_path=".build/enrichment/daemon/linkedin-daemon-state.json" host="127.0.0.1" port="8771" headed="false" open_control_tab="true":
+  cmd=(uv run --with playwright python scripts/linkedin_playwright_daemon.py --session-state "{{session_state}}" --state-path "{{state_path}}" --host "{{host}}" --port "{{port}}")
   if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  if [ "{{open_control_tab}}" != "true" ]; then cmd+=(--no-control-tab); fi
   "${cmd[@]}"
 
 # Build NYC 2nd-degree insurance ICP list via long-running LinkedIn daemon.
