@@ -69,6 +69,9 @@ def _parse_args() -> argparse.Namespace:
 
 def _split_title_org(subtitle: str, all_text: str) -> tuple[str, str]:
     text = normalize_space(subtitle)
+    if re.match(r"^view\s+.+profile$", text, flags=re.IGNORECASE):
+        text = ""
+
     if not text:
         candidates = [normalize_space(part) for part in all_text.split("|")]
         for candidate in candidates:
@@ -77,9 +80,17 @@ def _split_title_org(subtitle: str, all_text: str) -> tuple[str, str]:
             lower = candidate.lower()
             if re.search(r"\b[123](?:st|nd|rd)\b", lower):
                 continue
+            if "degree connection" in lower:
+                continue
             if "mutual connection" in lower:
                 continue
             if lower in {"follow", "connect", "message", "pending"}:
+                continue
+            if lower.startswith("view ") and "profile" in lower:
+                continue
+            if is_nyc_text(candidate):
+                continue
+            if re.search(r"\bmetropolitan area\b", lower):
                 continue
             text = candidate
             break
