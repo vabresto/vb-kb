@@ -1,5 +1,5 @@
 {
-  "collected_count": 2,
+  "collected_count": 3,
   "commits": [
     {
       "at": "2026-03-05T14:52:59.667638Z",
@@ -56,13 +56,21 @@
       "query_index": 0,
       "sha": "1df4ccfaf246369a0dd2939b31890b9ceb056633",
       "total_rows": 1
+    },
+    {
+      "at": "2026-03-05T15:02:06.771554Z",
+      "new_rows": 1,
+      "page_in_query": 8,
+      "query_index": 0,
+      "sha": "ddec245842f3cf818d71af4892c5fbf9ce3a3fed",
+      "total_rows": 2
     }
   ],
   "last_page_new_rows": 1,
-  "last_wait_seconds": 60,
+  "last_wait_seconds": 63,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 8,
-  "pages_scanned": 8,
+  "page_in_query": 9,
+  "pages_scanned": 9,
   "parse_errors": [],
   "people_processed": [
     {
@@ -704,14 +712,94 @@
       "name": "Valery Scholem",
       "page_in_query": 8,
       "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:03:22.500664Z",
+      "linkedin_url": "https://www.linkedin.com/in/natalya-kundina-cisa-cism-106b7a23/",
+      "name": "Natalya Kundina, CISA, CISM",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:03:22.500891Z",
+      "linkedin_url": "https://www.linkedin.com/in/gary-t-davis-16b43592/",
+      "name": "Gary T Davis",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T15:03:22.501169Z",
+      "linkedin_url": "https://www.linkedin.com/in/erin-k-cavanaugh/",
+      "name": "Erin K. Cavanaugh",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:03:22.501346Z",
+      "linkedin_url": "https://www.linkedin.com/in/martinezal/",
+      "name": "Alex Martinez, MBA",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:03:22.501541Z",
+      "linkedin_url": "https://www.linkedin.com/in/david-scalzetti-cfa-5857781/",
+      "name": "David Scalzetti, CFA",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:03:22.501661Z",
+      "linkedin_url": "https://www.linkedin.com/in/david-azvolinsky-51150333/",
+      "name": "David Azvolinsky",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:03:22.501696Z",
+      "linkedin_url": "https://www.linkedin.com/in/tony-motley-51671bb0/",
+      "name": "Tony Motley",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:03:22.503354Z",
+      "linkedin_url": "https://www.linkedin.com/in/casey-e-coleman-8432336b/",
+      "name": "Casey E. Coleman",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:03:22.503545Z",
+      "linkedin_url": "https://www.linkedin.com/in/alisonlochner/",
+      "name": "Alison Lochner",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:03:22.503668Z",
+      "linkedin_url": "https://www.linkedin.com/in/michael-shalom-986003b7/",
+      "name": "Michael Shalom",
+      "page_in_query": 9,
+      "query": "insurance director claims operations"
     }
   ],
   "query": "insurance director claims operations",
   "query_index": 0,
   "search_title": "(6) \"insurance director claims operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=8&sid=00n",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=9&sid=8mO",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:02:05.138884Z"
+  "updated_at": "2026-03-05T15:03:22.504206Z"
 }
