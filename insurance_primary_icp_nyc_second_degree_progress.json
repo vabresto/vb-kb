@@ -1,5 +1,5 @@
 {
-  "collected_count": 6,
+  "collected_count": 7,
   "commits": [
     {
       "at": "2026-03-05T14:52:59.667638Z",
@@ -184,13 +184,21 @@
       "query_index": 1,
       "sha": "ea3e03e9182714ece39db2bc432fd46dea477118",
       "total_rows": 6
+    },
+    {
+      "at": "2026-03-05T15:25:14.911248Z",
+      "new_rows": 0,
+      "page_in_query": 12,
+      "query_index": 1,
+      "sha": "9a6b6ca13b0a1bc7827c2151dfa7f1145d564341",
+      "total_rows": 6
     }
   ],
-  "last_page_new_rows": 0,
-  "last_wait_seconds": 60,
+  "last_page_new_rows": 1,
+  "last_wait_seconds": 62,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 12,
-  "pages_scanned": 24,
+  "page_in_query": 1,
+  "pages_scanned": 25,
   "parse_errors": [],
   "people_processed": [
     {
@@ -2112,14 +2120,94 @@
       "name": "Gerard T. Dolan, LUTCF NSSA",
       "page_in_query": 12,
       "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:26:46.716090Z",
+      "linkedin_url": "https://www.linkedin.com/in/rebeccadamon/",
+      "name": "Rebecca Damon",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:26:46.716205Z",
+      "linkedin_url": "https://www.linkedin.com/in/colleen-finan-fehringer-79114a32/",
+      "name": "Colleen Finan Fehringer",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:26:46.716298Z",
+      "linkedin_url": "https://www.linkedin.com/in/michael-dougherty-b3189aa7/",
+      "name": "Michael Dougherty",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:26:46.716380Z",
+      "linkedin_url": "https://www.linkedin.com/in/erica-busch-999a85130/",
+      "name": "Erica Busch",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:26:46.716574Z",
+      "linkedin_url": "https://www.linkedin.com/in/aakruwala/",
+      "name": "Arpit Akruwala",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T15:26:46.716712Z",
+      "linkedin_url": "https://www.linkedin.com/in/mikal-petersen-mba-acs-48619914/",
+      "name": "Mikal Petersen, MBA, ACS",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:26:46.716769Z",
+      "linkedin_url": "https://www.linkedin.com/in/george-helmy-110b4a19/",
+      "name": "George Helmy",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:26:46.716852Z",
+      "linkedin_url": "https://www.linkedin.com/in/erik-johnson-1112b795/",
+      "name": "Erik Johnson",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:26:46.716945Z",
+      "linkedin_url": "https://www.linkedin.com/in/yc3121/",
+      "name": "Yolanda C.",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:26:46.717021Z",
+      "linkedin_url": "https://www.linkedin.com/in/douglas-polley-25a16038/",
+      "name": "Douglas Polley",
+      "page_in_query": 1,
+      "query": "insurance director policy administration"
     }
   ],
-  "query": "insurance vp claims operations",
-  "query_index": 1,
-  "search_title": "(6) \"insurance vp claims operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=12&sid=%40Q9",
+  "query": "insurance director policy administration",
+  "query_index": 2,
+  "search_title": "(6) \"insurance director policy administration New York City Metropolitan Area\" | Search | LinkedIn",
+  "search_url": "https://www.linkedin.com/search/results/people/?facetNetwork=%5B%22S%22%5D&keywords=insurance%20director%20policy%20administration%20New%20York%20City%20Metropolitan%20Area&origin=GLOBAL_SEARCH_HEADER&sid=_YB",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:25:13.265984Z"
+  "updated_at": "2026-03-05T15:26:46.718037Z"
 }
