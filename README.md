@@ -81,6 +81,8 @@ Related runnable workflows:
 - `just linkedin-daemon-client http://127.0.0.1:8771 mode "human_control --actor human --reason inspect"`
 - `just linkedin-daemon-client http://127.0.0.1:8771 mode "autonomous --actor human --reason resume"`
 - `just linkedin-nyc-icp daemon_url="http://127.0.0.1:8771"`
+- `just linkedin-search-plan theme_file="insurance_primary_icp_theme.txt" output="linkedin_people_search_plan.csv"`
+- `just linkedin-collect-plan plan_csv="linkedin_people_search_plan.csv" output="linkedin_people_search_results_raw.csv" progress_log="linkedin_people_search_results_raw.progress.json" dedupe_mode="none"`
 - `just linkedin-auth "<username>" "<password>" "<totp_secret_base32>"`
 - `just linkedin-remote-start`
 - `just linkedin-remote-status`
@@ -108,6 +110,20 @@ Related runnable workflows:
   - `mode autonomous|human_control`
   - `cmd <daemon_cmd>`
   - `shutdown`
+
+### Plan-driven high-volume people search collection
+
+- Theme input:
+  - `insurance_primary_icp_theme.txt` is a sample theme file.
+- Generate deterministic query plan CSV:
+  - `scripts/linkedin_generate_search_plan.py --theme-file <theme_file> --output <plan_csv>`
+  - plan rows include canonical query params and canonical search URL (without `page`/`sid`).
+- Execute full sweep from plan (search pages only):
+  - `scripts/linkedin_collect_people_from_plan.py --plan-csv <plan_csv> --output <raw_csv> --progress-log <progress_json>`
+  - each enabled query runs from page 1 until pagination ends (or per-row `max_pages`).
+  - all scraped cards are appended by default (`--dedupe-mode none`).
+  - optional global URL dedupe: `--dedupe-mode global`.
+  - per-page commit/push and resumable progress are built in.
 
 ### Remote inspection (noVNC)
 

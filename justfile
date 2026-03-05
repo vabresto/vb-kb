@@ -108,6 +108,15 @@ linkedin-daemon-client daemon_url="http://127.0.0.1:8771" subcommand="state" arg
   if [ -n "{{args}}" ]; then cmd+=({{args}}); fi; \
   "${cmd[@]}"
 
+# Generate deterministic LinkedIn people-search plan CSV from a theme file.
+linkedin-search-plan theme_file="insurance_primary_icp_theme.txt" output="linkedin_people_search_plan.csv" location="New York City Metropolitan Area" base_context="insurance" max_pages="120":
+  uv run python scripts/linkedin_generate_search_plan.py --theme-file "{{theme_file}}" --output "{{output}}" --location "{{location}}" --base-context "{{base_context}}" --max-pages-per-query "{{max_pages}}"
+
+# Execute full plan-driven LinkedIn people-search sweeps (search pages only).
+linkedin-collect-plan plan_csv="linkedin_people_search_plan.csv" output="linkedin_people_search_results_raw.csv" progress_log="linkedin_people_search_results_raw.progress.json" daemon_url="http://127.0.0.1:8771" wait_min_seconds="60" wait_max_seconds="600" retry_count="3" dedupe_mode="none" commit_prefix="data":
+  @cmd=(uv run python scripts/linkedin_collect_people_from_plan.py --plan-csv "{{plan_csv}}" --output "{{output}}" --progress-log "{{progress_log}}" --daemon-url "{{daemon_url}}" --wait-min-seconds "{{wait_min_seconds}}" --wait-max-seconds "{{wait_max_seconds}}" --retry-count "{{retry_count}}" --dedupe-mode "{{dedupe_mode}}" --commit-prefix "{{commit_prefix}}"); \
+  "${cmd[@]}"
+
 # Start remote inspection stack (Xvfb + x11vnc + noVNC + headed daemon).
 linkedin-remote-start display=":99" daemon_host="127.0.0.1" daemon_port="8771" vnc_port="5901" novnc_port="6081" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" daemon_state_path=".build/enrichment/daemon/linkedin-daemon-state.json" open_control_tab="true":
   ./scripts/linkedin_remote_inspection.sh start --display "{{display}}" --daemon-host "{{daemon_host}}" --daemon-port "{{daemon_port}}" --vnc-port "{{vnc_port}}" --novnc-port "{{novnc_port}}" --session-state "{{session_state}}" --daemon-state-path "{{daemon_state_path}}" --open-control-tab "{{open_control_tab}}"

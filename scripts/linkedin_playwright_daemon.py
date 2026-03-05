@@ -12,7 +12,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import urlencode, urlparse
 
 from kb.linkedin_daemon import (
     DAEMON_MODE_AUTONOMOUS,
@@ -461,12 +461,36 @@ class LinkedInPlaywrightWorker:
 
                     if cmd == "open_people_search":
                         query = str(params.get("query") or "").strip()
-                        if not query:
-                            raise RuntimeError("open_people_search requires non-empty query")
-                        url = (
-                            "https://www.linkedin.com/search/results/people/"
-                            f"?keywords={quote_plus(query)}&facetNetwork=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER"
-                        )
+                        raw_query_params = params.get("query_params")
+                        cleaned_params: list[tuple[str, str]] = []
+                        if isinstance(raw_query_params, dict):
+                            for key, value in raw_query_params.items():
+                                param_key = str(key or "").strip()
+                                if not param_key:
+                                    continue
+                                if param_key.lower() in {"page", "sid"}:
+                                    continue
+                                if isinstance(value, list):
+                                    for item in value:
+                                        item_text = str(item or "").strip()
+                                        if item_text:
+                                            cleaned_params.append((param_key, item_text))
+                                else:
+                                    value_text = str(value or "").strip()
+                                    if value_text:
+                                        cleaned_params.append((param_key, value_text))
+
+                        has_keywords = any(key == "keywords" for key, _ in cleaned_params)
+                        if not has_keywords:
+                            if not query:
+                                raise RuntimeError("open_people_search requires non-empty query or query_params.keywords")
+                            cleaned_params.append(("keywords", query))
+                        if not any(key == "facetNetwork" for key, _ in cleaned_params):
+                            cleaned_params.append(("facetNetwork", '["S"]'))
+                        if not any(key == "origin" for key, _ in cleaned_params):
+                            cleaned_params.append(("origin", "GLOBAL_SEARCH_HEADER"))
+
+                        url = "https://www.linkedin.com/search/results/people/?" + urlencode(cleaned_params)
                         automation_page.goto(url, wait_until="domcontentloaded", timeout=90_000)
                         wait_idle(automation_page, timeout_ms=12_000)
                         automation_page.wait_for_timeout(1_400)
