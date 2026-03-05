@@ -1,5 +1,5 @@
 {
-  "collected_count": 18,
+  "collected_count": 19,
   "commits": [
     {
       "at": "2026-03-05T14:52:59.667638Z",
@@ -304,13 +304,21 @@
       "query_index": 3,
       "sha": "ecbbe750dc932f68f21f1478e8037cfeffe1e747",
       "total_rows": 18
+    },
+    {
+      "at": "2026-03-05T15:45:30.372826Z",
+      "new_rows": 0,
+      "page_in_query": 3,
+      "query_index": 3,
+      "sha": "b0d548dca1d962955239ddee0f7e52c3edc58520",
+      "total_rows": 18
     }
   ],
-  "last_page_new_rows": 0,
-  "last_wait_seconds": 60,
+  "last_page_new_rows": 1,
+  "last_wait_seconds": 61,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 3,
-  "pages_scanned": 39,
+  "page_in_query": 4,
+  "pages_scanned": 40,
   "parse_errors": [],
   "people_processed": [
     {
@@ -3432,14 +3440,94 @@
       "name": "Brian Youngs",
       "page_in_query": 3,
       "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:46:44.042735Z",
+      "linkedin_url": "https://www.linkedin.com/in/timyockel/",
+      "name": "Tim Yockel",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:46:44.042922Z",
+      "linkedin_url": "https://www.linkedin.com/in/aakruwala/",
+      "name": "Arpit Akruwala",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T15:46:44.043069Z",
+      "linkedin_url": "https://www.linkedin.com/in/jonah-platt-18a7b495/",
+      "name": "Jonah Platt",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:46:44.043234Z",
+      "linkedin_url": "https://www.linkedin.com/in/christina-klepper-vercillo-34474331/",
+      "name": "Christina Klepper Vercillo",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:46:44.043276Z",
+      "linkedin_url": "https://www.linkedin.com/in/beth-sturm-80637238/",
+      "name": "BETH STURM",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T15:46:44.043452Z",
+      "linkedin_url": "https://www.linkedin.com/in/gregdefiore/",
+      "name": "Greg DeFiore",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:46:44.043498Z",
+      "linkedin_url": "https://www.linkedin.com/in/edward-barbini-b8b04114/",
+      "name": "Edward Barbini",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:46:44.043625Z",
+      "linkedin_url": "https://www.linkedin.com/in/noelcyr/",
+      "name": "Noel Cyr",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:46:44.043766Z",
+      "linkedin_url": "https://www.linkedin.com/in/douglas-polley-25a16038/",
+      "name": "Douglas Polley",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:46:44.043910Z",
+      "linkedin_url": "https://www.linkedin.com/in/gail-weinberg-benefitshr/",
+      "name": "Gail Weinberg",
+      "page_in_query": 4,
+      "query": "insurance vp policy administration"
     }
   ],
   "query": "insurance vp policy administration",
   "query_index": 3,
   "search_title": "(6) \"insurance vp policy administration New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20policy%20administration%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=3&sid=vNM",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20policy%20administration%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=4&sid=CB1",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:45:28.781874Z"
+  "updated_at": "2026-03-05T15:46:44.044167Z"
 }
