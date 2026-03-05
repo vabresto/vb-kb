@@ -79,6 +79,45 @@ enrichment-session-import source import_path project_root=".":
 enrichment-run entity args="" project_root=".":
   uv run kb enrich-entity "{{entity}}" --project-root "{{project_root}}" {{args}}
 
+# Start a long-running LinkedIn Playwright daemon HTTP server + control UI.
+linkedin-daemon session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" state_path=".build/enrichment/daemon/linkedin-daemon-state.json" host="127.0.0.1" port="8771" headed="false" open_control_tab="true":
+  cmd=(uv run --with playwright python scripts/linkedin_playwright_daemon.py --session-state "{{session_state}}" --state-path "{{state_path}}" --host "{{host}}" --port "{{port}}")
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  if [ "{{open_control_tab}}" != "true" ]; then cmd+=(--no-control-tab); fi
+  "${cmd[@]}"
+
+# Build NYC 2nd-degree insurance ICP list via daemon HTTP API.
+linkedin-nyc-icp target_count="50" output="linkedin_nyc_insurance_icp_2nd_degree.csv" daemon_url="http://127.0.0.1:8771" max_pages_per_query="6" spawn_daemon="false" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" daemon_state_path=".build/enrichment/daemon/linkedin-daemon-state.json" headed="false" leave_daemon_running="false":
+  cmd=(uv run --with playwright python scripts/linkedin_nyc_icp_second_degree.py --target-count "{{target_count}}" --output "{{output}}" --daemon-url "{{daemon_url}}" --max-pages-per-query "{{max_pages_per_query}}")
+  if [ "{{spawn_daemon}}" = "true" ]; then cmd+=(--spawn-daemon --session-state "{{session_state}}" --daemon-state-path "{{daemon_state_path}}"); fi
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  if [ "{{leave_daemon_running}}" = "true" ]; then cmd+=(--leave-daemon-running); fi
+  "${cmd[@]}"
+
+# Send control/inspection commands to running LinkedIn daemon.
+linkedin-daemon-client daemon_url="http://127.0.0.1:8771" subcommand="state" args="":
+  cmd=(uv run python scripts/linkedin_daemon_client.py --daemon-url "{{daemon_url}}" {{subcommand}})
+  if [ -n "{{args}}" ]; then cmd+=({{args}}); fi
+  "${cmd[@]}"
+
+# Start remote inspection stack (Xvfb + x11vnc + noVNC + headed daemon).
+linkedin-remote-start display=":99" daemon_host="127.0.0.1" daemon_port="8771" vnc_port="5901" novnc_port="6081" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" daemon_state_path=".build/enrichment/daemon/linkedin-daemon-state.json" open_control_tab="true":
+  ./scripts/linkedin_remote_inspection.sh start --display "{{display}}" --daemon-host "{{daemon_host}}" --daemon-port "{{daemon_port}}" --vnc-port "{{vnc_port}}" --novnc-port "{{novnc_port}}" --session-state "{{session_state}}" --daemon-state-path "{{daemon_state_path}}" --open-control-tab "{{open_control_tab}}"
+
+# Stop remote inspection stack.
+linkedin-remote-stop:
+  ./scripts/linkedin_remote_inspection.sh stop
+
+# Show remote inspection stack status.
+linkedin-remote-status:
+  ./scripts/linkedin_remote_inspection.sh status
+
+# Authenticate LinkedIn with username/password + TOTP secret and persist storage state.
+linkedin-auth username password totp_secret output_path=".build/enrichment/sessions/linkedin.com/storage-state.json" headed="false":
+  cmd=(uv run --with playwright python scripts/linkedin_auth_with_totp.py --username "{{username}}" --password "{{password}}" --totp-secret "{{totp_secret}}" --output-path "{{output_path}}")
+  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
+  "${cmd[@]}"
+
 # Initialize a new person record from template and optionally bootstrap enrichment from profile URLs.
 # Exposes `kb person-init` flags directly while keeping optional passthrough args.
 person-init slug="" name="" linkedin_url="" skool_url="" intro_note="" how_we_met="" why_added="" headful="false" no_random_waits="false" pretty="false" args="" project_root=".":

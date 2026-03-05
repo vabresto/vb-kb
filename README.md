@@ -76,6 +76,48 @@ Related runnable workflows:
 - `just enrichment-run <entity-ref> "--source linkedin.com --headful --pretty"`
 - `just enrichment-run <entity-ref> "--source linkedin.com --no-random-waits --pretty"`
 - `just test-enrichment`
+- `just linkedin-daemon headed=true`
+- `just linkedin-daemon-client subcommand=state`
+- `just linkedin-daemon-client subcommand=mode args="human_control --actor human --reason inspect"`
+- `just linkedin-daemon-client subcommand=mode args="autonomous --actor human --reason resume"`
+- `just linkedin-nyc-icp daemon_url="http://127.0.0.1:8771"`
+- `just linkedin-auth "<username>" "<password>" "<totp_secret_base32>"`
+- `just linkedin-remote-start`
+- `just linkedin-remote-status`
+- `just linkedin-remote-stop`
+
+### Shared LinkedIn daemon (human + agent)
+
+- `scripts/linkedin_playwright_daemon.py` runs one long-lived Playwright browser/context/page and serves:
+  - control UI: `/control`
+  - state API: `/api/state`
+  - mode API: `/api/mode`
+  - command API: `/api/command`
+- Mode is persisted to `.build/enrichment/daemon/linkedin-daemon-state.json`.
+- Supported modes:
+  - `autonomous`: agent commands execute.
+  - `human_control`: automation commands are blocked until resumed.
+- Control page is auto-opened in a separate browser context and auto-reopened if closed.
+- Use `scripts/linkedin_daemon_client.py` (or `just linkedin-daemon-client`) for CLI control:
+  - `health`, `state`
+  - `mode autonomous|human_control`
+  - `cmd <daemon_cmd>`
+  - `shutdown`
+
+### Remote inspection (noVNC)
+
+- `scripts/linkedin_remote_inspection.sh` manages:
+  - `Xvfb` display for headed Chromium
+  - `x11vnc` bridge
+  - `websockify` + noVNC web endpoint
+  - headed LinkedIn daemon
+- Start:
+  - `just linkedin-remote-start`
+- Inspect remotely:
+  - open the emitted noVNC URL (default `http://127.0.0.1:6081/vnc.html?...`)
+  - open control page (default `http://127.0.0.1:8771/control`) to toggle mode.
+- For remote hosts, tunnel the ports from your laptop:
+  - `ssh -L 8771:127.0.0.1:8771 -L 6081:127.0.0.1:6081 <host>`
 
 Bootstrap command contract:
 
