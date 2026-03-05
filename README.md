@@ -77,9 +77,9 @@ Related runnable workflows:
 - `just enrichment-run <entity-ref> "--source linkedin.com --no-random-waits --pretty"`
 - `just test-enrichment`
 - `just linkedin-daemon headed=true`
-- `just linkedin-daemon-client subcommand=state`
-- `just linkedin-daemon-client subcommand=mode args="human_control --actor human --reason inspect"`
-- `just linkedin-daemon-client subcommand=mode args="autonomous --actor human --reason resume"`
+- `just linkedin-daemon-client`
+- `just linkedin-daemon-client http://127.0.0.1:8771 mode "human_control --actor human --reason inspect"`
+- `just linkedin-daemon-client http://127.0.0.1:8771 mode "autonomous --actor human --reason resume"`
 - `just linkedin-nyc-icp daemon_url="http://127.0.0.1:8771"`
 - `just linkedin-auth "<username>" "<password>" "<totp_secret_base32>"`
 - `just linkedin-remote-start`
@@ -131,8 +131,8 @@ Recommended setup flow (repeatable):
 2. Start clean:
    - `just linkedin-remote-start open_control_tab=true`
 3. Verify daemon health:
-   - `just linkedin-daemon-client subcommand=health`
-   - `just linkedin-daemon-client subcommand=state`
+   - `just linkedin-daemon-client http://127.0.0.1:8771 health`
+   - `just linkedin-daemon-client`
 4. Open the noVNC URL and identify windows:
    - `LinkedIn Daemon Control - Chromium` is the control context.
    - Separate LinkedIn tab/window is the automation context (agent-controlled).
