@@ -3,3 +3,4 @@ __pycache__/
 *.egg-info/
 
 .env
+private-tmp-archive-20260305/
