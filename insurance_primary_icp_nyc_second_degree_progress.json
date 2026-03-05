@@ -616,8 +616,17 @@
       "query_index": 6,
       "sha": "86f823855113f904dd26a312b68c036b4cc64d03",
       "total_rows": 99
+    },
+    {
+      "at": "2026-03-05T16:38:32.897804Z",
+      "new_rows": 2,
+      "page_in_query": 6,
+      "query_index": 6,
+      "sha": "f4c9e6b7aaff7c66a861ac14527901962c205f6a",
+      "total_rows": 101
     }
   ],
+  "completed_at": "2026-03-05T16:38:32.907052Z",
   "last_page_new_rows": 2,
   "last_wait_seconds": 60,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
@@ -6871,7 +6880,7 @@
   "search_title": "(6) \"insurance director operations excellence transformation New York City Metropolitan Area\" | Search | LinkedIn",
   "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20operations%20excellence%20transformation%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=6&sid=o-3",
   "started_at": "2026-03-05T14:53:40Z",
-  "status": "running",
+  "status": "completed",
   "target_count": 100,
-  "updated_at": "2026-03-05T16:38:31.352137Z"
+  "updated_at": "2026-03-05T16:38:32.907130Z"
 }
