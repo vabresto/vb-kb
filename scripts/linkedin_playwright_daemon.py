@@ -94,7 +94,7 @@ EXTRACT_CARD_DATA_JS = r"""
     seen.add(href);
 
     const name = parseName(profileAnchor);
-    const textRaw = clean(row.innerText || row.textContent || "");
+    const textRaw = String(row.innerText || row.textContent || "").replace(/\u00a0/g, " ");
     const lines = textRaw
       .split(/\n+/)
       .map((line) => clean(line))
