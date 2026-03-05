@@ -88,7 +88,10 @@ Related runnable workflows:
 
 ### Shared LinkedIn daemon (human + agent)
 
-- `scripts/linkedin_playwright_daemon.py` runs one long-lived Playwright browser/context/page and serves:
+- `scripts/linkedin_playwright_daemon.py` runs one long-lived Playwright browser with two contexts:
+  - `automation_context`: the LinkedIn page the agent uses.
+  - `control_context`: the `/control` tab/window for human mode + session save.
+- The daemon serves:
   - control UI: `/control`
   - state API: `/api/state`
   - mode API: `/api/mode`
@@ -98,6 +101,7 @@ Related runnable workflows:
   - `autonomous`: agent commands execute.
   - `human_control`: automation commands are blocked until resumed.
 - Control page is auto-opened in a separate browser context and auto-reopened if closed.
+- Agent commands always target `automation_context`; LinkedIn tabs opened from the control page/window are not automation targets.
 - Control page includes **Save Session State JSON**, which writes current Playwright `storageState` back to the configured path (or an override path you provide in the input field).
 - Use `scripts/linkedin_daemon_client.py` (or `just linkedin-daemon-client`) for CLI control:
   - `health`, `state`
@@ -119,6 +123,35 @@ Related runnable workflows:
   - open control page (default `http://127.0.0.1:8771/control`) to toggle mode.
 - For remote hosts, tunnel the ports from your laptop:
   - `ssh -L 8771:127.0.0.1:8771 -L 6081:127.0.0.1:6081 <host>`
+
+Recommended setup flow (repeatable):
+
+1. Stop stale processes:
+   - `just linkedin-remote-stop`
+2. Start clean:
+   - `just linkedin-remote-start open_control_tab=true`
+3. Verify daemon health:
+   - `just linkedin-daemon-client subcommand=health`
+   - `just linkedin-daemon-client subcommand=state`
+4. Open the noVNC URL and identify windows:
+   - `LinkedIn Daemon Control - Chromium` is the control context.
+   - Separate LinkedIn tab/window is the automation context (agent-controlled).
+5. Confirm agent sees logged-in automation page:
+   - `uv run python scripts/linkedin_daemon_client.py --daemon-url http://127.0.0.1:8771 cmd assert_authenticated`
+6. Persist login/session cookies:
+   - In `/control`, click **Save Session State JSON**.
+
+Troubleshooting:
+
+- Error: `Target page, context or browser has been closed`.
+  - Cause: automation page/window was closed.
+  - Fix: restart daemon stack (`just linkedin-remote-stop` then `just linkedin-remote-start`) and run `assert_authenticated` again.
+- Error: `failed to start Xvfb` with `open_control_tab=false` in logs.
+  - Cause: passed `open_control_tab=false` as a positional token to `scripts/linkedin_remote_inspection.sh`.
+  - Fix: use either `just linkedin-remote-start open_control_tab=false` or script long flag `--open-control-tab false`.
+- Control page shows LinkedIn logged in, but daemon state shows empty `automation_url`.
+  - Cause: login happened in control context, not automation context.
+  - Fix: switch to the automation window in noVNC and authenticate there, then save session state.
 
 Bootstrap command contract:
 
