@@ -465,7 +465,7 @@ class LinkedInPlaywrightWorker:
                             raise RuntimeError("open_people_search requires non-empty query")
                         url = (
                             "https://www.linkedin.com/search/results/people/"
-                            f"?keywords={quote_plus(query)}&network=%5B%22S%22%5D"
+                            f"?keywords={quote_plus(query)}&facetNetwork=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER"
                         )
                         automation_page.goto(url, wait_until="domcontentloaded", timeout=90_000)
                         wait_idle(automation_page, timeout_ms=12_000)
@@ -477,6 +477,7 @@ class LinkedInPlaywrightWorker:
                                     "url": automation_page.url,
                                     "title": automation_page.title(),
                                     "results_visible": automation_page.locator(
+                                        "[data-view-name='search-entity-result-universal-template'], "
                                         "li.reusable-search__result-container, div.entity-result"
                                     ).count(),
                                 },

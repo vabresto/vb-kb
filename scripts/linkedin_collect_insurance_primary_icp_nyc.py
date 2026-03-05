@@ -377,7 +377,7 @@ def main() -> int:
         if query_index < resume_query_index:
             continue
 
-        composed_query = f"{query} New York City Metropolitan Area"
+        composed_query = query
         next_page_to_scan = 1
         if query_index == resume_query_index and resume_page_in_query > 0:
             next_page_to_scan = resume_page_in_query + 1
