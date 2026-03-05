@@ -128,13 +128,21 @@
       "query_index": 1,
       "sha": "d8b6a9f4571460dca64494fa709b478c154edb1c",
       "total_rows": 3
+    },
+    {
+      "at": "2026-03-05T15:14:28.994155Z",
+      "new_rows": 0,
+      "page_in_query": 5,
+      "query_index": 1,
+      "sha": "ea1dba5b56cbb029c5280801f7ca56f9372ec632",
+      "total_rows": 3
     }
   ],
   "last_page_new_rows": 0,
   "last_wait_seconds": 60,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 5,
-  "pages_scanned": 17,
+  "page_in_query": 6,
+  "pages_scanned": 18,
   "parse_errors": [],
   "people_processed": [
     {
@@ -1496,14 +1504,94 @@
       "name": "Amy Jean-Pierre",
       "page_in_query": 5,
       "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:15:41.650199Z",
+      "linkedin_url": "https://www.linkedin.com/in/helenegcohen/",
+      "name": "Helene Cohen",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:15:41.650409Z",
+      "linkedin_url": "https://www.linkedin.com/in/irene-hendrick-aa89506/",
+      "name": "Irene Hendrick",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:15:41.650573Z",
+      "linkedin_url": "https://www.linkedin.com/in/kristynconrad/",
+      "name": "Kristyn Conrad",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:15:41.650686Z",
+      "linkedin_url": "https://www.linkedin.com/in/nancy-geller-76220a9/",
+      "name": "Nancy Geller",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:15:41.650819Z",
+      "linkedin_url": "https://www.linkedin.com/in/melissaheslip/",
+      "name": "Melissa Heslip",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:15:41.650861Z",
+      "linkedin_url": "https://www.linkedin.com/in/adamschrager/",
+      "name": "Adam Schrager",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:15:41.650893Z",
+      "linkedin_url": "https://www.linkedin.com/in/michael-murphy-4a233b5/",
+      "name": "Michael Murphy",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:15:41.651026Z",
+      "linkedin_url": "https://www.linkedin.com/in/samantha-schaad-856a64112/",
+      "name": "Samantha Schaad",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:15:41.651137Z",
+      "linkedin_url": "https://www.linkedin.com/in/mweitzman2020/",
+      "name": "Murray Weitzman",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:15:41.651284Z",
+      "linkedin_url": "https://www.linkedin.com/in/emily-ridings-cpa-691631178/",
+      "name": "Emily Ridings, CPA",
+      "page_in_query": 6,
+      "query": "insurance vp claims operations"
     }
   ],
   "query": "insurance vp claims operations",
   "query_index": 1,
   "search_title": "(6) \"insurance vp claims operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=5&sid=L0V",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=6&sid=0t%40",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:14:27.325983Z"
+  "updated_at": "2026-03-05T15:15:41.651353Z"
 }
