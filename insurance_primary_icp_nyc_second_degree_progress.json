@@ -1,0 +1,18 @@
+{
+  "collected_count": 0,
+  "commits": [],
+  "last_page_new_rows": 0,
+  "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
+  "page_in_query": 2,
+  "pages_scanned": 2,
+  "parse_errors": [],
+  "people_processed": [],
+  "query": "insurance director claims operations",
+  "query_index": 0,
+  "search_title": "(6) \"insurance director claims operations New York City Metropolitan Area\" | Search | LinkedIn",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&page=2&sid=b47",
+  "started_at": "2026-03-05T14:37:27.176412Z",
+  "status": "running",
+  "target_count": 100,
+  "updated_at": "2026-03-05T14:39:27.578808Z"
+}
