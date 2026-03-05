@@ -26,21 +26,78 @@ from playwright.sync_api import sync_playwright
 
 EXTRACT_CARD_DATA_JS = r"""
 () => {
-  let rows = Array.from(document.querySelectorAll("li.reusable-search__result-container"));
-  if (rows.length === 0) {
-    rows = Array.from(document.querySelectorAll("div.entity-result"));
-  }
-  const out = [];
-  for (const row of rows) {
-    const profileAnchor = row.querySelector("a[href*='/in/']");
-    if (!profileAnchor) continue;
+  const clean = (value) => String(value || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+  const cleanUrl = (href) => {
+    const raw = String(href || "").trim();
+    if (!raw) return "";
+    try {
+      const u = new URL(raw, location.origin);
+      if (!/linkedin\.com$/i.test(u.hostname) && !/\.linkedin\.com$/i.test(u.hostname)) return "";
+      if (!/\/in\//i.test(u.pathname)) return "";
+      return `${u.origin}${u.pathname}`;
+    } catch {
+      return "";
+    }
+  };
 
-    const href = profileAnchor.href || profileAnchor.getAttribute("href") || "";
-    const name = (profileAnchor.textContent || "").trim().replace(/\s+/g, " ");
-    const textRaw = (row.innerText || "").replace(/\u00a0/g, " ");
+  const findProfileAnchor = (row) => {
+    const anchors = Array.from(row.querySelectorAll("a[href*='/in/']")).filter((a) => {
+      const href = a.getAttribute("href") || "";
+      return /\/in\//i.test(href) && !/\/linkedin\/learning\//i.test(href) && !/\/pulse\//i.test(href);
+    });
+    if (!anchors.length) return null;
+    for (const anchor of anchors) {
+      const hidden = clean(anchor.querySelector(".visually-hidden")?.textContent || "");
+      const text = clean(anchor.textContent || "");
+      if (/^view\s+.+profile$/i.test(hidden) || /^view\s+.+profile$/i.test(text)) {
+        return anchor;
+      }
+    }
+    for (const anchor of anchors) {
+      const text = clean(anchor.textContent || "").toLowerCase();
+      if (!text) continue;
+      if (/^(connect|message|follow|ignore|accept|pending|more)\b/.test(text)) continue;
+      if (/^status is\b/.test(text)) continue;
+      return anchor;
+    }
+    return anchors[0];
+  };
+
+  const parseName = (anchor) => {
+    const hidden = clean(anchor.querySelector(".visually-hidden")?.textContent || "");
+    const text = clean(anchor.textContent || "");
+    const hiddenMatch = /view\s+(.+?)[’'\u2018\u2019]?\s*s?\s*profile/i.exec(hidden);
+    if (hiddenMatch) return clean(hiddenMatch[1]);
+    const textMatch = /view\s+(.+?)[’'\u2018\u2019]?\s*s?\s*profile/i.exec(text);
+    if (textMatch) return clean(textMatch[1]);
+    return clean(text.replace(/\s*view\s+.+$/i, ""));
+  };
+
+  const collectRows = () => {
+    const bySelector = [
+      ...document.querySelectorAll("[data-view-name='search-entity-result-universal-template']"),
+      ...document.querySelectorAll("li.reusable-search__result-container"),
+      ...document.querySelectorAll("div.entity-result"),
+    ];
+    if (bySelector.length > 0) return bySelector;
+    return Array.from(document.querySelectorAll("li")).filter((li) => li.querySelector("a[href*='/in/']"));
+  };
+
+  const rows = collectRows();
+  const out = [];
+  const seen = new Set();
+  for (const row of rows) {
+    const profileAnchor = findProfileAnchor(row);
+    if (!profileAnchor) continue;
+    const href = cleanUrl(profileAnchor.getAttribute("href") || profileAnchor.href || "");
+    if (!href || seen.has(href)) continue;
+    seen.add(href);
+
+    const name = parseName(profileAnchor);
+    const textRaw = clean(row.innerText || row.textContent || "");
     const lines = textRaw
-      .split("\n")
-      .map((line) => line.trim().replace(/\s+/g, " "))
+      .split(/\n+/)
+      .map((line) => clean(line))
       .filter(Boolean);
     const allText = lines.join(" | ");
 
@@ -53,29 +110,22 @@ EXTRACT_CARD_DATA_JS = r"""
       }
     }
 
-    const subtitleEl = row.querySelector(".entity-result__primary-subtitle");
-    const secondaryEl = row.querySelector(".entity-result__secondary-subtitle");
-    let subtitle = (subtitleEl?.textContent || "").trim().replace(/\s+/g, " ");
-    let location = (secondaryEl?.textContent || "").trim().replace(/\s+/g, " ");
+    let subtitle = clean(row.querySelector(".entity-result__primary-subtitle")?.textContent || "");
+    let location = clean(row.querySelector(".entity-result__secondary-subtitle")?.textContent || "");
     let mutualLine = "";
-
     for (const line of lines) {
       if (!mutualLine && /mutual connection/i.test(line)) {
         mutualLine = line;
       }
       if (!subtitle) {
+        if (name && line === name) continue;
         if (/^(1st|2nd|3rd)$/i.test(line)) continue;
         if (/mutual connection/i.test(line)) continue;
-        if (/^(follow|connect|message|pending)$/i.test(line)) continue;
-        if (name && line === name) continue;
+        if (/^(follow|connect|message|pending|more)$/i.test(line)) continue;
         subtitle = line;
       }
-      if (!location) {
-        if (
-          /metropolitan area|new york|brooklyn|queens|manhattan|bronx|staten island|jersey city|hoboken|long island city/i.test(line)
-        ) {
-          location = line;
-        }
+      if (!location && /metropolitan area|new york|brooklyn|queens|manhattan|bronx|staten island|jersey city|hoboken|long island city/i.test(line)) {
+        location = line;
       }
     }
 
