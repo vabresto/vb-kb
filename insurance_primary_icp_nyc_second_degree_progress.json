@@ -1,117 +1,99 @@
 {
   "collected_count": 0,
-  "commits": [
-    {
-      "at": "2026-03-05T14:39:29.114074Z",
-      "new_rows": 0,
-      "page_in_query": 2,
-      "query_index": 0,
-      "sha": "4850ac25252a04aa946db61114d7bc5b998a1656",
-      "total_rows": 0
-    },
-    {
-      "at": "2026-03-05T14:41:55.894245Z",
-      "new_rows": 0,
-      "page_in_query": 3,
-      "query_index": 0,
-      "sha": "b40ffb01688c74e07a7557c8005c41e5e61977db",
-      "total_rows": 0
-    }
-  ],
+  "commits": [],
   "last_page_new_rows": 0,
-  "last_wait_seconds": 112,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 4,
-  "pages_scanned": 4,
+  "page_in_query": 1,
+  "pages_scanned": 1,
   "parse_errors": [],
   "people_processed": [
     {
       "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796487Z",
-      "linkedin_url": "https://www.linkedin.com/in/matt-straley-5451018/",
-      "name": "Matt Straley",
-      "page_in_query": 4,
+      "at": "2026-03-05T14:51:29.808370Z",
+      "linkedin_url": "https://www.linkedin.com/in/summerbookout/",
+      "name": "Summer Bookout",
+      "page_in_query": 1,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T14:51:29.810121Z",
+      "linkedin_url": "https://www.linkedin.com/in/mikal-petersen-mba-acs-48619914/",
+      "name": "Mikal Petersen, MBA, ACS",
+      "page_in_query": 1,
+      "query": "insurance director claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T14:51:29.810314Z",
+      "linkedin_url": "https://www.linkedin.com/in/marcrothchild/",
+      "name": "Marc Rothchild",
+      "page_in_query": 1,
       "query": "insurance director claims operations"
     },
     {
       "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796562Z",
-      "linkedin_url": "https://www.linkedin.com/in/nick-novinger-a85ba049/",
-      "name": "Nick Novinger",
-      "page_in_query": 4,
+      "at": "2026-03-05T14:51:29.810357Z",
+      "linkedin_url": "https://www.linkedin.com/in/timothy-donlon-aic-cpcu-7843aa2/",
+      "name": "Timothy Donlon, AIC, CPCU",
+      "page_in_query": 1,
       "query": "insurance director claims operations"
     },
     {
       "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796616Z",
-      "linkedin_url": "https://www.linkedin.com/in/kaurmeenu/",
-      "name": "MEENU KAUR",
-      "page_in_query": 4,
+      "at": "2026-03-05T14:51:29.810397Z",
+      "linkedin_url": "https://www.linkedin.com/in/sandihalpert/",
+      "name": "Sandi Halpert, CPA, CA",
+      "page_in_query": 1,
       "query": "insurance director claims operations"
     },
     {
       "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796659Z",
-      "linkedin_url": "https://www.linkedin.com/in/mathangi-shan/",
-      "name": "Mathangi Shan",
-      "page_in_query": 4,
+      "at": "2026-03-05T14:51:29.810457Z",
+      "linkedin_url": "https://www.linkedin.com/in/erick-vischer-8055369/",
+      "name": "Erick Vischer",
+      "page_in_query": 1,
       "query": "insurance director claims operations"
     },
     {
       "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796753Z",
-      "linkedin_url": "https://www.linkedin.com/in/ammar-al-salem-a7551519/",
-      "name": "Ammar Al-Salem",
-      "page_in_query": 4,
+      "at": "2026-03-05T14:51:29.810499Z",
+      "linkedin_url": "https://www.linkedin.com/in/douglas-wong-812840a5/",
+      "name": "Douglas Wong",
+      "page_in_query": 1,
       "query": "insurance director claims operations"
     },
     {
       "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796799Z",
-      "linkedin_url": "https://www.linkedin.com/in/alexd10/",
-      "name": "Alex Duong",
-      "page_in_query": 4,
+      "at": "2026-03-05T14:51:29.810532Z",
+      "linkedin_url": "https://www.linkedin.com/in/lauclement/",
+      "name": "Clement Lau",
+      "page_in_query": 1,
       "query": "insurance director claims operations"
     },
     {
       "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796854Z",
-      "linkedin_url": "https://www.linkedin.com/in/devin-shinon-kim-ba-cip-7983a810a/",
-      "name": "Devin Shinon Kim, BA, CIP",
-      "page_in_query": 4,
+      "at": "2026-03-05T14:51:29.810571Z",
+      "linkedin_url": "https://www.linkedin.com/in/sara-jeannette-a4246b70/",
+      "name": "Sara Jeannette",
+      "page_in_query": 1,
       "query": "insurance director claims operations"
     },
     {
       "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796896Z",
-      "linkedin_url": "https://www.linkedin.com/in/manalmansha/",
-      "name": "Manal Mansha",
-      "page_in_query": 4,
-      "query": "insurance director claims operations"
-    },
-    {
-      "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796947Z",
-      "linkedin_url": "https://www.linkedin.com/in/rekha-maheshwari19/",
-      "name": "Rekha Maheshwari PMP\u00ae, LLQP\u00ae,OTL\u00ae, CSM\u00ae",
-      "page_in_query": 4,
-      "query": "insurance director claims operations"
-    },
-    {
-      "action": "skipped_not_nyc",
-      "at": "2026-03-05T14:50:11.796984Z",
-      "linkedin_url": "https://www.linkedin.com/in/robertgrand/",
-      "name": "Robert Grand CPCU, ARM, ARe",
-      "page_in_query": 4,
+      "at": "2026-03-05T14:51:29.810600Z",
+      "linkedin_url": "https://www.linkedin.com/in/charmy-patel-422a24273/",
+      "name": "Charmy Patel",
+      "page_in_query": 1,
       "query": "insurance director claims operations"
     }
   ],
   "query": "insurance director claims operations",
   "query_index": 0,
   "search_title": "(6) \"insurance director claims operations\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20claims%20operations&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=4&sid=m8d",
-  "started_at": "2026-03-05T14:37:27.176412Z",
+  "search_url": "https://www.linkedin.com/search/results/people/?facetNetwork=%5B%22S%22%5D&keywords=insurance%20director%20claims%20operations&origin=GLOBAL_SEARCH_HEADER&sid=SfQ",
+  "started_at": "2026-03-05T14:53:00Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T14:50:11.797074Z"
+  "updated_at": "2026-03-05T14:51:29.810727Z"
 }
