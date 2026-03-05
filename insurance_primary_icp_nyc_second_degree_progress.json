@@ -1,5 +1,5 @@
 {
-  "collected_count": 92,
+  "collected_count": 96,
   "commits": [
     {
       "at": "2026-03-05T14:52:59.667638Z",
@@ -568,13 +568,21 @@
       "query_index": 5,
       "sha": "701b855424b480ee01476c12ab55de37b1281883",
       "total_rows": 90
+    },
+    {
+      "at": "2026-03-05T16:30:38.545458Z",
+      "new_rows": 2,
+      "page_in_query": 12,
+      "query_index": 5,
+      "sha": "6250bbf61b5d78107855509a81156f55e39c6792",
+      "total_rows": 92
     }
   ],
-  "last_page_new_rows": 2,
-  "last_wait_seconds": 62,
+  "last_page_new_rows": 4,
+  "last_wait_seconds": 60,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 12,
-  "pages_scanned": 72,
+  "page_in_query": 1,
+  "pages_scanned": 73,
   "parse_errors": [],
   "people_processed": [
     {
@@ -6336,14 +6344,94 @@
       "name": "Harsha Rajamani",
       "page_in_query": 12,
       "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:32:06.642111Z",
+      "linkedin_url": "https://www.linkedin.com/in/ciprianporutiu/",
+      "name": "Ciprian Porutiu",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:32:06.642226Z",
+      "linkedin_url": "https://www.linkedin.com/in/laurieawein/",
+      "name": "Laurie Wein",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:32:06.642281Z",
+      "linkedin_url": "https://www.linkedin.com/in/jamestowne/",
+      "name": "James Towne",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:32:06.642329Z",
+      "linkedin_url": "https://www.linkedin.com/in/mikal-petersen-mba-acs-48619914/",
+      "name": "Mikal Petersen, MBA, ACS",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:32:06.642378Z",
+      "linkedin_url": "https://www.linkedin.com/in/oz-abramovitz/",
+      "name": "Oz Abramovitz",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:32:06.642441Z",
+      "linkedin_url": "https://www.linkedin.com/in/lesliepayson/",
+      "name": "Leslie Payson",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:32:06.642487Z",
+      "linkedin_url": "https://www.linkedin.com/in/michael-dougherty-b3189aa7/",
+      "name": "Michael Dougherty",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:32:06.642527Z",
+      "linkedin_url": "https://www.linkedin.com/in/jennifer-romero-308267b1/",
+      "name": "Jennifer Romero",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:32:06.642581Z",
+      "linkedin_url": "https://www.linkedin.com/in/john-kotsonouris-ba89614/",
+      "name": "John Kotsonouris",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:32:06.642627Z",
+      "linkedin_url": "https://www.linkedin.com/in/nic-solano-a11510159/",
+      "name": "Nic Solano",
+      "page_in_query": 1,
+      "query": "insurance director operations excellence transformation"
     }
   ],
-  "query": "insurance vp service operations",
-  "query_index": 5,
-  "search_title": "(6) \"insurance vp service operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20service%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=12&sid=8dn",
+  "query": "insurance director operations excellence transformation",
+  "query_index": 6,
+  "search_title": "(6) \"insurance director operations excellence transformation New York City Metropolitan Area\" | Search | LinkedIn",
+  "search_url": "https://www.linkedin.com/search/results/people/?facetNetwork=%5B%22S%22%5D&keywords=insurance%20director%20operations%20excellence%20transformation%20New%20York%20City%20Metropolitan%20Area&origin=GLOBAL_SEARCH_HEADER&sid=!nm",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T16:30:37.001180Z"
+  "updated_at": "2026-03-05T16:32:06.642838Z"
 }
