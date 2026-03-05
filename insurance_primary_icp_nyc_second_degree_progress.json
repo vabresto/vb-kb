@@ -328,13 +328,21 @@
       "query_index": 3,
       "sha": "5a92f75fb2a675b6fde6f9aedf1740870fbecab8",
       "total_rows": 19
+    },
+    {
+      "at": "2026-03-05T15:49:22.585563Z",
+      "new_rows": 0,
+      "page_in_query": 6,
+      "query_index": 3,
+      "sha": "bc8b9c5295866619670c619de43ddd08afc57ecf",
+      "total_rows": 19
     }
   ],
   "last_page_new_rows": 0,
-  "last_wait_seconds": 63,
+  "last_wait_seconds": 60,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 6,
-  "pages_scanned": 42,
+  "page_in_query": 7,
+  "pages_scanned": 43,
   "parse_errors": [],
   "people_processed": [
     {
@@ -3696,14 +3704,94 @@
       "name": "Michael Murphy",
       "page_in_query": 6,
       "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.268334Z",
+      "linkedin_url": "https://www.linkedin.com/in/bob-competiello-chfc%C2%AE-cepa%C2%AE-abfp%C2%AE-9282553b/",
+      "name": "Bob Competiello, CHFC\u00ae, CEPA\u00ae, ABFP\u00ae",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.268569Z",
+      "linkedin_url": "https://www.linkedin.com/in/mitchsimon/",
+      "name": "Mitch Simon, MBA, CBCP, MBCI",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.268729Z",
+      "linkedin_url": "https://www.linkedin.com/in/oleg-m-7a10367/",
+      "name": "Oleg M.",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.268981Z",
+      "linkedin_url": "https://www.linkedin.com/in/austin-cahill-3b0b1564/",
+      "name": "Austin Cahill",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.269125Z",
+      "linkedin_url": "https://www.linkedin.com/in/michelemarottaphd/",
+      "name": "Michele Marotta, Ph.D., MBA",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.269227Z",
+      "linkedin_url": "https://www.linkedin.com/in/justin-bernbach-2101113/",
+      "name": "Justin Bernbach",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.269517Z",
+      "linkedin_url": "https://www.linkedin.com/in/fatou-faburay/",
+      "name": "Fatou F.",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.269649Z",
+      "linkedin_url": "https://www.linkedin.com/in/keithbanks1/",
+      "name": "Keith Banks",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.269758Z",
+      "linkedin_url": "https://www.linkedin.com/in/patrick-young-0368715/",
+      "name": "Patrick Young",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:50:35.269881Z",
+      "linkedin_url": "https://www.linkedin.com/in/anna-arakelyan-653283103/",
+      "name": "Anna Arakelyan",
+      "page_in_query": 7,
+      "query": "insurance vp policy administration"
     }
   ],
   "query": "insurance vp policy administration",
   "query_index": 3,
   "search_title": "(6) \"insurance vp policy administration New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20policy%20administration%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=6&sid=.cB",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20policy%20administration%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=7&sid=qsh",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:49:20.954488Z"
+  "updated_at": "2026-03-05T15:50:35.269950Z"
 }
