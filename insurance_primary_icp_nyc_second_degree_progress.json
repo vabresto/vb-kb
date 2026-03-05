@@ -600,13 +600,21 @@
       "query_index": 6,
       "sha": "3b200ea29931c68eaf41fa5c23e4b3311fdb7645",
       "total_rows": 98
+    },
+    {
+      "at": "2026-03-05T16:36:03.453612Z",
+      "new_rows": 1,
+      "page_in_query": 4,
+      "query_index": 6,
+      "sha": "779a3f4925262075b53f6626b6116eb812b36066",
+      "total_rows": 99
     }
   ],
-  "last_page_new_rows": 1,
-  "last_wait_seconds": 65,
+  "last_page_new_rows": 0,
+  "last_wait_seconds": 61,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 4,
-  "pages_scanned": 76,
+  "page_in_query": 5,
+  "pages_scanned": 77,
   "parse_errors": [],
   "people_processed": [
     {
@@ -6688,14 +6696,94 @@
       "name": "Willian Maio",
       "page_in_query": 4,
       "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:37:17.122617Z",
+      "linkedin_url": "https://www.linkedin.com/in/annetteblountallen/",
+      "name": "Annette Allen, MBA, ACC, SHRM-SCP",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:37:17.122712Z",
+      "linkedin_url": "https://www.linkedin.com/in/adrienne-franklin-3194328/",
+      "name": "Adrienne Franklin",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:37:17.122779Z",
+      "linkedin_url": "https://www.linkedin.com/in/maureen-doheny-4ab9a1a/",
+      "name": "Maureen Doheny",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T16:37:17.122841Z",
+      "linkedin_url": "https://www.linkedin.com/in/rosefrederic/",
+      "name": "Fr\u00e9d\u00e9ric Rose",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:37:17.122914Z",
+      "linkedin_url": "https://www.linkedin.com/in/kellyemcconnell/",
+      "name": "Kelly McConnell",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:37:17.122987Z",
+      "linkedin_url": "https://www.linkedin.com/in/ajs1001/",
+      "name": "Alexander S.",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:37:17.123058Z",
+      "linkedin_url": "https://www.linkedin.com/in/andrea-c-61249a128/",
+      "name": "Andrea C.",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:37:17.123125Z",
+      "linkedin_url": "https://www.linkedin.com/in/marina-a-yoffe-2478399/",
+      "name": "Marina A. Yoffe",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T16:37:17.123169Z",
+      "linkedin_url": "https://www.linkedin.com/in/philip-goldfarb-5b461312/",
+      "name": "Philip Goldfarb",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:37:17.123241Z",
+      "linkedin_url": "https://www.linkedin.com/in/vanessavasilakis/",
+      "name": "Vanessa Vasilakis",
+      "page_in_query": 5,
+      "query": "insurance director operations excellence transformation"
     }
   ],
   "query": "insurance director operations excellence transformation",
   "query_index": 6,
   "search_title": "(6) \"insurance director operations excellence transformation New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20operations%20excellence%20transformation%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=4&sid=bA)",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20director%20operations%20excellence%20transformation%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=5&sid=4I.",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T16:36:01.512564Z"
+  "updated_at": "2026-03-05T16:37:17.123319Z"
 }
