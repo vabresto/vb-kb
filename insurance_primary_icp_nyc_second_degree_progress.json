@@ -1,5 +1,5 @@
 {
-  "collected_count": 21,
+  "collected_count": 26,
   "commits": [
     {
       "at": "2026-03-05T14:52:59.667638Z",
@@ -376,13 +376,21 @@
       "query_index": 3,
       "sha": "20061be9728d63bc71c01056bb48b0d4e76494e4",
       "total_rows": 21
+    },
+    {
+      "at": "2026-03-05T15:56:58.791054Z",
+      "new_rows": 0,
+      "page_in_query": 12,
+      "query_index": 3,
+      "sha": "9056607e887e973229a2433be467a037100268ca",
+      "total_rows": 21
     }
   ],
-  "last_page_new_rows": 0,
-  "last_wait_seconds": 65,
+  "last_page_new_rows": 5,
+  "last_wait_seconds": 61,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 12,
-  "pages_scanned": 48,
+  "page_in_query": 1,
+  "pages_scanned": 49,
   "parse_errors": [],
   "people_processed": [
     {
@@ -4224,14 +4232,94 @@
       "name": "Mary Samuelsen",
       "page_in_query": 12,
       "query": "insurance vp policy administration"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:00:56.950499Z",
+      "linkedin_url": "https://www.linkedin.com/in/mikal-petersen-mba-acs-48619914/",
+      "name": "Mikal Petersen, MBA, ACS",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:00:56.950674Z",
+      "linkedin_url": "https://www.linkedin.com/in/michael-dougherty-b3189aa7/",
+      "name": "Michael Dougherty",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:00:56.951256Z",
+      "linkedin_url": "https://www.linkedin.com/in/aakruwala/",
+      "name": "Arpit Akruwala",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:00:56.951363Z",
+      "linkedin_url": "https://www.linkedin.com/in/erica-busch-999a85130/",
+      "name": "Erica Busch",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:00:56.951479Z",
+      "linkedin_url": "https://www.linkedin.com/in/gretchen-weinkam-317aab37/",
+      "name": "Gretchen Weinkam",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:00:56.951552Z",
+      "linkedin_url": "https://www.linkedin.com/in/john-falcone-82042418/",
+      "name": "John Falcone",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:00:56.951620Z",
+      "linkedin_url": "https://www.linkedin.com/in/geoffrey-mckernan/",
+      "name": "Geoff McKernan",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:00:56.951687Z",
+      "linkedin_url": "https://www.linkedin.com/in/wendylanski/",
+      "name": "Wendy Lanski",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:00:56.951792Z",
+      "linkedin_url": "https://www.linkedin.com/in/jacobfass/",
+      "name": "Jacob Fass",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:00:56.951867Z",
+      "linkedin_url": "https://www.linkedin.com/in/philiplogiudice/",
+      "name": "Philip LoGiudice",
+      "page_in_query": 1,
+      "query": "insurance director service operations"
     }
   ],
-  "query": "insurance vp policy administration",
-  "query_index": 3,
-  "search_title": "(6) \"insurance vp policy administration New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20policy%20administration%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=12&sid=s~n",
+  "query": "insurance director service operations",
+  "query_index": 4,
+  "search_title": "(6) \"insurance director service operations New York City Metropolitan Area\" | Search | LinkedIn",
+  "search_url": "https://www.linkedin.com/search/results/people/?facetNetwork=%5B%22S%22%5D&keywords=insurance%20director%20service%20operations%20New%20York%20City%20Metropolitan%20Area&origin=GLOBAL_SEARCH_HEADER&sid=0xy",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:56:57.127363Z"
+  "updated_at": "2026-03-05T16:00:56.952236Z"
 }
