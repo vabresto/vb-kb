@@ -1,5 +1,5 @@
 {
-  "collected_count": 83,
+  "collected_count": 84,
   "commits": [
     {
       "at": "2026-03-05T14:52:59.667638Z",
@@ -536,13 +536,21 @@
       "query_index": 5,
       "sha": "30b51ec2ac9e54de3cf6b83e6dae5d398fb8d2a6",
       "total_rows": 82
+    },
+    {
+      "at": "2026-03-05T16:25:33.441596Z",
+      "new_rows": 1,
+      "page_in_query": 8,
+      "query_index": 5,
+      "sha": "ad344e949567c14bb92f50732e526eeb4d014a7f",
+      "total_rows": 83
     }
   ],
   "last_page_new_rows": 1,
-  "last_wait_seconds": 60,
+  "last_wait_seconds": 62,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 8,
-  "pages_scanned": 68,
+  "page_in_query": 9,
+  "pages_scanned": 69,
   "parse_errors": [],
   "people_processed": [
     {
@@ -5984,14 +5992,94 @@
       "name": "Anthony Carannante",
       "page_in_query": 8,
       "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:26:48.098623Z",
+      "linkedin_url": "https://www.linkedin.com/in/anthony-carannante/",
+      "name": "Anthony Carannante",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:26:48.098753Z",
+      "linkedin_url": "https://www.linkedin.com/in/nicholasfodera/",
+      "name": "Nicholas Fodera",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T16:26:48.098831Z",
+      "linkedin_url": "https://www.linkedin.com/in/tori-guida-0174538/",
+      "name": "Tori Guida",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:26:48.098928Z",
+      "linkedin_url": "https://www.linkedin.com/in/gary-t-davis-16b43592/",
+      "name": "Gary T Davis",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:26:48.099067Z",
+      "linkedin_url": "https://www.linkedin.com/in/natalya-kundina-cisa-cism-106b7a23/",
+      "name": "Natalya Kundina, CISA, CISM",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:26:48.099243Z",
+      "linkedin_url": "https://www.linkedin.com/in/rawsonfaux/",
+      "name": "Rawson Faux",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_duplicate",
+      "at": "2026-03-05T16:26:48.099409Z",
+      "linkedin_url": "https://www.linkedin.com/in/juliaunger/",
+      "name": "Julia Unger",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:26:48.099554Z",
+      "linkedin_url": "https://www.linkedin.com/in/gretchencashman/",
+      "name": "Gretchen Cashman",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T16:26:48.099656Z",
+      "linkedin_url": "https://www.linkedin.com/in/matthewagreiner/",
+      "name": "Matthew Greiner",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
+    },
+    {
+      "action": "added",
+      "at": "2026-03-05T16:26:48.099733Z",
+      "linkedin_url": "https://www.linkedin.com/in/mweitzman2020/",
+      "name": "Murray Weitzman",
+      "page_in_query": 9,
+      "query": "insurance vp service operations"
     }
   ],
   "query": "insurance vp service operations",
   "query_index": 5,
   "search_title": "(6) \"insurance vp service operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20service%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=8&sid=d~w",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20service%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=9&sid=%3Bj4",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T16:25:31.831694Z"
+  "updated_at": "2026-03-05T16:26:48.100065Z"
 }
