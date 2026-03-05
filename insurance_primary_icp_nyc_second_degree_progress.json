@@ -96,13 +96,21 @@
       "query_index": 0,
       "sha": "dd2d3d9d8d94fbffef8b42310ace2032ccbe606d",
       "total_rows": 3
+    },
+    {
+      "at": "2026-03-05T15:08:48.736826Z",
+      "new_rows": 0,
+      "page_in_query": 1,
+      "query_index": 1,
+      "sha": "d47115c934e4479feeda6fe7bf43077d5b12c239",
+      "total_rows": 3
     }
   ],
   "last_page_new_rows": 0,
   "last_wait_seconds": 64,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results.csv",
-  "page_in_query": 1,
-  "pages_scanned": 13,
+  "page_in_query": 2,
+  "pages_scanned": 14,
   "parse_errors": [],
   "people_processed": [
     {
@@ -1144,14 +1152,94 @@
       "name": "Tamar Bacalu",
       "page_in_query": 1,
       "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:10:41.272978Z",
+      "linkedin_url": "https://www.linkedin.com/in/dessigleason/",
+      "name": "Dessi Gleason",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:10:41.273057Z",
+      "linkedin_url": "https://www.linkedin.com/in/marckaye/",
+      "name": "Marc Kaye",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:10:41.274491Z",
+      "linkedin_url": "https://www.linkedin.com/in/serena-helou/",
+      "name": "Serena Helou",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:10:41.274713Z",
+      "linkedin_url": "https://www.linkedin.com/in/cheryl-prang-a641381/",
+      "name": "Cheryl Prang",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:10:41.274923Z",
+      "linkedin_url": "https://www.linkedin.com/in/michael-dougherty-b3189aa7/",
+      "name": "Michael Dougherty",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:10:41.275162Z",
+      "linkedin_url": "https://www.linkedin.com/in/elaine-rocha-esq/",
+      "name": "Elaine Rocha",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:10:41.275363Z",
+      "linkedin_url": "https://www.linkedin.com/in/esme-huezo/",
+      "name": "Esme M.",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_not_nyc",
+      "at": "2026-03-05T15:10:41.275452Z",
+      "linkedin_url": "https://www.linkedin.com/in/sean-o-connor-cpcu-are-87818590/",
+      "name": "Sean O'Connor, CPCU, ARe",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:10:41.275599Z",
+      "linkedin_url": "https://www.linkedin.com/in/stephen-l-day-051b023/",
+      "name": "Stephen L Day",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
+    },
+    {
+      "action": "skipped_role_mismatch",
+      "at": "2026-03-05T15:10:41.275999Z",
+      "linkedin_url": "https://www.linkedin.com/in/crwayland/",
+      "name": "Charles Wayland",
+      "page_in_query": 2,
+      "query": "insurance vp claims operations"
     }
   ],
   "query": "insurance vp claims operations",
   "query_index": 1,
   "search_title": "(6) \"insurance vp claims operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?facetNetwork=%5B%22S%22%5D&keywords=insurance%20vp%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&origin=GLOBAL_SEARCH_HEADER&sid=a0m",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20vp%20claims%20operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=2&sid=zmV",
   "started_at": "2026-03-05T14:53:40Z",
   "status": "running",
   "target_count": 100,
-  "updated_at": "2026-03-05T15:08:47.078486Z"
+  "updated_at": "2026-03-05T15:10:41.276123Z"
 }
