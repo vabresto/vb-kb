@@ -113,14 +113,12 @@ def _is_target_role(*, title: str, org: str, all_text: str) -> bool:
     if not text:
         return False
 
-    is_dir_vp = bool(re.search(r"\b(?:director|vp|vice president)\b", text))
-    is_head = bool(re.search(r"\bhead\b", text))
+    is_leadership = bool(re.search(r"\b(?:director|vp|vice president|head)\b", text))
     has_ops = bool(re.search(r"\b(?:operations?|ops|operational)\b", text))
     has_claims = bool(re.search(r"\bclaims?\b", text))
     has_policy = bool(re.search(r"\bpolicy\b", text))
-    has_admin = bool(re.search(r"\b(?:administration|admin)\b", text))
     has_service = bool(re.search(r"\bservice\b", text))
-    has_excellence = bool(re.search(r"\b(?:operations?\s+excellence|operational\s+excellence|excellence)\b", text))
+    has_excellence = bool(re.search(r"\b(?:excellence|operations?\s+excellence|operational\s+excellence)\b", text))
     has_transform = bool(re.search(r"\btransform(?:ation|ational)?\b", text))
     has_regulatory = bool(re.search(r"\bregulatory\b", text))
     has_reporting = bool(re.search(r"\breporting\b", text))
@@ -128,12 +126,16 @@ def _is_target_role(*, title: str, org: str, all_text: str) -> bool:
         re.search(r"\b(?:insurance|insurer|carrier|tpa|third[- ]party administrator|reinsur|underwrit)\b", text)
     )
 
-    claims_ops = is_dir_vp and has_claims and has_ops
-    policy_admin_ops = is_dir_vp and has_ops and has_policy and has_admin
-    service_ops = is_dir_vp and has_ops and has_service
-    ops_excellence_transform = is_dir_vp and (has_excellence or has_transform) and (has_ops or insurance_context)
-    head_reg_reporting_ops = is_head and has_ops and (has_regulatory or has_reporting) and insurance_context
-    return claims_ops or policy_admin_ops or service_ops or ops_excellence_transform or head_reg_reporting_ops
+    return is_leadership and has_ops and (
+        insurance_context
+        or has_claims
+        or has_policy
+        or has_service
+        or has_excellence
+        or has_transform
+        or has_regulatory
+        or has_reporting
+    )
 
 
 def _is_bot_challenge(url: str, title: str) -> bool:
