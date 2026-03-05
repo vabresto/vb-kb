@@ -89,10 +89,10 @@ enrichment-run entity args="" project_root=".":
 
 # Start a long-running LinkedIn Playwright daemon HTTP server + control UI.
 linkedin-daemon session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" state_path=".build/enrichment/daemon/linkedin-daemon-state.json" host="127.0.0.1" port="8771" headed="false" open_control_tab="true":
-  cmd=(uv run --with playwright python scripts/linkedin_playwright_daemon.py --session-state "{{session_state}}" --state-path "{{state_path}}" --host "{{host}}" --port "{{port}}")
-  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi
-  if [ "{{open_control_tab}}" != "true" ]; then cmd+=(--no-control-tab); fi
-  "${cmd[@]}"
+  set -- uv run --with playwright python scripts/linkedin_playwright_daemon.py --session-state "{{session_state}}" --state-path "{{state_path}}" --host "{{host}}" --port "{{port}}"
+  if [ "{{headed}}" = "true" ]; then set -- "$@" --headed; fi
+  if [ "{{open_control_tab}}" != "true" ]; then set -- "$@" --no-control-tab; fi
+  "$@"
 
 # Build NYC 2nd-degree insurance ICP list via daemon HTTP API.
 linkedin-nyc-icp target_count="50" output="linkedin_nyc_insurance_icp_2nd_degree.csv" daemon_url="http://127.0.0.1:8771" max_pages_per_query="6" spawn_daemon="false" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" daemon_state_path=".build/enrichment/daemon/linkedin-daemon-state.json" headed="false" leave_daemon_running="false":
