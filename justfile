@@ -100,6 +100,18 @@ linkedin-daemon-client daemon_url="http://127.0.0.1:8771" subcommand="state" arg
   if [ -n "{{args}}" ]; then cmd+=({{args}}); fi
   "${cmd[@]}"
 
+# Start remote inspection stack (Xvfb + x11vnc + noVNC + headed daemon).
+linkedin-remote-start display=":99" daemon_host="127.0.0.1" daemon_port="8771" vnc_port="5901" novnc_port="6081" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" daemon_state_path=".build/enrichment/daemon/linkedin-daemon-state.json" open_control_tab="true":
+  ./scripts/linkedin_remote_inspection.sh start --display "{{display}}" --daemon-host "{{daemon_host}}" --daemon-port "{{daemon_port}}" --vnc-port "{{vnc_port}}" --novnc-port "{{novnc_port}}" --session-state "{{session_state}}" --daemon-state-path "{{daemon_state_path}}" --open-control-tab "{{open_control_tab}}"
+
+# Stop remote inspection stack.
+linkedin-remote-stop:
+  ./scripts/linkedin_remote_inspection.sh stop
+
+# Show remote inspection stack status.
+linkedin-remote-status:
+  ./scripts/linkedin_remote_inspection.sh status
+
 # Authenticate LinkedIn with username/password + TOTP secret and persist storage state.
 linkedin-auth username password totp_secret output_path=".build/enrichment/sessions/linkedin.com/storage-state.json" headed="false":
   cmd=(uv run --with playwright python scripts/linkedin_auth_with_totp.py --username "{{username}}" --password "{{password}}" --totp-secret "{{totp_secret}}" --output-path "{{output_path}}")

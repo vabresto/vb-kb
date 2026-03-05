@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import queue
+import threading
 import time
+from dataclasses import dataclass
 from http import HTTPStatus
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote_plus, urlparse
@@ -143,10 +146,7 @@ CONTROL_HTML = """<!doctype html>
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ mode, actor: 'human-ui', reason: 'manual-toggle' }),
       });
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || 'mode update failed');
-      }
+      if (!response.ok) throw new Error(await response.text());
       return await response.json();
     }
 
@@ -204,6 +204,280 @@ CONTROL_HTML = """<!doctype html>
 """
 
 
+@dataclass
+class _WorkerTask:
+    cmd: str
+    params: dict[str, object]
+    response_queue: queue.Queue[tuple[bool, object]]
+
+
+class LinkedInPlaywrightWorker:
+    def __init__(self, *, session_state_path: Path, headless: bool, open_control_tab: bool) -> None:
+        self._session_state_path = session_state_path
+        self._headless = headless
+        self._open_control_tab = open_control_tab
+        self._control_url: str | None = None
+        self._thread: threading.Thread | None = None
+        self._tasks: queue.Queue[_WorkerTask] = queue.Queue()
+        self._stop = threading.Event()
+        self._ready = threading.Event()
+        self._startup_error: str | None = None
+        self._next_control_check = 0.0
+
+    @staticmethod
+    def _is_login_redirect(url: str) -> bool:
+        lowered = url.lower()
+        return "linkedin.com/uas/login" in lowered or "/login" in lowered
+
+    def start(self) -> None:
+        if not self._session_state_path.exists():
+            raise RuntimeError(f"session state file not found: {self._session_state_path}")
+        self._thread = threading.Thread(target=self._run, name="linkedin-playwright-worker", daemon=True)
+        self._thread.start()
+        if not self._ready.wait(timeout=20):
+            raise RuntimeError("playwright worker did not become ready")
+        if self._startup_error is not None:
+            raise RuntimeError(self._startup_error)
+
+    def stop(self) -> None:
+        if self._thread is None:
+            return
+        try:
+            self.call(cmd="shutdown_worker")
+        except Exception:
+            pass
+        self._stop.set()
+        self._thread.join(timeout=10)
+
+    def set_control_url(self, control_url: str) -> None:
+        self.call(cmd="set_control_url", params={"control_url": control_url})
+
+    def call(self, *, cmd: str, params: dict[str, object] | None = None) -> dict[str, object]:
+        response_queue: queue.Queue[tuple[bool, object]] = queue.Queue(maxsize=1)
+        self._tasks.put(_WorkerTask(cmd=cmd, params=params or {}, response_queue=response_queue))
+        try:
+            ok, payload = response_queue.get(timeout=120)
+        except queue.Empty as exc:
+            raise RuntimeError(f"playwright worker timed out while handling '{cmd}'") from exc
+        if not ok:
+            raise RuntimeError(str(payload))
+        if not isinstance(payload, dict):
+            raise RuntimeError(f"invalid worker response for '{cmd}'")
+        return payload
+
+    def _run(self) -> None:
+        playwright = None
+        browser = None
+        automation_context = None
+        automation_page = None
+        control_context = None
+        control_page = None
+
+        def wait_idle(page: Any, timeout_ms: int = 10_000) -> None:
+            try:
+                page.wait_for_load_state("networkidle", timeout=timeout_ms)
+            except PlaywrightTimeoutError:
+                pass
+
+        def ensure_control_page() -> None:
+            nonlocal control_page
+            if not self._open_control_tab:
+                return
+            if not self._control_url:
+                return
+            if control_context is None:
+                return
+            if control_page is not None and not control_page.is_closed():
+                return
+            page = control_context.new_page()
+            page.goto(self._control_url, wait_until="domcontentloaded", timeout=30_000)
+            control_page = page
+
+        try:
+            playwright = sync_playwright().start()
+            browser = playwright.chromium.launch(headless=self._headless)
+            automation_context = browser.new_context(
+                storage_state=str(self._session_state_path.resolve()),
+                viewport={"width": 1440, "height": 980},
+            )
+            automation_page = automation_context.new_page()
+            control_context = browser.new_context(viewport={"width": 1200, "height": 900})
+            self._ready.set()
+
+            while not self._stop.is_set():
+                now = time.monotonic()
+                if now >= self._next_control_check:
+                    self._next_control_check = now + 2.0
+                    try:
+                        ensure_control_page()
+                    except Exception:
+                        pass
+
+                try:
+                    task = self._tasks.get(timeout=0.2)
+                except queue.Empty:
+                    continue
+
+                try:
+                    cmd = task.cmd.strip()
+                    params = task.params
+
+                    if cmd == "shutdown_worker":
+                        task.response_queue.put((True, {"closing": True}))
+                        break
+
+                    if cmd == "set_control_url":
+                        self._control_url = str(params.get("control_url") or "")
+                        task.response_queue.put((True, {"ok": True}))
+                        continue
+
+                    if cmd == "state_snapshot":
+                        automation_url = ""
+                        automation_title = ""
+                        authenticated: bool | None = None
+                        if automation_page is not None and not automation_page.is_closed():
+                            try:
+                                automation_url = automation_page.url
+                                automation_title = automation_page.title()
+                                authenticated = not self._is_login_redirect(automation_url)
+                            except Exception:
+                                authenticated = None
+                        payload = {
+                            "automation_url": automation_url,
+                            "automation_title": automation_title,
+                            "authenticated": authenticated,
+                            "control_page_open": bool(control_page is not None and not control_page.is_closed()),
+                        }
+                        task.response_queue.put((True, payload))
+                        continue
+
+                    if cmd == "assert_authenticated":
+                        automation_page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=90_000)
+                        wait_idle(automation_page, timeout_ms=12_000)
+                        automation_page.wait_for_timeout(1_200)
+                        current = automation_page.url
+                        task.response_queue.put(
+                            (
+                                True,
+                                {
+                                    "authenticated": not self._is_login_redirect(current),
+                                    "url": current,
+                                    "title": automation_page.title(),
+                                },
+                            )
+                        )
+                        continue
+
+                    if cmd == "open_people_search":
+                        query = str(params.get("query") or "").strip()
+                        if not query:
+                            raise RuntimeError("open_people_search requires non-empty query")
+                        url = (
+                            "https://www.linkedin.com/search/results/people/"
+                            f"?keywords={quote_plus(query)}&network=%5B%22S%22%5D"
+                        )
+                        automation_page.goto(url, wait_until="domcontentloaded", timeout=90_000)
+                        wait_idle(automation_page, timeout_ms=12_000)
+                        automation_page.wait_for_timeout(1_400)
+                        task.response_queue.put(
+                            (
+                                True,
+                                {
+                                    "url": automation_page.url,
+                                    "title": automation_page.title(),
+                                    "results_visible": automation_page.locator(
+                                        "li.reusable-search__result-container, div.entity-result"
+                                    ).count(),
+                                },
+                            )
+                        )
+                        continue
+
+                    if cmd == "scrape_people_cards":
+                        for _ in range(2):
+                            automation_page.mouse.wheel(0, 1400)
+                            automation_page.wait_for_timeout(280)
+                        automation_page.wait_for_timeout(700)
+                        cards = automation_page.evaluate(EXTRACT_CARD_DATA_JS)
+                        task.response_queue.put((True, {"cards": cards}))
+                        continue
+
+                    if cmd == "next_page":
+                        selectors = (
+                            "button[aria-label='Next']",
+                            "button.artdeco-pagination__button--next",
+                            "button:has-text('Next')",
+                        )
+                        moved = False
+                        for selector in selectors:
+                            locator = automation_page.locator(selector)
+                            if locator.count() == 0:
+                                continue
+                            button = locator.first
+                            disabled = button.get_attribute("disabled")
+                            aria_disabled = str(button.get_attribute("aria-disabled") or "").strip().lower()
+                            classes = str(button.get_attribute("class") or "").strip().lower()
+                            if disabled is not None or aria_disabled == "true" or "disabled" in classes:
+                                break
+                            button.click()
+                            wait_idle(automation_page, timeout_ms=10_000)
+                            automation_page.wait_for_timeout(1_200)
+                            moved = True
+                            break
+                        task.response_queue.put(
+                            (
+                                True,
+                                {
+                                    "moved": moved,
+                                    "url": automation_page.url,
+                                    "title": automation_page.title(),
+                                },
+                            )
+                        )
+                        continue
+
+                    if cmd == "sleep":
+                        seconds = float(params.get("seconds") or 0)
+                        if seconds > 0:
+                            time.sleep(seconds)
+                        task.response_queue.put((True, {"slept_seconds": seconds}))
+                        continue
+
+                    if cmd == "current_page":
+                        task.response_queue.put(
+                            (True, {"url": automation_page.url, "title": automation_page.title()})
+                        )
+                        continue
+
+                    raise RuntimeError(f"unknown command: {cmd}")
+                except Exception as exc:  # noqa: PERF203
+                    task.response_queue.put((False, str(exc)))
+        except Exception as exc:
+            self._startup_error = str(exc)
+            self._ready.set()
+        finally:
+            if automation_context is not None:
+                try:
+                    automation_context.close()
+                except Exception:
+                    pass
+            if control_context is not None:
+                try:
+                    control_context.close()
+                except Exception:
+                    pass
+            if browser is not None:
+                try:
+                    browser.close()
+                except Exception:
+                    pass
+            if playwright is not None:
+                try:
+                    playwright.stop()
+                except Exception:
+                    pass
+
+
 class LinkedInPlaywrightDaemon:
     def __init__(
         self,
@@ -213,217 +487,68 @@ class LinkedInPlaywrightDaemon:
         headless: bool,
         open_control_tab: bool,
     ) -> None:
-        self._session_state_path = session_state_path
         self._state_path = state_path
-        self._headless = headless
-        self._open_control_tab = open_control_tab
-        self._playwright = None
-        self._browser = None
-        self._automation_context = None
-        self._automation_page = None
-        self._control_context = None
-        self._control_page = None
+        self._state_lock = threading.RLock()
         self._state = load_state(state_path)
         if not isinstance(self._state, dict):
             self._state = {"mode": DAEMON_MODE_AUTONOMOUS}
         persist_state(self._state_path, self._state)
-        self._control_url: str | None = None
-        self._shutdown_requested = False
-        self._next_control_check = 0.0
-
-    def set_control_url(self, control_url: str) -> None:
-        self._control_url = control_url
+        self._shutdown_requested = threading.Event()
+        self._worker = LinkedInPlaywrightWorker(
+            session_state_path=session_state_path,
+            headless=headless,
+            open_control_tab=open_control_tab,
+        )
 
     def start(self) -> None:
-        if not self._session_state_path.exists():
-            raise RuntimeError(f"session state file not found: {self._session_state_path}")
-        self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch(headless=self._headless)
-        self._automation_context = self._browser.new_context(
-            storage_state=str(self._session_state_path.resolve()),
-            viewport={"width": 1440, "height": 980},
-        )
-        self._automation_page = self._automation_context.new_page()
-        self._control_context = self._browser.new_context(viewport={"width": 1200, "height": 900})
+        self._worker.start()
 
     def close(self) -> None:
-        if self._automation_context is not None:
-            self._automation_context.close()
-            self._automation_context = None
-        if self._control_context is not None:
-            self._control_context.close()
-            self._control_context = None
-        if self._browser is not None:
-            self._browser.close()
-            self._browser = None
-        if self._playwright is not None:
-            self._playwright.stop()
-            self._playwright = None
+        self._worker.stop()
 
-    @property
-    def page(self):  # noqa: ANN201
-        if self._automation_page is None:
-            raise RuntimeError("automation page is not available")
-        return self._automation_page
-
-    @staticmethod
-    def _is_login_redirect(url: str) -> bool:
-        lowered = url.lower()
-        return "linkedin.com/uas/login" in lowered or "/login" in lowered
-
-    def _wait_idle(self, *, timeout_ms: int = 10_000) -> None:
-        try:
-            self.page.wait_for_load_state("networkidle", timeout=timeout_ms)
-        except PlaywrightTimeoutError:
-            pass
-
-    def ensure_control_page(self) -> None:
-        if not self._open_control_tab:
-            return
-        if not self._control_url:
-            return
-        if self._control_context is None:
-            return
-        if self._control_page is not None and not self._control_page.is_closed():
-            return
-        page = self._control_context.new_page()
-        page.goto(self._control_url, wait_until="domcontentloaded", timeout=30_000)
-        self._control_page = page
-
-    def tick(self) -> None:
-        now = time.monotonic()
-        if now < self._next_control_check:
-            return
-        self._next_control_check = now + 2.0
-        try:
-            self.ensure_control_page()
-        except Exception:
-            return
+    def set_control_url(self, control_url: str) -> None:
+        self._worker.set_control_url(control_url)
 
     def mode(self) -> str:
-        return str(self._state.get("mode") or DAEMON_MODE_AUTONOMOUS)
+        with self._state_lock:
+            return str(self._state.get("mode") or DAEMON_MODE_AUTONOMOUS)
 
     def set_mode(self, *, mode: str, actor: str, reason: str) -> dict[str, Any]:
-        self._state = build_mode_state(mode=mode, actor=actor, reason=reason)
-        persist_state(self._state_path, self._state)
+        with self._state_lock:
+            self._state = build_mode_state(mode=mode, actor=actor, reason=reason)
+            persist_state(self._state_path, self._state)
         return self.state_snapshot()
 
     def state_snapshot(self) -> dict[str, Any]:
-        base = dict(self._state)
-        automation_url = ""
-        automation_title = ""
-        authenticated: bool | None = None
-        try:
-            if self._automation_page is not None and not self._automation_page.is_closed():
-                automation_url = self._automation_page.url
-                automation_title = self._automation_page.title()
-                authenticated = not self._is_login_redirect(automation_url)
-        except Exception:
-            authenticated = None
-        control_page_open = bool(self._control_page is not None and not self._control_page.is_closed())
-        base.update(
-            {
-                "automation_url": automation_url,
-                "automation_title": automation_title,
-                "authenticated": authenticated,
-                "control_page_open": control_page_open,
-                "shutdown_requested": self._shutdown_requested,
-            }
-        )
+        with self._state_lock:
+            base = dict(self._state)
+        runtime = self._worker.call(cmd="state_snapshot")
+        base.update(runtime)
+        base["shutdown_requested"] = self._shutdown_requested.is_set()
         return base
 
     def request_shutdown(self) -> None:
-        self._shutdown_requested = True
+        self._shutdown_requested.set()
 
     def shutdown_requested(self) -> bool:
-        return self._shutdown_requested
+        return self._shutdown_requested.is_set()
 
     def handle_command(self, cmd: str, params: dict[str, object]) -> dict[str, object]:
         cmd = cmd.strip()
         if not cmd:
             raise RuntimeError("cmd must be non-empty")
-
         if cmd == "ping":
             return {"message": "pong"}
         if cmd == "get_state":
             return self.state_snapshot()
-
-        mode = self.mode()
-        if not command_allowed_in_mode(mode=mode, cmd=cmd):
-            raise RuntimeError("daemon is in human_control mode; command is blocked until autonomous mode resumes")
-
-        if cmd == "assert_authenticated":
-            self.page.goto("https://www.linkedin.com/feed/", wait_until="domcontentloaded", timeout=90_000)
-            self._wait_idle(timeout_ms=12_000)
-            self.page.wait_for_timeout(1_200)
-            current = self.page.url
-            return {
-                "authenticated": not self._is_login_redirect(current),
-                "url": current,
-                "title": self.page.title(),
-            }
-
-        if cmd == "open_people_search":
-            query = str(params.get("query") or "").strip()
-            if not query:
-                raise RuntimeError("open_people_search requires non-empty query")
-            url = (
-                "https://www.linkedin.com/search/results/people/"
-                f"?keywords={quote_plus(query)}&network=%5B%22S%22%5D"
-            )
-            self.page.goto(url, wait_until="domcontentloaded", timeout=90_000)
-            self._wait_idle(timeout_ms=12_000)
-            self.page.wait_for_timeout(1_400)
-            return {
-                "url": self.page.url,
-                "title": self.page.title(),
-                "results_visible": self.page.locator("li.reusable-search__result-container, div.entity-result").count(),
-            }
-
-        if cmd == "scrape_people_cards":
-            for _ in range(2):
-                self.page.mouse.wheel(0, 1400)
-                self.page.wait_for_timeout(280)
-            self.page.wait_for_timeout(700)
-            cards = self.page.evaluate(EXTRACT_CARD_DATA_JS)
-            return {"cards": cards}
-
-        if cmd == "next_page":
-            selectors = (
-                "button[aria-label='Next']",
-                "button.artdeco-pagination__button--next",
-                "button:has-text('Next')",
-            )
-            for selector in selectors:
-                locator = self.page.locator(selector)
-                if locator.count() == 0:
-                    continue
-                button = locator.first
-                disabled = button.get_attribute("disabled")
-                aria_disabled = str(button.get_attribute("aria-disabled") or "").strip().lower()
-                classes = str(button.get_attribute("class") or "").strip().lower()
-                if disabled is not None or aria_disabled == "true" or "disabled" in classes:
-                    return {"moved": False}
-                button.click()
-                self._wait_idle(timeout_ms=10_000)
-                self.page.wait_for_timeout(1_200)
-                return {"moved": True, "url": self.page.url, "title": self.page.title()}
-            return {"moved": False}
-
-        if cmd == "sleep":
-            seconds = float(params.get("seconds") or 0)
-            if seconds > 0:
-                time.sleep(seconds)
-            return {"slept_seconds": seconds}
-
-        if cmd == "current_page":
-            return {"url": self.page.url, "title": self.page.title()}
-
         if cmd == "shutdown":
             self.request_shutdown()
             return {"closing": True}
 
-        raise RuntimeError(f"unknown command: {cmd}")
+        mode = self.mode()
+        if not command_allowed_in_mode(mode=mode, cmd=cmd):
+            raise RuntimeError("daemon is in human_control mode; command is blocked until autonomous mode resumes")
+        return self._worker.call(cmd=cmd, params=params)
 
 
 def _parse_json_body(handler: BaseHTTPRequestHandler) -> dict[str, object]:
@@ -455,7 +580,7 @@ def _write_html(handler: BaseHTTPRequestHandler, status: int, html: str) -> None
     handler.wfile.write(body)
 
 
-def _build_handler(daemon: LinkedInPlaywrightDaemon):
+def _build_handler(daemon: LinkedInPlaywrightDaemon, shutdown_server: callable):  # noqa: ANN001
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: object) -> None:  # noqa: A003
             return
@@ -506,6 +631,7 @@ def _build_handler(daemon: LinkedInPlaywrightDaemon):
             if path == "/api/shutdown":
                 daemon.request_shutdown()
                 _write_json(self, HTTPStatus.OK, {"ok": True, "message": "shutdown requested"})
+                threading.Thread(target=shutdown_server, daemon=True).start()
                 return
 
             _write_json(self, HTTPStatus.NOT_FOUND, {"ok": False, "error": "not found"})
@@ -556,11 +682,9 @@ def main() -> int:
         print(json.dumps({"ok": False, "event": "startup_failed", "error": str(exc)}), flush=True)
         return 1
 
-    server = HTTPServer((args.host, args.port), _build_handler(daemon))
-    server.timeout = 1.0
+    server = ThreadingHTTPServer((args.host, args.port), _build_handler(daemon, lambda: server.shutdown()))
     control_url = f"http://{args.host}:{args.port}/control"
     daemon.set_control_url(control_url)
-    daemon.tick()
 
     print(
         json.dumps(
@@ -577,9 +701,7 @@ def main() -> int:
     )
 
     try:
-        while not daemon.shutdown_requested():
-            server.handle_request()
-            daemon.tick()
+        server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:
         pass
     finally:
@@ -593,3 +715,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
