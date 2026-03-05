@@ -594,6 +594,12 @@ def main() -> int:
                 message=commit_message,
                 retry_count=args.retry_count,
             )
+            print(
+                f"page_scanned query={query_index + 1}/{len(SEARCH_QUERIES)} "
+                f"page={page_in_query} added={len(rows_to_append)} total={len(seen_urls)} "
+                f"commit={commit_sha[:12]}",
+                flush=True,
+            )
             progress["commits"].append(
                 {
                     "sha": commit_sha,
@@ -624,6 +630,7 @@ def main() -> int:
             progress["last_wait_seconds"] = wait_seconds
             progress["status"] = "sleeping_between_pages"
             _save_progress(progress_path, progress)
+            print(f"sleeping_seconds={wait_seconds}", flush=True)
             time.sleep(wait_seconds)
             progress["status"] = "running"
             _save_progress(progress_path, progress)
