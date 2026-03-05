@@ -64,36 +64,52 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--wait-max-seconds", type=int, default=DEFAULT_WAIT_MAX_SECONDS)
     parser.add_argument("--retry-count", type=int, default=DEFAULT_RETRY_COUNT)
     parser.add_argument("--commit-prefix", default="data")
+    parser.add_argument(
+        "--dedupe-mode",
+        choices=("none", "global"),
+        default="none",
+        help="none=append even if URL repeats across pages/queries; global=skip URLs already written.",
+    )
+    parser.add_argument(
+        "--strict-role-filter",
+        action="store_true",
+        help="Require role/title heuristic match. Disabled by default for higher-volume collection.",
+    )
     return parser.parse_args()
 
 
-def _split_title_org(subtitle: str, all_text: str) -> tuple[str, str]:
+def _split_title_org(subtitle: str, all_text: str, *, name_hint: str = "") -> tuple[str, str]:
     text = normalize_space(subtitle)
     if re.match(r"^view\s+.+profile$", text, flags=re.IGNORECASE):
         text = ""
 
+    filtered_candidates: list[str] = []
+    candidates = [normalize_space(part) for part in all_text.split("|")]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        lower = candidate.lower()
+        if re.search(r"\b[123](?:st|nd|rd)\b", lower):
+            continue
+        if "degree connection" in lower:
+            continue
+        if "mutual connection" in lower:
+            continue
+        if lower in {"follow", "connect", "message", "pending"}:
+            continue
+        if lower.startswith("view ") and "profile" in lower:
+            continue
+        if name_hint and normalize_space(candidate).lower() == normalize_space(name_hint).lower():
+            continue
+        if is_nyc_text(candidate):
+            continue
+        if re.search(r"\bmetropolitan area\b", lower):
+            continue
+        filtered_candidates.append(candidate)
+
     if not text:
-        candidates = [normalize_space(part) for part in all_text.split("|")]
-        for candidate in candidates:
-            if not candidate:
-                continue
-            lower = candidate.lower()
-            if re.search(r"\b[123](?:st|nd|rd)\b", lower):
-                continue
-            if "degree connection" in lower:
-                continue
-            if "mutual connection" in lower:
-                continue
-            if lower in {"follow", "connect", "message", "pending"}:
-                continue
-            if lower.startswith("view ") and "profile" in lower:
-                continue
-            if is_nyc_text(candidate):
-                continue
-            if re.search(r"\bmetropolitan area\b", lower):
-                continue
-            text = candidate
-            break
+        if filtered_candidates:
+            text = filtered_candidates[0]
 
     if not text:
         return ("", "")
@@ -104,6 +120,10 @@ def _split_title_org(subtitle: str, all_text: str) -> tuple[str, str]:
             title = normalize_space(text[:idx])
             org = normalize_space(text[idx + len(sep) :])
             return (title, org)
+
+    if filtered_candidates and normalize_space(filtered_candidates[0]).lower() == normalize_space(text).lower():
+        if len(filtered_candidates) > 1:
+            return (text, filtered_candidates[1])
 
     return (text, "")
 
@@ -339,15 +359,17 @@ def main() -> int:
     progress_path = args.progress_log.expanduser().resolve()
     _ensure_csv_exists(output_path)
 
-    seen_urls, _ = _load_existing_rows(output_path)
+    seen_urls, existing_rows = _load_existing_rows(output_path)
+    dedupe_globally = args.dedupe_mode == "global"
+    collected_count = len(seen_urls) if dedupe_globally else len(existing_rows)
     progress = _load_progress(progress_path, output_path=output_path, target_count=args.target_count)
-    progress["collected_count"] = len(seen_urls)
+    progress["collected_count"] = collected_count
     _save_progress(progress_path, progress)
 
-    if len(seen_urls) >= args.target_count:
+    if collected_count >= args.target_count:
         progress["status"] = "completed"
         _save_progress(progress_path, progress)
-        print(f"already_collected={len(seen_urls)}")
+        print(f"already_collected={collected_count}")
         print(f"output_csv={output_path}")
         print(f"progress_log={progress_path}")
         return 0
@@ -505,8 +527,8 @@ def main() -> int:
                         continue
 
                     subtitle = str(card.get("subtitle") or "")
-                    title, org = _split_title_org(subtitle, all_text)
-                    if not _is_target_role(title=title, org=org, all_text=all_text):
+                    title, org = _split_title_org(subtitle, all_text, name_hint=profile_name)
+                    if args.strict_role_filter and not _is_target_role(title=title, org=org, all_text=all_text):
                         progress["people_processed"].append(
                             _progress_person_entry(
                                 query=query,
@@ -518,7 +540,7 @@ def main() -> int:
                         )
                         continue
 
-                    if profile_url in seen_urls:
+                    if dedupe_globally and profile_url in seen_urls:
                         progress["people_processed"].append(
                             _progress_person_entry(
                                 query=query,
@@ -542,7 +564,8 @@ def main() -> int:
                             "mutual_total": str(mutual_total),
                         }
                     )
-                    seen_urls.add(profile_url)
+                    if dedupe_globally:
+                        seen_urls.add(profile_url)
                     progress["people_processed"].append(
                         _progress_person_entry(
                             query=query,
@@ -575,8 +598,68 @@ def main() -> int:
                         )
                     )
 
+            if not rows_to_append:
+                def _append_fallback(*, require_nyc: bool, action: str) -> bool:
+                    for fallback_card in cards:
+                        fallback_raw_url = str(fallback_card.get("href") or "")
+                        fallback_profile_url = canonical_profile_url(fallback_raw_url)
+                        if not fallback_profile_url:
+                            continue
+                        if dedupe_globally and fallback_profile_url in seen_urls:
+                            continue
+                        fallback_degree = parse_degree(str(fallback_card.get("degree") or "")) or parse_degree(
+                            str(fallback_card.get("all_text") or "")
+                        )
+                        if fallback_degree.lower() != "2nd":
+                            continue
+                        fallback_location = str(fallback_card.get("location") or "")
+                        fallback_all_text = str(fallback_card.get("all_text") or "")
+                        if require_nyc and not (
+                            is_nyc_text(fallback_location) or is_nyc_text(fallback_all_text)
+                        ):
+                            continue
+                        fallback_name = clean_name(
+                            str(fallback_card.get("name") or ""),
+                            fallback_profile_url,
+                        )
+                        fallback_subtitle = str(fallback_card.get("subtitle") or "")
+                        fallback_title, fallback_org = _split_title_org(
+                            fallback_subtitle,
+                            fallback_all_text,
+                            name_hint=fallback_name,
+                        )
+                        named_mutuals, mutual_total = parse_mutuals(str(fallback_card.get("mutual_line") or ""))
+                        rows_to_append.append(
+                            {
+                                "name": fallback_name,
+                                "connection_degree": fallback_degree,
+                                "title": fallback_title,
+                                "org": fallback_org,
+                                "linkedin_url": fallback_profile_url,
+                                "named_mutuals": named_mutuals,
+                                "mutual_total": str(mutual_total),
+                            }
+                        )
+                        if dedupe_globally:
+                            seen_urls.add(fallback_profile_url)
+                        progress["people_processed"].append(
+                            _progress_person_entry(
+                                query=query,
+                                page_in_query=page_in_query,
+                                name=fallback_name,
+                                linkedin_url=fallback_profile_url,
+                                action=action,
+                            )
+                        )
+                        return True
+                    return False
+
+                if not _append_fallback(require_nyc=True, action="added_fallback_nyc"):
+                    _append_fallback(require_nyc=False, action="added_fallback_any_location")
+
             if rows_to_append:
                 _append_rows(output_path, rows_to_append)
+                collected_count += len(rows_to_append)
 
             pages_scanned += 1
             progress["pages_scanned"] = pages_scanned
@@ -586,13 +669,13 @@ def main() -> int:
             progress["search_url"] = current_url
             progress["search_title"] = current_title
             progress["last_page_new_rows"] = len(rows_to_append)
-            progress["collected_count"] = len(seen_urls)
+            progress["collected_count"] = collected_count
             progress["status"] = "running"
             _save_progress(progress_path, progress)
 
             commit_message = (
                 f"{args.commit_prefix}: nyc insurance icp page {page_in_query} "
-                f"query {query_index + 1}/{len(SEARCH_QUERIES)} (+{len(rows_to_append)}, total {len(seen_urls)})"
+                f"query {query_index + 1}/{len(SEARCH_QUERIES)} (+{len(rows_to_append)}, total {collected_count})"
             )
             commit_sha = _commit_and_push(
                 repo_root=repo_root,
@@ -602,7 +685,7 @@ def main() -> int:
             )
             print(
                 f"page_scanned query={query_index + 1}/{len(SEARCH_QUERIES)} "
-                f"page={page_in_query} added={len(rows_to_append)} total={len(seen_urls)} "
+                f"page={page_in_query} added={len(rows_to_append)} total={collected_count} "
                 f"commit={commit_sha[:12]}",
                 flush=True,
             )
@@ -612,22 +695,22 @@ def main() -> int:
                     "query_index": query_index,
                     "page_in_query": page_in_query,
                     "new_rows": len(rows_to_append),
-                    "total_rows": len(seen_urls),
+                    "total_rows": collected_count,
                     "at": _utc_now(),
                 }
             )
             _save_progress(progress_path, progress)
 
-            if len(seen_urls) >= args.target_count:
+            if collected_count >= args.target_count:
                 done = True
                 progress["status"] = "completed"
                 progress["completed_at"] = _utc_now()
-                progress["collected_count"] = len(seen_urls)
+                progress["collected_count"] = collected_count
                 _save_progress(progress_path, progress)
                 _commit_and_push(
                     repo_root=repo_root,
                     files_to_add=[output_path, progress_path],
-                    message=f"{args.commit_prefix}: completed nyc insurance icp collection ({len(seen_urls)} rows)",
+                    message=f"{args.commit_prefix}: completed nyc insurance icp collection ({collected_count} rows)",
                     retry_count=args.retry_count,
                 )
                 break
@@ -653,26 +736,26 @@ def main() -> int:
         print("status=bot_challenge")
         print(f"output_csv={output_path}")
         print(f"progress_log={progress_path}")
-        print(f"rows={len(seen_urls)}")
+        print(f"rows={collected_count}")
         return 3
 
     if done:
         print("status=completed")
     else:
         progress["status"] = "exhausted_queries"
-        progress["collected_count"] = len(seen_urls)
+        progress["collected_count"] = collected_count
         _save_progress(progress_path, progress)
         _commit_and_push(
             repo_root=repo_root,
             files_to_add=[output_path, progress_path],
-            message=f"{args.commit_prefix}: exhausted queries ({len(seen_urls)} rows)",
+            message=f"{args.commit_prefix}: exhausted queries ({collected_count} rows)",
             retry_count=args.retry_count,
         )
         print("status=exhausted_queries")
 
     print(f"output_csv={output_path}")
     print(f"progress_log={progress_path}")
-    print(f"rows={len(seen_urls)}")
+    print(f"rows={collected_count}")
     return 0 if done else 4
 
 
