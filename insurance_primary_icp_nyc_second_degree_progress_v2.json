@@ -419,20 +419,35 @@
       "total_rows": 191,
       "unchanged_rows": 0,
       "updated_rows": 6
+    },
+    {
+      "at": "2026-03-08T22:43:29.509942Z",
+      "good_name_title_org": 7,
+      "new_rows": 6,
+      "page_in_query": 5,
+      "profiles_seen": 10,
+      "quality_ratio": 0.7,
+      "query_id": "Q002",
+      "query_index": 1,
+      "row_delta": 6,
+      "sha": "d2b165d3cb78474f5f30c22cb3d595474398773d",
+      "total_rows": 197,
+      "unchanged_rows": 0,
+      "updated_rows": 4
     }
   ],
   "keywords": "insurance VP Claims Operations New York City Metropolitan Area",
-  "last_page_good_name_title_org": 7,
-  "last_page_new_rows": 6,
+  "last_page_good_name_title_org": 6,
+  "last_page_new_rows": 4,
   "last_page_profiles_seen": 10,
-  "last_page_quality_ratio": 0.7,
-  "last_page_row_delta": 6,
+  "last_page_quality_ratio": 0.6,
+  "last_page_row_delta": 4,
   "last_page_unchanged_rows": 0,
-  "last_page_updated_rows": 4,
-  "last_wait_seconds": 94,
+  "last_page_updated_rows": 6,
+  "last_wait_seconds": 74,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results_v2.csv",
-  "page_in_query": 5,
-  "pages_scanned": 29,
+  "page_in_query": 6,
+  "pages_scanned": 30,
   "parse_errors": [
     {
       "at": "2026-03-08T22:25:05.061670Z",
@@ -483,9 +498,9 @@
   "plan_csv": "/root/ws/vb-kb/linkedin_people_search_plan.csv",
   "query_id": "Q002",
   "query_index": 1,
-  "rows_written": 197,
+  "rows_written": 201,
   "search_title": "(12) \"insurance VP Claims Operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20VP%20Claims%20Operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=5&sid=_%3B9",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20VP%20Claims%20Operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=6&sid=pqu",
   "started_at": "2026-03-08T21:49:54.375435Z",
   "status": "running",
   "tail_break": {
@@ -498,5 +513,5 @@
     "streak": 2
   },
   "target_rows": 250,
-  "updated_at": "2026-03-08T22:43:28.030705Z"
+  "updated_at": "2026-03-08T22:44:56.216239Z"
 }
