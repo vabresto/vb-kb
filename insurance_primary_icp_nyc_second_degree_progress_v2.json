@@ -344,20 +344,35 @@
       "total_rows": 172,
       "unchanged_rows": 0,
       "updated_rows": 2
+    },
+    {
+      "at": "2026-03-08T22:35:19.708284Z",
+      "good_name_title_org": 2,
+      "new_rows": 0,
+      "page_in_query": 24,
+      "profiles_seen": 2,
+      "quality_ratio": 1.0,
+      "query_id": "Q001",
+      "query_index": 0,
+      "row_delta": 0,
+      "sha": "6c0b3d664a475f60a1b9ed7d0e6fdabcaf60b821",
+      "total_rows": 172,
+      "unchanged_rows": 0,
+      "updated_rows": 2
     }
   ],
-  "keywords": "insurance Director Claims Operations New York City Metropolitan Area",
-  "last_page_good_name_title_org": 2,
-  "last_page_new_rows": 0,
-  "last_page_profiles_seen": 2,
-  "last_page_quality_ratio": 1.0,
-  "last_page_row_delta": 0,
+  "keywords": "insurance VP Claims Operations New York City Metropolitan Area",
+  "last_page_good_name_title_org": 5,
+  "last_page_new_rows": 6,
+  "last_page_profiles_seen": 10,
+  "last_page_quality_ratio": 0.5,
+  "last_page_row_delta": 6,
   "last_page_unchanged_rows": 0,
-  "last_page_updated_rows": 2,
+  "last_page_updated_rows": 4,
   "last_wait_seconds": 72,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results_v2.csv",
-  "page_in_query": 24,
-  "pages_scanned": 24,
+  "page_in_query": 1,
+  "pages_scanned": 25,
   "parse_errors": [
     {
       "at": "2026-03-08T22:25:05.061670Z",
@@ -406,13 +421,22 @@
     }
   ],
   "plan_csv": "/root/ws/vb-kb/linkedin_people_search_plan.csv",
-  "query_id": "Q001",
-  "query_index": 0,
-  "rows_written": 172,
-  "search_title": "(12) \"insurance Director Claims Operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20Director%20Claims%20Operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=24&sid=yQA",
+  "query_id": "Q002",
+  "query_index": 1,
+  "rows_written": 178,
+  "search_title": "(12) \"insurance VP Claims Operations New York City Metropolitan Area\" | Search | LinkedIn",
+  "search_url": "https://www.linkedin.com/search/results/people/?facetNetwork=%5B%22S%22%5D&keywords=insurance%20VP%20Claims%20Operations%20New%20York%20City%20Metropolitan%20Area&origin=GLOBAL_SEARCH_HEADER&sid=mzh",
   "started_at": "2026-03-08T21:49:54.375435Z",
   "status": "running",
+  "tail_break": {
+    "at": "2026-03-08T22:35:19.709523Z",
+    "page_in_query": 24,
+    "profiles_seen": 2,
+    "query_id": "Q001",
+    "query_index": 0,
+    "row_delta": 0,
+    "streak": 2
+  },
   "target_rows": 250,
-  "updated_at": "2026-03-08T22:35:18.139276Z"
+  "updated_at": "2026-03-08T22:35:37.686502Z"
 }
