@@ -74,12 +74,6 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--wait-max-seconds", type=int, default=DEFAULT_WAIT_MAX)
     parser.add_argument("--retry-count", type=int, default=DEFAULT_RETRY_COUNT)
     parser.add_argument("--commit-prefix", default="data")
-    parser.add_argument(
-        "--dedupe-mode",
-        choices=("none", "global"),
-        default="none",
-        help="none=append all results; global=skip profile URLs already present in output.",
-    )
     return parser.parse_args()
 
 
@@ -147,24 +141,31 @@ def _ensure_output_exists(path: Path) -> None:
         writer.writeheader()
 
 
-def _load_seen_urls(path: Path) -> tuple[set[str], int]:
-    seen: set[str] = set()
-    total_rows = 0
+def _load_existing_rows(path: Path) -> tuple[list[dict[str, str]], dict[str, int]]:
+    rows: list[dict[str, str]] = []
+    index_by_url: dict[str, int] = {}
     if not path.exists():
-        return seen, total_rows
+        return rows, index_by_url
     with path.open("r", newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
-        for row in reader:
-            total_rows += 1
+        for csv_row in reader:
+            row = {field: str(csv_row.get(field, "") or "") for field in OUTPUT_FIELDS}
             profile_url = canonical_profile_url(row.get("linkedin_url", ""))
-            if profile_url:
-                seen.add(profile_url)
-    return seen, total_rows
+            if not profile_url:
+                continue
+            row["linkedin_url"] = profile_url
+            if profile_url in index_by_url:
+                rows[index_by_url[profile_url]] = row
+                continue
+            index_by_url[profile_url] = len(rows)
+            rows.append(row)
+    return rows, index_by_url
 
 
-def _append_rows(path: Path, rows: list[dict[str, str]]) -> None:
-    with path.open("a", newline="", encoding="utf-8") as handle:
+def _write_rows(path: Path, rows: list[dict[str, str]]) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=OUTPUT_FIELDS)
+        writer.writeheader()
         for row in rows:
             writer.writerow(row)
 
@@ -277,9 +278,8 @@ def main() -> int:
 
     _ensure_output_exists(output_path)
     plan_rows = _load_plan(plan_path)
-    seen_urls, total_existing = _load_seen_urls(output_path)
-    dedupe_globally = args.dedupe_mode == "global"
-    rows_written = total_existing
+    existing_rows, index_by_url = _load_existing_rows(output_path)
+    rows_written = len(existing_rows)
 
     progress = _load_progress(progress_path, output_path=output_path, plan_path=plan_path)
     progress["rows_written"] = rows_written
@@ -415,13 +415,13 @@ def main() -> int:
                 )
                 _save_progress(progress_path, progress)
 
-            rows_to_append: list[dict[str, str]] = []
+            page_added = 0
+            page_updated = 0
+            page_unchanged = 0
             for rank, card in enumerate(cards, start=1):
                 raw_href = str(card.get("href") or "")
                 profile_url = canonical_profile_url(raw_href)
                 if not profile_url:
-                    continue
-                if dedupe_globally and profile_url in seen_urls:
                     continue
 
                 name = clean_name(str(card.get("name") or ""), profile_url)
@@ -431,37 +431,48 @@ def main() -> int:
                 title, org = parse_title_org_from_card(name=name, subtitle=subtitle, all_text=all_text)
                 location_text = str(card.get("location") or "")
                 named_mutuals, mutual_total = parse_mutuals(str(card.get("mutual_line") or ""))
-                rows_to_append.append(
-                    {
-                        "captured_at": _utc_now(),
-                        "query_id": query_id,
-                        "theme_line": row.get("theme_line", ""),
-                        "title_permutation": row.get("title_permutation", ""),
-                        "base_context": row.get("base_context", ""),
-                        "location": row.get("location", ""),
-                        "degree_filter": row.get("degree_filter", ""),
-                        "keywords": keywords,
-                        "query_params_json": row.get("query_params_json", ""),
-                        "search_url_canonical": row.get("search_url", ""),
-                        "page_in_query": str(page_in_query),
-                        "rank_on_page": str(rank),
-                        "name": name,
-                        "connection_degree": degree,
-                        "title": title,
-                        "org": org,
-                        "location_text": location_text,
-                        "linkedin_url": profile_url,
-                        "named_mutuals": named_mutuals,
-                        "mutual_total": str(mutual_total),
-                        "all_text": all_text,
-                    }
-                )
-                if dedupe_globally:
-                    seen_urls.add(profile_url)
+                scraped_row = {
+                    "captured_at": _utc_now(),
+                    "query_id": query_id,
+                    "theme_line": row.get("theme_line", ""),
+                    "title_permutation": row.get("title_permutation", ""),
+                    "base_context": row.get("base_context", ""),
+                    "location": row.get("location", ""),
+                    "degree_filter": row.get("degree_filter", ""),
+                    "keywords": keywords,
+                    "query_params_json": row.get("query_params_json", ""),
+                    "search_url_canonical": row.get("search_url", ""),
+                    "page_in_query": str(page_in_query),
+                    "rank_on_page": str(rank),
+                    "name": name,
+                    "connection_degree": degree,
+                    "title": title,
+                    "org": org,
+                    "location_text": location_text,
+                    "linkedin_url": profile_url,
+                    "named_mutuals": named_mutuals,
+                    "mutual_total": str(mutual_total),
+                    "all_text": all_text,
+                }
 
-            if rows_to_append:
-                _append_rows(output_path, rows_to_append)
-                rows_written += len(rows_to_append)
+                existing_index = index_by_url.get(profile_url)
+                if existing_index is None:
+                    index_by_url[profile_url] = len(existing_rows)
+                    existing_rows.append(scraped_row)
+                    page_added += 1
+                    continue
+
+                existing_row = existing_rows[existing_index]
+                if existing_row != scraped_row:
+                    existing_rows[existing_index] = scraped_row
+                    page_updated += 1
+                else:
+                    page_unchanged += 1
+
+            if page_added > 0 or page_updated > 0:
+                _write_rows(output_path, existing_rows)
+
+            rows_written = len(existing_rows)
 
             pages_scanned += 1
             progress["pages_scanned"] = pages_scanned
@@ -472,13 +483,15 @@ def main() -> int:
             progress["page_in_query"] = page_in_query
             progress["search_url"] = current_url
             progress["search_title"] = current_title
-            progress["last_page_new_rows"] = len(rows_to_append)
+            progress["last_page_new_rows"] = page_added
+            progress["last_page_updated_rows"] = page_updated
+            progress["last_page_unchanged_rows"] = page_unchanged
             progress["status"] = "running"
             _save_progress(progress_path, progress)
 
             commit_message = (
                 f"{args.commit_prefix}: plan-run {query_id} page {page_in_query} "
-                f"(+{len(rows_to_append)}, total {rows_written})"
+                f"(+{page_added} ~{page_updated} ={page_unchanged}, total {rows_written})"
             )
             commit_sha = _commit_and_push(
                 repo_root=repo_root,
@@ -492,14 +505,17 @@ def main() -> int:
                     "query_index": query_index,
                     "query_id": query_id,
                     "page_in_query": page_in_query,
-                    "new_rows": len(rows_to_append),
+                    "new_rows": page_added,
+                    "updated_rows": page_updated,
+                    "unchanged_rows": page_unchanged,
                     "total_rows": rows_written,
                     "at": _utc_now(),
                 }
             )
             _save_progress(progress_path, progress)
             print(
-                f"page_scanned query={query_id} page={page_in_query} added={len(rows_to_append)} "
+                f"page_scanned query={query_id} page={page_in_query} added={page_added} updated={page_updated} "
+                f"unchanged={page_unchanged} "
                 f"total={rows_written} commit={commit_sha[:12]}",
                 flush=True,
             )

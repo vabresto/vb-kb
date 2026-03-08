@@ -80,9 +80,8 @@ Related runnable workflows:
 - `just linkedin-daemon-client`
 - `just linkedin-daemon-client http://127.0.0.1:8771 mode "human_control --actor human --reason inspect"`
 - `just linkedin-daemon-client http://127.0.0.1:8771 mode "autonomous --actor human --reason resume"`
-- `just linkedin-nyc-icp daemon_url="http://127.0.0.1:8771"`
 - `just linkedin-search-plan theme_file="insurance_primary_icp_theme.txt" output="linkedin_people_search_plan.csv"`
-- `just linkedin-collect-plan plan_csv="linkedin_people_search_plan.csv" output="linkedin_people_search_results_raw.csv" progress_log="linkedin_people_search_results_raw.progress.json" dedupe_mode="none"`
+- `just linkedin-collect-plan plan_csv="linkedin_people_search_plan.csv" output="linkedin_people_search_results_raw.csv" progress_log="linkedin_people_search_results_raw.progress.json"`
 - `just linkedin-auth "<username>" "<password>" "<totp_secret_base32>"`
 - `just linkedin-remote-start`
 - `just linkedin-remote-status`
@@ -121,8 +120,7 @@ Related runnable workflows:
 - Execute full sweep from plan (search pages only):
   - `scripts/linkedin_collect_people_from_plan.py --plan-csv <plan_csv> --output <raw_csv> --progress-log <progress_json>`
   - each enabled query runs from page 1 until pagination ends (or per-row `max_pages`).
-  - all scraped cards are appended by default (`--dedupe-mode none`).
-  - optional global URL dedupe: `--dedupe-mode global`.
+  - dedupe key is canonical LinkedIn profile URL, with upsert behavior (existing rows are fully updated when re-seen).
   - per-page commit/push and resumable progress are built in.
 
 ### Remote inspection (noVNC)

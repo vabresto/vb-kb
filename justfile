@@ -94,14 +94,6 @@ linkedin-daemon session_state=".build/enrichment/sessions/linkedin.com/storage-s
   if [ "{{open_control_tab}}" != "true" ]; then cmd+=(--no-control-tab); fi; \
   "${cmd[@]}"
 
-# Build NYC 2nd-degree insurance ICP list via daemon HTTP API.
-linkedin-nyc-icp target_count="50" output="linkedin_nyc_insurance_icp_2nd_degree.csv" daemon_url="http://127.0.0.1:8771" max_pages_per_query="6" spawn_daemon="false" session_state=".build/enrichment/sessions/linkedin.com/storage-state.json" daemon_state_path=".build/enrichment/daemon/linkedin-daemon-state.json" headed="false" leave_daemon_running="false":
-  @cmd=(uv run --with playwright python scripts/linkedin_nyc_icp_second_degree.py --target-count "{{target_count}}" --output "{{output}}" --daemon-url "{{daemon_url}}" --max-pages-per-query "{{max_pages_per_query}}"); \
-  if [ "{{spawn_daemon}}" = "true" ]; then cmd+=(--spawn-daemon --session-state "{{session_state}}" --daemon-state-path "{{daemon_state_path}}"); fi; \
-  if [ "{{headed}}" = "true" ]; then cmd+=(--headed); fi; \
-  if [ "{{leave_daemon_running}}" = "true" ]; then cmd+=(--leave-daemon-running); fi; \
-  "${cmd[@]}"
-
 # Send control/inspection commands to running LinkedIn daemon.
 linkedin-daemon-client daemon_url="http://127.0.0.1:8771" subcommand="state" args="":
   @cmd=(uv run python scripts/linkedin_daemon_client.py --daemon-url "{{daemon_url}}" {{subcommand}}); \
@@ -113,8 +105,8 @@ linkedin-search-plan theme_file="insurance_primary_icp_theme.txt" output="linked
   uv run python scripts/linkedin_generate_search_plan.py --theme-file "{{theme_file}}" --output "{{output}}" --location "{{location}}" --base-context "{{base_context}}" --max-pages-per-query "{{max_pages}}"
 
 # Execute full plan-driven LinkedIn people-search sweeps (search pages only).
-linkedin-collect-plan plan_csv="linkedin_people_search_plan.csv" output="linkedin_people_search_results_raw.csv" progress_log="linkedin_people_search_results_raw.progress.json" daemon_url="http://127.0.0.1:8771" wait_min_seconds="60" wait_max_seconds="600" retry_count="3" dedupe_mode="none" commit_prefix="data":
-  @cmd=(uv run python scripts/linkedin_collect_people_from_plan.py --plan-csv "{{plan_csv}}" --output "{{output}}" --progress-log "{{progress_log}}" --daemon-url "{{daemon_url}}" --wait-min-seconds "{{wait_min_seconds}}" --wait-max-seconds "{{wait_max_seconds}}" --retry-count "{{retry_count}}" --dedupe-mode "{{dedupe_mode}}" --commit-prefix "{{commit_prefix}}"); \
+linkedin-collect-plan plan_csv="linkedin_people_search_plan.csv" output="linkedin_people_search_results_raw.csv" progress_log="linkedin_people_search_results_raw.progress.json" daemon_url="http://127.0.0.1:8771" wait_min_seconds="60" wait_max_seconds="600" retry_count="3" commit_prefix="data":
+  @cmd=(uv run python scripts/linkedin_collect_people_from_plan.py --plan-csv "{{plan_csv}}" --output "{{output}}" --progress-log "{{progress_log}}" --daemon-url "{{daemon_url}}" --wait-min-seconds "{{wait_min_seconds}}" --wait-max-seconds "{{wait_max_seconds}}" --retry-count "{{retry_count}}" --commit-prefix "{{commit_prefix}}"); \
   "${cmd[@]}"
 
 # Start remote inspection stack (Xvfb + x11vnc + noVNC + headed daemon).
