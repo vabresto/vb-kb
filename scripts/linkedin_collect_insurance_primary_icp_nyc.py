@@ -19,7 +19,7 @@ from kb.linkedin_people_search import (
     canonical_profile_url,
     clean_name,
     is_nyc_text,
-    normalize_space,
+    parse_title_org_from_card,
     parse_degree,
     parse_mutuals,
 )
@@ -78,58 +78,8 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _split_title_org(subtitle: str, all_text: str, *, name_hint: str = "") -> tuple[str, str]:
-    text = normalize_space(subtitle)
-    if re.match(r"^view\s+.+profile$", text, flags=re.IGNORECASE):
-        text = ""
-
-    filtered_candidates: list[str] = []
-    candidates = [normalize_space(part) for part in all_text.split("|")]
-    for candidate in candidates:
-        if not candidate:
-            continue
-        lower = candidate.lower()
-        if re.search(r"\b[123](?:st|nd|rd)\b", lower):
-            continue
-        if "degree connection" in lower:
-            continue
-        if "mutual connection" in lower:
-            continue
-        if lower in {"follow", "connect", "message", "pending"}:
-            continue
-        if lower.startswith("view ") and "profile" in lower:
-            continue
-        if name_hint and normalize_space(candidate).lower() == normalize_space(name_hint).lower():
-            continue
-        if is_nyc_text(candidate):
-            continue
-        if re.search(r"\bmetropolitan area\b", lower):
-            continue
-        filtered_candidates.append(candidate)
-
-    if not text:
-        if filtered_candidates:
-            text = filtered_candidates[0]
-
-    if not text:
-        return ("", "")
-
-    for sep in (" at ", " @ "):
-        idx = text.lower().find(sep)
-        if idx > 0:
-            title = normalize_space(text[:idx])
-            org = normalize_space(text[idx + len(sep) :])
-            return (title, org)
-
-    if filtered_candidates and normalize_space(filtered_candidates[0]).lower() == normalize_space(text).lower():
-        if len(filtered_candidates) > 1:
-            return (text, filtered_candidates[1])
-
-    return (text, "")
-
-
 def _is_target_role(*, title: str, org: str, all_text: str) -> bool:
-    text = normalize_space(f"{title} {org} {all_text}").lower()
+    text = " ".join(f"{title} {org} {all_text}".split()).lower()
     if not text:
         return False
 
@@ -527,7 +477,7 @@ def main() -> int:
                         continue
 
                     subtitle = str(card.get("subtitle") or "")
-                    title, org = _split_title_org(subtitle, all_text, name_hint=profile_name)
+                    title, org = parse_title_org_from_card(name=profile_name, subtitle=subtitle, all_text=all_text)
                     if args.strict_role_filter and not _is_target_role(title=title, org=org, all_text=all_text):
                         progress["people_processed"].append(
                             _progress_person_entry(
@@ -623,10 +573,10 @@ def main() -> int:
                             fallback_profile_url,
                         )
                         fallback_subtitle = str(fallback_card.get("subtitle") or "")
-                        fallback_title, fallback_org = _split_title_org(
-                            fallback_subtitle,
-                            fallback_all_text,
-                            name_hint=fallback_name,
+                        fallback_title, fallback_org = parse_title_org_from_card(
+                            name=fallback_name,
+                            subtitle=fallback_subtitle,
+                            all_text=fallback_all_text,
                         )
                         named_mutuals, mutual_total = parse_mutuals(str(fallback_card.get("mutual_line") or ""))
                         rows_to_append.append(

@@ -18,7 +18,7 @@ from kb.linkedin_people_search import (
     is_nyc_text,
     parse_degree,
     parse_mutuals,
-    parse_org,
+    parse_title_org_from_card,
 )
 
 DEFAULT_OUTPUT_PATH = Path("linkedin_nyc_insurance_icp_2nd_degree.csv")
@@ -170,10 +170,15 @@ def _collect_profiles(
                     continue
 
                 mutual_names, mutual_total = parse_mutuals(str(item.get("mutual_line") or ""))
+                title_text, org_text = parse_title_org_from_card(
+                    name=str(item.get("name") or ""),
+                    subtitle=str(item.get("subtitle") or ""),
+                    all_text=str(item.get("all_text") or ""),
+                )
                 rows.append(
                     {
                         "name": clean_name(str(item.get("name") or ""), profile_url),
-                        "org": parse_org(str(item.get("subtitle") or "")),
+                        "org": org_text or title_text,
                         "connection_degree": degree,
                         "linkedin_url": profile_url,
                         "mutual_names": mutual_names,
@@ -237,4 +242,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

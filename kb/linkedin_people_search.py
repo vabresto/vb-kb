@@ -88,6 +88,121 @@ def parse_org(subtitle: str | None) -> str:
     return normalize_space(candidate)
 
 
+def is_probable_location(text: str | None) -> bool:
+    value = normalize_space(text)
+    if not value:
+        return False
+    lowered = value.lower()
+    if is_nyc_text(value):
+        return True
+    if "metropolitan area" in lowered:
+        return True
+    if lowered.startswith("greater "):
+        return True
+    if re.search(r",\s*[A-Z]{2}\b", value):
+        return True
+    if lowered in {"canada", "united states", "usa", "united kingdom", "uk", "hong kong sar"}:
+        return True
+    return False
+
+
+def parse_title_org_from_card(*, name: str | None, subtitle: str | None, all_text: str | None) -> tuple[str, str]:
+    person_name = normalize_space(name)
+    subtitle_text = normalize_space(subtitle)
+    lines = [normalize_space(part) for part in normalize_space(all_text).split("|")]
+
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    def _add_if_valid(line: str) -> None:
+        text = normalize_space(line)
+        if not text:
+            return
+        lowered = text.lower()
+        if person_name and lowered == person_name.lower():
+            return
+        if re.match(r"^view\s+.+profile$", lowered):
+            return
+        if re.search(r"\b[123](?:st|nd|rd)\b", lowered):
+            return
+        if "degree connection" in lowered:
+            return
+        if "mutual connection" in lowered:
+            return
+        if lowered in {"follow", "connect", "message", "pending", "more"}:
+            return
+        if is_probable_location(text):
+            return
+        if lowered in seen:
+            return
+        seen.add(lowered)
+        candidates.append(text)
+
+    _add_if_valid(subtitle_text)
+    for line in lines:
+        _add_if_valid(line)
+
+    if not candidates:
+        return ("", "")
+
+    title = candidates[0]
+    role_like_pattern = re.compile(
+        r"\b("
+        r"director|vice president|vp|head|chief|officer|manager|operations?|ops|"
+        r"management|risk|claims?|policy|service|transform(?:ation|ational)?|"
+        r"excellence|regulatory|reporting|enterprise|strategy|"
+        r"underwriter|analyst|specialist|lead|principal"
+        r")\b",
+        flags=re.IGNORECASE,
+    )
+    region_tokens = {
+        "americas",
+        "north america",
+        "south america",
+        "emea",
+        "apac",
+        "global",
+        "worldwide",
+    }
+    org_marker_pattern = re.compile(
+        r"\b("
+        r"advisors?|group|company|inc|llc|ltd|corp|corporation|brokers?|"
+        r"consulting|insurance|re|holdings?|partners?|associates?"
+        r")\b",
+        flags=re.IGNORECASE,
+    )
+
+    for sep in (" at ", " @ "):
+        idx = title.lower().find(sep)
+        if idx > 0:
+            return (normalize_space(title[:idx]), normalize_space(title[idx + len(sep) :]))
+
+    # Handle headline patterns like "Assistant Vice President, ... , Everest Re".
+    if "," in title:
+        left, right = title.rsplit(",", 1)
+        left = normalize_space(left)
+        right = normalize_space(right)
+        if right and not is_probable_location(right):
+            right_has_org_marker = bool(org_marker_pattern.search(right))
+            if right.lower() not in region_tokens and (right_has_org_marker or not role_like_pattern.search(right)):
+                return (left, right)
+
+    org = ""
+    for candidate in candidates[1:]:
+        lowered = candidate.lower()
+        if is_probable_location(candidate):
+            continue
+        if lowered in region_tokens:
+            continue
+        has_org_marker = bool(org_marker_pattern.search(candidate))
+        if role_like_pattern.search(lowered) and not has_org_marker:
+            continue
+        org = candidate
+        break
+
+    return (title, org)
+
+
 def parse_degree(text: str | None) -> str:
     normalized = normalize_space(text)
     if normalized:
@@ -134,4 +249,3 @@ def parse_mutuals(mutual_line: str | None) -> tuple[str, int]:
     if "mutual connection" in line.lower():
         return (line, 0)
     return ("", 0)
-

@@ -13,7 +13,14 @@ from pathlib import Path
 from typing import Any
 
 from kb.linkedin_daemon_client import LinkedInDaemonClient
-from kb.linkedin_people_search import canonical_profile_url, clean_name, normalize_space, parse_degree, parse_mutuals
+from kb.linkedin_people_search import (
+    canonical_profile_url,
+    clean_name,
+    normalize_space,
+    parse_degree,
+    parse_mutuals,
+    parse_title_org_from_card,
+)
 
 DEFAULT_DAEMON_URL = "http://127.0.0.1:8771"
 DEFAULT_PLAN = Path("linkedin_people_search_plan.csv")
@@ -231,42 +238,6 @@ def _save_progress(progress_path: Path, progress: dict[str, Any]) -> None:
     progress_path.write_text(json.dumps(progress, indent=2, sort_keys=True), encoding="utf-8")
 
 
-def _split_title_org(name: str, subtitle: str, all_text: str) -> tuple[str, str]:
-    subtitle_text = normalize_space(subtitle)
-    if re.match(r"^view\s+.+profile$", subtitle_text, flags=re.IGNORECASE):
-        subtitle_text = ""
-    parts = [normalize_space(part) for part in all_text.split("|")]
-
-    filtered: list[str] = []
-    for part in parts:
-        lowered = part.lower()
-        if not part:
-            continue
-        if re.search(r"\b[123](?:st|nd|rd)\b", lowered):
-            continue
-        if "degree connection" in lowered:
-            continue
-        if "mutual connection" in lowered:
-            continue
-        if lowered in {"follow", "connect", "message", "pending"}:
-            continue
-        if lowered.startswith("view ") and "profile" in lowered:
-            continue
-        if normalize_space(name).lower() == part.lower():
-            continue
-        filtered.append(part)
-
-    text = subtitle_text or (filtered[0] if filtered else "")
-    if not text:
-        return ("", "")
-    for sep in (" at ", " @ "):
-        idx = text.lower().find(sep)
-        if idx > 0:
-            return (normalize_space(text[:idx]), normalize_space(text[idx + len(sep) :]))
-    org = filtered[1] if len(filtered) > 1 and normalize_space(filtered[0]).lower() == normalize_space(text).lower() else ""
-    return (text, org)
-
-
 def _is_bot_challenge(url: str, title: str) -> bool:
     text = normalize_space(f"{url} {title}").lower()
     markers = ("/checkpoint/", "captcha", "security verification", "challenge", "authwall")
@@ -457,7 +428,7 @@ def main() -> int:
                 degree = parse_degree(str(card.get("degree") or "")) or parse_degree(str(card.get("all_text") or ""))
                 subtitle = str(card.get("subtitle") or "")
                 all_text = str(card.get("all_text") or "")
-                title, org = _split_title_org(name, subtitle, all_text)
+                title, org = parse_title_org_from_card(name=name, subtitle=subtitle, all_text=all_text)
                 location_text = str(card.get("location") or "")
                 named_mutuals, mutual_total = parse_mutuals(str(card.get("mutual_line") or ""))
                 rows_to_append.append(
