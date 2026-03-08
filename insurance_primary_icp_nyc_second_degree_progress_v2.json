@@ -554,8 +554,25 @@
       "total_rows": 245,
       "unchanged_rows": 0,
       "updated_rows": 3
+    },
+    {
+      "at": "2026-03-08T22:58:58.806387Z",
+      "good_name_title_org": 5,
+      "new_rows": 7,
+      "page_in_query": 14,
+      "profiles_seen": 10,
+      "quality_ratio": 0.5,
+      "query_id": "Q002",
+      "query_index": 1,
+      "row_delta": 7,
+      "sha": "6c04dd33422c5c560a1371a9d96d6efadf88c430",
+      "total_rows": 252,
+      "unchanged_rows": 0,
+      "updated_rows": 3
     }
   ],
+  "completed_at": "2026-03-08T22:58:58.808904Z",
+  "completed_reason": "target_rows_reached",
   "keywords": "insurance VP Claims Operations New York City Metropolitan Area",
   "last_page_good_name_title_org": 5,
   "last_page_new_rows": 7,
@@ -622,7 +639,7 @@
   "search_title": "(12) \"insurance VP Claims Operations New York City Metropolitan Area\" | Search | LinkedIn",
   "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20VP%20Claims%20Operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=14&sid=DP)",
   "started_at": "2026-03-08T21:49:54.375435Z",
-  "status": "running",
+  "status": "completed",
   "tail_break": {
     "at": "2026-03-08T22:35:19.709523Z",
     "page_in_query": 24,
@@ -633,5 +650,6 @@
     "streak": 2
   },
   "target_rows": 250,
-  "updated_at": "2026-03-08T22:58:57.330216Z"
+  "target_rows_reached_at": "2026-03-08T22:58:58.807734Z",
+  "updated_at": "2026-03-08T22:58:58.808962Z"
 }
