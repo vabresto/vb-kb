@@ -104,6 +104,21 @@
       "total_rows": 69,
       "unchanged_rows": 0,
       "updated_rows": 0
+    },
+    {
+      "at": "2026-03-08T22:03:49.877706Z",
+      "good_name_title_org": 7,
+      "new_rows": 10,
+      "page_in_query": 8,
+      "profiles_seen": 10,
+      "quality_ratio": 0.7,
+      "query_id": "Q001",
+      "query_index": 0,
+      "row_delta": 10,
+      "sha": "3a4f1d2efa55121805e93e837398fb1a81d2a951",
+      "total_rows": 79,
+      "unchanged_rows": 0,
+      "updated_rows": 0
     }
   ],
   "keywords": "insurance Director Claims Operations New York City Metropolitan Area",
@@ -114,19 +129,19 @@
   "last_page_row_delta": 10,
   "last_page_unchanged_rows": 0,
   "last_page_updated_rows": 0,
-  "last_wait_seconds": 98,
+  "last_wait_seconds": 85,
   "output_csv": "/root/ws/vb-kb/insurance_primary_icp_nyc_second_degree_results_v2.csv",
-  "page_in_query": 8,
-  "pages_scanned": 8,
+  "page_in_query": 9,
+  "pages_scanned": 9,
   "parse_errors": [],
   "plan_csv": "/root/ws/vb-kb/linkedin_people_search_plan.csv",
   "query_id": "Q001",
   "query_index": 0,
-  "rows_written": 79,
+  "rows_written": 89,
   "search_title": "(12) \"insurance Director Claims Operations New York City Metropolitan Area\" | Search | LinkedIn",
-  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20Director%20Claims%20Operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=8&sid=3No",
+  "search_url": "https://www.linkedin.com/search/results/people/?keywords=insurance%20Director%20Claims%20Operations%20New%20York%20City%20Metropolitan%20Area&network=%5B%22S%22%5D&origin=GLOBAL_SEARCH_HEADER&page=9&sid=w5B",
   "started_at": "2026-03-08T21:49:54.375435Z",
   "status": "running",
   "target_rows": 250,
-  "updated_at": "2026-03-08T22:03:48.393513Z"
+  "updated_at": "2026-03-08T22:05:27.552625Z"
 }
