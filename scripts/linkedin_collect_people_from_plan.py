@@ -74,6 +74,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--wait-max-seconds", type=int, default=DEFAULT_WAIT_MAX)
     parser.add_argument("--retry-count", type=int, default=DEFAULT_RETRY_COUNT)
     parser.add_argument("--commit-prefix", default="data")
+    parser.add_argument(
+        "--target-rows",
+        type=int,
+        default=0,
+        help="Stop once output has at least this many unique canonical LinkedIn URLs (0 means no target).",
+    )
     return parser.parse_args()
 
 
@@ -266,6 +272,8 @@ def main() -> int:
     args = _parse_args()
     if args.retry_count <= 0:
         raise SystemExit("retry-count must be > 0")
+    if args.target_rows < 0:
+        raise SystemExit("target-rows must be >= 0")
     if args.wait_min_seconds <= 0 or args.wait_max_seconds <= 0:
         raise SystemExit("wait min/max must be > 0")
     if args.wait_min_seconds > args.wait_max_seconds:
@@ -283,6 +291,7 @@ def main() -> int:
 
     progress = _load_progress(progress_path, output_path=output_path, plan_path=plan_path)
     progress["rows_written"] = rows_written
+    progress["target_rows"] = int(args.target_rows)
     _save_progress(progress_path, progress)
 
     client = LinkedInDaemonClient(base_url=args.daemon_url, timeout_seconds=120.0)
@@ -295,8 +304,11 @@ def main() -> int:
     resume_page_in_query = int(progress.get("page_in_query") or 0)
     pages_scanned = int(progress.get("pages_scanned") or 0)
     bot_challenge = False
+    target_reached = bool(args.target_rows > 0 and rows_written >= args.target_rows)
 
     for query_index, row in enumerate(plan_rows):
+        if target_reached:
+            break
         if query_index < resume_query_index:
             continue
 
@@ -346,6 +358,9 @@ def main() -> int:
 
         page_in_query = next_page_to_scan
         while page_in_query <= max_pages:
+            if args.target_rows > 0 and rows_written >= args.target_rows:
+                target_reached = True
+                break
             current = client.command(cmd="current_page")
             current_url = str(current.get("url") or "")
             current_title = str(current.get("title") or "")
@@ -415,20 +430,26 @@ def main() -> int:
                 )
                 _save_progress(progress_path, progress)
 
+            page_start_rows = rows_written
             page_added = 0
             page_updated = 0
             page_unchanged = 0
+            page_total_profiles = 0
+            page_good_name_title_org = 0
             for rank, card in enumerate(cards, start=1):
                 raw_href = str(card.get("href") or "")
                 profile_url = canonical_profile_url(raw_href)
                 if not profile_url:
                     continue
+                page_total_profiles += 1
 
                 name = clean_name(str(card.get("name") or ""), profile_url)
                 degree = parse_degree(str(card.get("degree") or "")) or parse_degree(str(card.get("all_text") or ""))
                 subtitle = str(card.get("subtitle") or "")
                 all_text = str(card.get("all_text") or "")
                 title, org = parse_title_org_from_card(name=name, subtitle=subtitle, all_text=all_text)
+                if name.strip() and title.strip() and org.strip():
+                    page_good_name_title_org += 1
                 location_text = str(card.get("location") or "")
                 named_mutuals, mutual_total = parse_mutuals(str(card.get("mutual_line") or ""))
                 scraped_row = {
@@ -473,6 +494,10 @@ def main() -> int:
                 _write_rows(output_path, existing_rows)
 
             rows_written = len(existing_rows)
+            page_row_delta = rows_written - page_start_rows
+            page_quality_ratio = (
+                float(page_good_name_title_org) / float(page_total_profiles) if page_total_profiles > 0 else 0.0
+            )
 
             pages_scanned += 1
             progress["pages_scanned"] = pages_scanned
@@ -486,7 +511,35 @@ def main() -> int:
             progress["last_page_new_rows"] = page_added
             progress["last_page_updated_rows"] = page_updated
             progress["last_page_unchanged_rows"] = page_unchanged
+            progress["last_page_row_delta"] = page_row_delta
+            progress["last_page_profiles_seen"] = page_total_profiles
+            progress["last_page_good_name_title_org"] = page_good_name_title_org
+            progress["last_page_quality_ratio"] = round(page_quality_ratio, 6)
             progress["status"] = "running"
+            if page_row_delta <= 0:
+                progress["parse_errors"].append(
+                    {
+                        "type": "sanity_no_growth",
+                        "query_index": query_index,
+                        "query_id": query_id,
+                        "page_in_query": page_in_query,
+                        "rows_before": page_start_rows,
+                        "rows_after": rows_written,
+                        "at": _utc_now(),
+                    }
+                )
+            if page_total_profiles > 0 and page_good_name_title_org == 0:
+                progress["parse_errors"].append(
+                    {
+                        "type": "sanity_quality_zero",
+                        "query_index": query_index,
+                        "query_id": query_id,
+                        "page_in_query": page_in_query,
+                        "profiles_seen": page_total_profiles,
+                        "good_name_title_org": page_good_name_title_org,
+                        "at": _utc_now(),
+                    }
+                )
             _save_progress(progress_path, progress)
 
             commit_message = (
@@ -508,6 +561,10 @@ def main() -> int:
                     "new_rows": page_added,
                     "updated_rows": page_updated,
                     "unchanged_rows": page_unchanged,
+                    "row_delta": page_row_delta,
+                    "profiles_seen": page_total_profiles,
+                    "good_name_title_org": page_good_name_title_org,
+                    "quality_ratio": round(page_quality_ratio, 6),
                     "total_rows": rows_written,
                     "at": _utc_now(),
                 }
@@ -515,7 +572,8 @@ def main() -> int:
             _save_progress(progress_path, progress)
             print(
                 f"page_scanned query={query_id} page={page_in_query} added={page_added} updated={page_updated} "
-                f"unchanged={page_unchanged} "
+                f"unchanged={page_unchanged} delta={page_row_delta} "
+                f"quality={page_good_name_title_org}/{page_total_profiles} "
                 f"total={rows_written} commit={commit_sha[:12]}",
                 flush=True,
             )
@@ -536,6 +594,8 @@ def main() -> int:
 
         if bot_challenge:
             break
+        if target_reached:
+            break
 
     if bot_challenge:
         print("status=bot_challenge")
@@ -545,6 +605,8 @@ def main() -> int:
         return 3
 
     progress["status"] = "completed"
+    if target_reached:
+        progress["completed_reason"] = "target_rows_reached"
     progress["rows_written"] = rows_written
     progress["completed_at"] = _utc_now()
     _save_progress(progress_path, progress)
