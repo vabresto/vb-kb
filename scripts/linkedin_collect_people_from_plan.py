@@ -80,6 +80,18 @@ def _parse_args() -> argparse.Namespace:
         default=0,
         help="Stop once output has at least this many unique canonical LinkedIn URLs (0 means no target).",
     )
+    parser.add_argument(
+        "--tail-no-growth-limit",
+        type=int,
+        default=3,
+        help="Break to next query after this many consecutive no-growth low-profile pages.",
+    )
+    parser.add_argument(
+        "--tail-profile-threshold",
+        type=int,
+        default=3,
+        help="Treat a page as low-profile for tail detection when scraped profile count is <= this threshold.",
+    )
     return parser.parse_args()
 
 
@@ -274,6 +286,10 @@ def main() -> int:
         raise SystemExit("retry-count must be > 0")
     if args.target_rows < 0:
         raise SystemExit("target-rows must be >= 0")
+    if args.tail_no_growth_limit <= 0:
+        raise SystemExit("tail-no-growth-limit must be > 0")
+    if args.tail_profile_threshold <= 0:
+        raise SystemExit("tail-profile-threshold must be > 0")
     if args.wait_min_seconds <= 0 or args.wait_max_seconds <= 0:
         raise SystemExit("wait min/max must be > 0")
     if args.wait_min_seconds > args.wait_max_seconds:
@@ -357,6 +373,7 @@ def main() -> int:
                     break
 
         page_in_query = next_page_to_scan
+        query_tail_streak = 0
         while page_in_query <= max_pages:
             if args.target_rows > 0 and rows_written >= args.target_rows:
                 target_reached = True
@@ -577,6 +594,40 @@ def main() -> int:
                 f"total={rows_written} commit={commit_sha[:12]}",
                 flush=True,
             )
+
+            if args.target_rows > 0 and rows_written >= args.target_rows:
+                target_reached = True
+                progress["status"] = "target_rows_reached"
+                progress["target_rows_reached_at"] = _utc_now()
+                _save_progress(progress_path, progress)
+                print(
+                    f"target_rows_reached target={args.target_rows} total={rows_written} query={query_id} page={page_in_query}",
+                    flush=True,
+                )
+                break
+
+            if page_row_delta <= 0 and page_total_profiles <= args.tail_profile_threshold:
+                query_tail_streak += 1
+            else:
+                query_tail_streak = 0
+            if query_tail_streak >= args.tail_no_growth_limit:
+                progress["status"] = "tail_break_to_next_query"
+                progress["tail_break"] = {
+                    "query_id": query_id,
+                    "query_index": query_index,
+                    "page_in_query": page_in_query,
+                    "streak": query_tail_streak,
+                    "profiles_seen": page_total_profiles,
+                    "row_delta": page_row_delta,
+                    "at": _utc_now(),
+                }
+                _save_progress(progress_path, progress)
+                print(
+                    f"tail_break query={query_id} page={page_in_query} streak={query_tail_streak} "
+                    f"profiles={page_total_profiles} delta={page_row_delta}",
+                    flush=True,
+                )
+                break
 
             wait_seconds = random.randint(args.wait_min_seconds, args.wait_max_seconds)
             progress["status"] = "sleeping_between_pages"
